@@ -1,0 +1,416 @@
+# COMPREHENSIVE KNOWLEDGE APP .gitignore
+# This .gitignore is designed to keep ONLY essential source code and exclude all data/model files
+
+# ===== CRITICAL: LARGE FILES THAT SHOULD NEVER BE TRACKED =====
+# Large binary files and executables
+*.exe
+*.msi
+*.dmg
+*.pkg
+*.deb
+*.rpm
+*.app
+
+# PDF files (can be very large)
+*.pdf
+
+# Model files and weights
+*.gguf
+*.bin
+*.safetensors
+*.onnx
+*.pt
+*.pth
+*.h5
+*.model
+*.pkl
+*.pickle
+
+# Data and media files
+*.csv
+*.json.gz
+*.jsonl
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+*.mdb
+
+# Large text files (extracted content, etc.)
+*_extracted.txt
+*_processed.txt
+training_dataset.txt
+combined_training_dataset.txt
+
+# Archive files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
+
+# ===== PYTHON SPECIFIC =====
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ===== SECURITY & SENSITIVE DATA =====
+# API Keys and secrets
+config/api_keys.json
+*.key
+*.keyfile
+*.pem
+*.crt
+.env*
+.secrets*
+
+# User data and uploads
+user_data/
+uploaded_books/
+data/uploaded_books/
+
+# ===== IDE & EDITOR FILES =====
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===== SYSTEM FILES =====
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux
+*~
+
+# ===== APPLICATION SPECIFIC =====
+# Cache directories
+cache/
+.cache/
+*_cache/
+
+# Log files
+logs/
+*.log
+*.log.*
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# Training data and models (regeneratable)
+training/uploaded_books/
+training/processed_docs/
+training/models/
+training/datasets/
+training/lora_adapters*/
+lora_adapters*/
+models/
+nltk_data/
+nltk_data_fixed/
+
+# WebEngine cache
+cache/webengine/
+
+# Screenshot directories
+auto_screenshots/
+debug_screenshots*/
+test_screenshots*/
+screenshots/
+
+# Generated images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+
+# ===== DEBUG & TESTING FILES =====
+# All debug, test, and analysis scripts (these clutter the repo)
+test_*.py
+debug_*.py
+*_test.py
+*_debug.py
+*_debugger.py
+fix_*.py
+verify_*.py
+check_*.py
+force_*.py
+run_*.py
+simple_*.py
+final_*.py
+nuclear_*.py
+comprehensive_*.py
+automated_*.py
+direct_*.py
+working_*.py
+strict_*.py
+quick_*.py
+immediate_*.py
+enhance_*.py
+optimize_*.py
+analyze_*.py
+generate_*.py
+transfer_*.py
+move_*.py
+clear_*.py
+add_*.py
+better_*.py
+auto_*.py
+adaptive_*.py
+batch_*.py
+complete_*.py
+global_*.py
+iterative_*.py
+screenshot_*.py
+gpu_*.py
+
+# Generated markdown files (documentation that's auto-generated)
+*_SUMMARY.md
+*_RESULTS.md
+*_GUIDE.md
+*_INVESTIGATION*.md
+*_FIX*.md
+*_FIXES*.md
+*_BUGS*.md
+*_BUG*.md
+*_COMPLETE*.md
+*_CONFIRMED.md
+
+# Generated text files
+knowledge_app_*.txt
+*_analysis.txt
+*_loc_analysis.txt
+*.json.results
+comprehensive_*.json
+countloc.py
+
+# Batch files
+*.bat
+*.cmd
+
+# Generated HTML files (for testing)
+test_*.html
+
+# ===== THIRD PARTY & EXTERNAL =====
+# Third-party directories
+.git/
+.qodo/
+.repomix/
+.vercel/
+node_modules/
+
+# ===== ESSENTIAL FILES TO KEEP =====
+# These patterns ensure we keep important files even if they match above patterns
+
+# Core source code (explicit inclusion)
+!src/
+!src/**/*.py
+!src/**/*.js
+!src/**/*.html
+!src/**/*.css
+
+# Essential config files (only templates/examples)
+!config/app_settings.json
+!config/unified_config.json
+!config/settings.json
+
+# Core training module structure (no data)
+!training/
+!training/__init__.py
+!training/README.md
+!training/core/
+!training/core/**/*.py
+!training/config/
+!training/config/**/*.yaml
+!training/config/**/*.json
+!training/scripts/
+!training/scripts/**/*.py
+
+# Essential tests (not debug tests)
+!tests/
+!tests/**/*.py
+# But exclude the specific debug/test files
+tests/test_*.py
+tests/debug_*.py
+tests/*_test.py
+tests/*_debug.py
+tests/gui_automation_debugger.py
+
+# Documentation and configuration
+!README.md
+!requirements.txt
+!requirements-pinned.txt
+!main.py
+!.gitignore
+
+# Kiro configuration
+!.kiro/
+!.kiro/**/*.md
+
+# Keep essential empty directories
+!.gitkeep
+
+# ===== FINAL SAFETY: Explicitly exclude problematic patterns =====
+# Even if something matches an inclusion pattern above, exclude these
+**/__pycache__/
+**/*.pyc
+**/*.log
+**/cache/
+**/temp/
+**/*.exe
+**/*.pdf
+**/*.db
+**/*.sqlite

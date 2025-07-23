@@ -1,0 +1,30 @@
+.option-button {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    font-size: 1rem;
+}
+
+.option-letter {
+    width: 2.5rem;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-right: 0.75rem;
+}
+
+.option-content {
+    flex-grow: 1;
+    color: var(--text-primary);
+}

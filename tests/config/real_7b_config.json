@@ -1,0 +1,84 @@
+{
+  "model": {
+    "selected_model": "mistral-7b",
+    "custom_model_path": null,
+    "use_flash_attention": true,
+    "use_xformers": true,
+    "attn_implementation": "auto",
+    "trust_remote_code": true
+  },
+  "quantization": {
+    "use_qlora": true,
+    "use_4bit": true,
+    "bnb_4bit_compute_dtype": "float16",
+    "bnb_4bit_quant_type": "nf4",
+    "use_nested_quant": false,
+    "load_in_8bit": false
+  },
+  "lora": {
+    "r": 16,
+    "alpha": 32,
+    "dropout": 0.1,
+    "bias": "none",
+    "task_type": "CAUSAL_LM",
+    "target_modules": [
+      "q_proj",
+      "v_proj"
+    ],
+    "use_optimized_targets": true
+  },
+  "training": {
+    "output_dir": "data/lora_adapters_mistral/real_7b",
+    "num_train_epochs": 3,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 32,
+    "learning_rate": 0.0002,
+    "weight_decay": 0.001,
+    "max_grad_norm": 0.3,
+    "warmup_ratio": 0.03,
+    "lr_scheduler_type": "constant",
+    "save_steps": 250,
+    "logging_steps": 10,
+    "eval_steps": null,
+    "save_total_limit": 5,
+    "load_best_model_at_end": false,
+    "auto_resume": true,
+    "checkpoint_metadata": true
+  },
+  "data": {
+    "max_seq_length": 2048,
+    "dataset_text_field": "text",
+    "train_data_path": "lora_adapters_mistral/default/training_data_augmented_default.txt",
+    "validation_split": 0.1,
+    "packing": true,
+    "progressive_seq_length": true,
+    "initial_seq_length": 512,
+    "final_seq_length": 2048,
+    "seq_length_transition_epoch": 1,
+    "preprocessing": {
+      "remove_empty_lines": true,
+      "min_line_length": 10,
+      "max_line_length": 4096
+    }
+  },
+  "hardware": {
+    "device_map": "auto",
+    "max_memory": null,
+    "low_cpu_mem_usage": true,
+    "use_cache": false,
+    "dataloader_pin_memory": false,
+    "dataloader_num_workers": 0
+  },
+  "optimization": {
+    "gradient_checkpointing": true,
+    "fp16": true,
+    "bf16": false,
+    "tf32": true,
+    "optim": "paged_adamw_8bit",
+    "group_by_length": true,
+    "length_column_name": "length",
+    "dataloader_num_workers": 0,
+    "remove_unused_columns": false,
+    "ddp_find_unused_parameters": false
+  }
+}

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge App</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                autoload: {
+                    color: [],
+                    colorv2: ['color']
+                },
+                packages: {'[+]': ['noerrors']}
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors']
+            },
+            startup: {
+                typeset: false,  // We'll trigger typesetting manually
+                ready() {
+                    console.log('✅ MathJax startup completed');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+        
+        // Enhanced MathJax loading detection
+        window.addEventListener('load', function() {
+            console.log('🔍 Window loaded, checking MathJax...');
+            if (window.MathJax) {
+                console.log('✅ MathJax found on window load');
+            } else {
+                console.warn('⚠️ MathJax not found on window load');
+            }
+        });
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+            onload="console.log('✅ MathJax script loaded from CDN'); window.mathJaxLoaded = true;"
+            onerror="console.error('❌ Failed to load MathJax from CDN'); loadOfflineMathJax();"></script>
+
+    <script>
+        // Offline MathJax fallback
+        function loadOfflineMathJax() {
+            console.log('🔄 Attempting to load offline MathJax fallback...');
+
+            // Set flag for offline mode
+            window.mathJaxOfflineMode = true;
+
+            // Try to load local MathJax if available
+            const localScript = document.createElement('script');
+            localScript.src = 'mathjax/tex-mml-chtml.js'; // Local fallback path
+            localScript.async = true;
+            localScript.onload = function() {
+                console.log('✅ Local MathJax loaded successfully');
+                window.mathJaxLoaded = true;
+            };
+            localScript.onerror = function() {
+                console.warn('⚠️ Local MathJax not available, using text-based fallback');
+                window.mathJaxLoaded = false;
+                window.mathJaxOfflineMode = true;
+                initializeOfflineMathRenderer();
+            };
+
+            document.head.appendChild(localScript);
+        }
+
+        function initializeOfflineMathRenderer() {
+            console.log('🔧 Initializing offline math renderer...');
+
+            // Simple text-based math renderer for offline mode
+            window.OfflineMathRenderer = {
+                renderMath: function(element) {
+                    if (!element) return Promise.resolve();
+
+                    const mathElements = element.querySelectorAll('[data-math]');
+                    mathElements.forEach(mathEl => {
+                        const mathText = mathEl.getAttribute('data-math');
+                        mathEl.innerHTML = `<span class="math-fallback">${mathText}</span>`;
+                    });
+
+                    return Promise.resolve();
+                }
+            };
+
+            console.log('✅ Offline math renderer initialized');
+        }
+
+        // Check MathJax availability after page load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (!window.mathJaxLoaded && !window.mathJaxOfflineMode) {
+                    console.log('🔄 MathJax not loaded after timeout, switching to offline mode');
+                    loadOfflineMathJax();
+                }
+            }, 5000); // 5 second timeout
+        });
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Knowledge App</h1>
+                <p class="app-subtitle">Modern Learning Platform</p>
+            </div>
+            <div class="header-controls">
+                <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Navigation -->
+            <nav class="side-nav">
+                <button class="nav-item active" onclick="showScreen('home', this)">
+                    <span class="icon">🏠</span>
+                    <span>Home</span>
+                </button>
+                <button class="nav-item" onclick="showScreen('quiz', this)">
+                    <span class="icon">📝</span>
+                    <span>Quiz</span>
+                </button>
+                <button class="nav-item" onclick="showScreen('review', this)">
+                    <span class="icon">📚</span>
+                    <span>Review</span>
+                </button>
+                <button class="nav-item" onclick="showScreen('train', this)">
+                    <span class="icon">🧠</span>
+                    <span>Train Model</span>
+                </button>
+                <button class="nav-item" onclick="showScreen('settings', this)">
+                    <span class="icon">⚙️</span>
+                    <span>Settings</span>
+                </button>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Home Screen -->
+                <div id="home-screen" class="screen active">
+                    <div class="welcome-card">
+                        <h2>Welcome to Knowledge App</h2>
+                        <p>Test your knowledge with AI-powered quizzes</p>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3>0</h3>
+                                <p>Quizzes Taken</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>0%</h3>
+                                <p>Average Score</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>0</h3>
+                                <p>Questions Answered</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="startQuickQuiz()">Start Quiz</button>
+                    </div>
+                </div>
+
+                <!-- Quiz Screen -->
+                <div id="quiz-screen" class="screen">
+                    <div class="quiz-container">
+                        <div id="quiz-setup" class="quiz-setup">
+                            <h2>Quiz Setup</h2>
+                            <div class="form-group">
+                                <label>Topic</label>
+                                <input type="text" id="quiz-topic" placeholder="Enter topic (e.g., Science, History)">
+                            </div>
+                            <div class="form-group">
+                                <label>Mode</label>
+                                <!-- 🚀 CRITICAL FIX: Remove hardcoded 'selected' to allow user preferences -->
+                                <select id="quiz-mode" onchange="updateModeInfo(); saveSettings();">
+                                    <option value="offline">Offline (Local AI - TURBO)</option>
+                                    <option value="auto" selected>Auto (Best Available)</option>
+                                    <option value="online">Online (Cloud APIs)</option>
+                                </select>
+                                <div id="mode-info" class="mode-info">
+                                    <small>🤖 Auto-selecting best available method</small>
+                                </div>
+                            </div>
+                            
+                            <div id="api-status" class="api-status" style="display: none;">
+                                <div class="api-providers" id="api-providers">
+                                    <!-- API provider status will be shown here -->
+                                </div>
+                                <div class="api-help">
+                                    <small>💡 <strong>Supported APIs:</strong> OpenAI GPT-4, Anthropic Claude, Google Gemini, Groq, OpenRouter</small>
+                                    <br>
+                                    <small>🔑 <strong>Setup:</strong> Set environment variables OPENAI_API_KEY, ANTHROPIC_API_KEY, GROQ_API_KEY, etc.</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Game Mode</label>
+                                <select id="quiz-game-mode" onchange="updateGameModeInfo(); saveSettings();">
+                                    <option value="casual">🎵 Casual Mode (Relaxed, Music)</option>
+                                    <option value="serious">⏱️ Serious Mode (Timed, Focused)</option>
+                                </select>
+                                <div id="game-mode-info" class="mode-info">
+                                    <small>🎵 Relaxed learning with background music and no time pressure</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Question Type</label>
+                                <select id="quiz-submode" onchange="updateSubmodeInfo(); saveSettings();">
+                                    <option value="mixed">🔀 Mixed (Balanced)</option>
+                                    <option value="numerical">📊 Numerical (Math & Calculations)</option>
+                                    <option value="conceptual">🧠 Conceptual (Theory & Understanding)</option>
+                                </select>
+                                <div id="submode-info" class="mode-info">
+                                    <small>🔀 Balanced mix of numerical and conceptual questions</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Difficulty</label>
+                                <select id="quiz-difficulty" onchange="updateDifficultyInfo(); saveSettings();">
+                                    <option value="easy">🟢 Easy</option>
+                                    <option value="medium">🟡 Medium</option>
+                                    <option value="hard">🔴 Hard</option>
+                                    <option value="expert">🔥💀 EXPERT (PhD-Level) 💀🔥</option>
+                                </select>
+                                <div id="difficulty-info" class="mode-info">
+                                    <small>🔴 Advanced analysis and complex problem-solving</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Number of Questions</label>
+                                <input type="number" id="quiz-questions" value="2" min="1" max="10">
+                            </div>
+
+                            <!-- 🌊 Token Streaming Option -->
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="token-streaming-enabled" class="toggle-checkbox" checked>
+                                    <label for="token-streaming-enabled" class="toggle-label">
+                                        🌊 Live Token Streaming
+                                        <small class="feature-description">Watch AI thinking process in real-time (Expert + Online mode only)</small>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- DeepSeek Integration -->
+                            <div class="form-group deepseek-section" id="deepseek-section" style="display: none;">
+                                <div class="deepseek-header">
+                                    <h3>🧠 DeepSeek AI Pipeline</h3>
+                                    <div id="deepseek-status" class="deepseek-status">
+                                        <span class="status-indicator">⏳</span>
+                                        <span class="status-text">Checking DeepSeek availability...</span>
+                                    </div>
+                                </div>
+                                <div class="deepseek-info">
+                                    <small>🔬 Two-Model Pipeline: DeepSeek R1 thinking + Llama JSON formatting</small>
+                                    <br>
+                                    <small>🎯 Optimized for expert-level, PhD-quality questions</small>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary" onclick="startCustomQuiz()">Start Quiz</button>
+                        </div>
+
+                        <div id="quiz-game" class="quiz-game" style="display: none;">
+                            <!-- Status Display -->
+                            <div id="status-display" class="status-display" style="display: none;">
+                                <!-- Status messages will be dynamically added -->
+                            </div>
+                            
+                            <div class="quiz-header">
+                                <span id="question-number">Loading...</span>
+                                <span id="quiz-timer">Time: 30s</span>
+                            </div>
+                            <div class="question-container">
+                                <h3 id="question-text">Loading question...</h3>
+                                <div id="options-container" class="options-container">
+                                    <!-- Options will be dynamically added -->
+                                </div>
+                            </div>
+                            
+                            <!-- Feedback Container -->
+                            <div id="feedback-container" class="feedback-container" style="display: none;">
+                                <!-- Feedback will be dynamically added -->
+                            </div>
+                            
+                            <!-- Explanation Container -->
+                            <div id="explanation-container" class="explanation-container" style="display: none;">
+                                <!-- Explanation will be dynamically added -->
+                            </div>
+                            
+                            <div class="quiz-footer">
+                                <button id="submit-btn" class="btn btn-primary" onclick="submitAnswer()">Submit</button>
+                                <button class="btn btn-secondary" onclick="skipQuestion()">Skip</button>
+                            </div>
+                            
+                            <!-- Navigation Buttons -->
+                            <div id="navigation-buttons" class="navigation-buttons" style="display: none;">
+                                <button class="btn btn-secondary" onclick="showPreviousQuestion()">← Previous</button>
+                                <button class="btn btn-secondary" onclick="showNextQuestion()">Next →</button>
+                                <button class="btn btn-primary" onclick="loadNextNewQuestion()">Next New Question</button>
+                            </div>
+                        </div>
+
+                        <div id="quiz-results" class="quiz-results" style="display: none;">
+                            <h2>Quiz Complete!</h2>
+                            <div class="score-display">
+                                <div class="score-circle">
+                                    <span id="score-percentage">0%</span>
+                                </div>
+                            </div>
+                            <p id="score-text">You scored 0 out of 0</p>
+                            <button class="btn btn-primary" onclick="resetQuiz()">New Quiz</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review Screen -->
+                <div id="review-screen" class="screen">
+                    <div class="review-container">
+                        <h2>📚 Question Review & History</h2>
+                        <p>Review all your previously generated questions without burning API calls or GPU resources!</p>
+
+                        <!-- NUCLEAR OPTION: Direct Question Display -->
+                        <div class="nuclear-review-section" style="background: #ffe6e6; padding: 10px; margin: 10px; border: 2px solid #ff0000;">
+                            <h3>🚀 NUCLEAR DEBUG MODE</h3>
+                            <button class="btn btn-primary" onclick="nuclearLoadQuestions()" style="margin: 5px;">
+                                🚀 FORCE LOAD QUESTIONS
+                            </button>
+                            <button class="btn btn-secondary" onclick="nuclearTestDisplay()" style="margin: 5px;">
+                                🧪 TEST DISPLAY
+                            </button>
+                            <div id="nuclear-debug" style="background: #f0f0f0; padding: 10px; margin: 10px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+
+                        <!-- Review Controls -->
+                        <div class="review-controls">
+                            <div class="filter-section">
+                                <h3>🔍 Filters</h3>
+                                <div class="filter-grid">
+                                    <div class="filter-item">
+                                        <label>Search Questions</label>
+                                        <input type="text" id="question-search" placeholder="Search by content..." onkeyup="searchQuestions()">
+                                    </div>
+                                    <div class="filter-item">
+                                        <label>Filter by Topic</label>
+                                        <select id="topic-filter" onchange="filterQuestionsByTopic()">
+                                            <option value="">All Topics</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-item">
+                                        <label>Filter by Difficulty</label>
+                                        <select id="difficulty-filter" onchange="filterQuestionsByDifficulty()">
+                                            <option value="">All Difficulties</option>
+                                            <option value="easy">🟢 Easy</option>
+                                            <option value="medium">🟡 Medium</option>
+                                            <option value="hard">🔴 Hard</option>
+                                            <option value="expert">🔥💀 Expert</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="review-actions">
+                                    <button class="btn btn-primary" onclick="loadQuestionHistory()">🔄 Refresh History</button>
+                                    <button class="btn btn-secondary" onclick="showQuestionStats()">📊 Statistics</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Statistics Display -->
+                        <div id="question-stats" class="question-stats" style="display: none;">
+                            <h3>📊 Question Statistics</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <h3 id="total-questions-stat">0</h3>
+                                    <p>Total Questions</p>
+                                </div>
+                                <div class="stat-card">
+                                    <h3 id="topics-count-stat">0</h3>
+                                    <p>Topics Covered</p>
+                                </div>
+                                <div class="stat-card">
+                                    <h3 id="expert-questions-stat">0</h3>
+                                    <p>Expert Level</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Questions Display -->
+                        <div id="question-history-container" class="question-history-container">
+                            <div id="loading-history" class="loading-message">
+                                <p>⏳ Loading question history...</p>
+                            </div>
+                            <div id="no-questions" class="no-questions" style="display: none;">
+                                <p>📝 No questions found. Generate some questions first!</p>
+                                <button class="btn btn-primary" onclick="showScreen('quiz')">Start Quiz</button>
+                            </div>
+                            <div id="questions-list" class="questions-list">
+                                <!-- Questions will be dynamically loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Question Detail Modal -->
+                        <div id="question-detail-modal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3>Question Details</h3>
+                                    <span class="modal-close" onclick="closeQuestionModal()">&times;</span>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="modal-question-content">
+                                        <!-- Question content will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Train Model Screen -->
+                <div id="train-screen" class="screen">
+                    <div class="train-container">
+                        <div class="upload-section">
+                            <h3>📚 Document Upload</h3>
+                            <div class="upload-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                <div class="upload-icon">📄</div>
+                                <p class="upload-text">Drag and drop files here or click to browse</p>
+                                <p class="upload-hint">Supported formats: PDF, TXT, DOCX</p>
+                                <input type="file" id="file-input" multiple accept=".pdf,.txt,.docx,.doc,.rtf" onchange="handleFileSelect(event)" style="display: none;">
+                                <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                                    📁 Browse Files
+                                </button>
+                            </div>
+
+                            <!-- Upload Progress -->
+                            <div id="upload-progress" class="upload-progress" style="display: none;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="upload-progress-fill"></div>
+                                </div>
+                                <div class="progress-text" id="upload-progress-text">Uploading...</div>
+                            </div>
+                        </div>
+
+                        <div id="train-content">
+                            <!-- Training UI will be populated here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Screen -->
+                <div id="settings-screen" class="screen">
+                    <div class="settings-container">
+                        <h2>Settings</h2>
+                        
+                        <!-- API Configuration Section -->
+                        <div class="settings-section">
+                            <h3>🤖 AI Providers</h3>
+                            <p class="section-description">Configure API keys for cloud AI providers. Keys are stored locally and encrypted.</p>
+                            
+                            <div class="api-providers-grid">
+                                <div class="api-provider-card">
+                                    <div class="provider-header">
+                                        <span class="provider-icon">🧠</span>
+                                        <span class="provider-name">OpenAI</span>
+                                        <span id="openai-status" class="provider-status">❌</span>
+                                    </div>
+                                    <input type="password" id="openai-api-key" placeholder="sk-..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <div class="provider-info">
+                                        <small>Powers GPT-4, GPT-3.5, and other OpenAI models</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="api-provider-card">
+                                    <div class="provider-header">
+                                        <span class="provider-icon">🔮</span>
+                                        <span class="provider-name">Anthropic</span>
+                                        <span id="anthropic-status" class="provider-status">❌</span>
+                                    </div>
+                                    <input type="password" id="anthropic-api-key" placeholder="sk-ant-..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <div class="provider-info">
+                                        <small>Powers Claude 3.5 Sonnet and other Claude models</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="api-provider-card">
+                                    <div class="provider-header">
+                                        <span class="provider-icon">🎯</span>
+                                        <span class="provider-name">Google Gemini</span>
+                                        <span id="gemini-status" class="provider-status">❌</span>
+                                    </div>
+                                    <input type="password" id="gemini-api-key" placeholder="AIza..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <div class="provider-info">
+                                        <small>Powers Gemini Pro and other Google AI models</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="api-provider-card">
+                                    <div class="provider-header">
+                                        <span class="provider-icon">⚡</span>
+                                        <span class="provider-name">Groq</span>
+                                        <span id="groq-status" class="provider-status">❌</span>
+                                    </div>
+                                    <input type="password" id="groq-api-key" placeholder="gsk_..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <div class="provider-info">
+                                        <small>Ultra-fast inference with Mixtral and Llama models</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="api-provider-card">
+                                    <div class="provider-header">
+                                        <span class="provider-icon">🌐</span>
+                                        <span class="provider-name">OpenRouter</span>
+                                        <span id="openrouter-status" class="provider-status">❌</span>
+                                    </div>
+                                    <input type="password" id="openrouter-api-key" placeholder="sk-or-..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <div class="provider-info">
+                                        <small>Access to multiple models through one API</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="api-actions">
+                                <button class="btn btn-secondary" onclick="testAllProviders()">🧪 Test All APIs</button>
+                                <button class="btn btn-secondary" onclick="clearAllApiKeys()">🗑️ Clear All Keys</button>
+                                <button class="btn btn-warning" onclick="resetApiKeysAdvanced()">🔄 Advanced Reset</button>
+                                <button class="btn btn-info" onclick="validateAllApiKeys()">🔍 Validate Keys</button>
+                            </div>
+                            
+                            <!-- ✅ NEW: API Key Management Status -->
+                            <div class="api-status-summary">
+                                <div class="status-indicators">
+                                    <span id="api-persistence-status">💾 Auto-save: Active</span>
+                                    <span id="api-session-status">🔄 Session backup: Ready</span>
+                                </div>
+                            </div>
+                            
+                            <div class="api-help">
+                                <details>
+                                    <summary>🔑 Where to get API keys</summary>
+                                    <ul>
+                                        <li><strong>OpenAI:</strong> <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a></li>
+                                        <li><strong>Anthropic:</strong> <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a></li>
+                                        <li><strong>Google:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a></li>
+                                        <li><strong>Groq:</strong> <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a></li>
+                                        <li><strong>OpenRouter:</strong> <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a></li>
+                                    </ul>
+                                </details>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3>Appearance</h3>
+                            <div class="setting-item">
+                                <label>Dark Mode</label>
+                                <input type="checkbox" id="dark-mode-toggle" onchange="toggleTheme()">
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h3>Quiz Settings</h3>
+                            <div class="setting-item">
+                                <label>Default Timer (seconds)</label>
+                                <input type="number" id="default-timer" value="30" min="10" max="120" onchange="saveSettings();">
+                            </div>
+                            <div class="setting-item">
+                                <label>Show Correct Answers</label>
+                                <input type="checkbox" id="show-answers" checked onchange="saveSettings();">
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>🤖 Model Selection & Preferences</h3>
+                            <div class="setting-item">
+                                <label>Available Models</label>
+                                <button class="btn btn-secondary" onclick="refreshAvailableModels()">🔄 Refresh Available Models</button>
+                                <div id="available-models-list" class="models-list">
+                                    <p class="loading-text">Click "Refresh" to load available models...</p>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label>Preferred Model for MCQ Generation</label>
+                                <select id="preferred-mcq-model" onchange="saveModelPreferences();">
+                                    <option value="">Auto-select best available model</option>
+                                </select>
+                                <small class="setting-help">Choose your preferred model for generating quiz questions</small>
+                            </div>
+                            <div class="setting-item">
+                                <label>Preferred Model for Expert/Thinking Mode</label>
+                                <select id="preferred-thinking-model" onchange="saveModelPreferences();">
+                                    <option value="">Auto-select best thinking model</option>
+                                </select>
+                                <small class="setting-help">Choose your preferred model for complex reasoning tasks</small>
+                            </div>
+                            <div class="setting-item">
+                                <label>Model Selection Strategy</label>
+                                <select id="model-selection-strategy" onchange="saveModelPreferences();">
+                                    <option value="intelligent">🤖 Intelligent (Recommended)</option>
+                                    <option value="user_preference">👤 User Preference Only</option>
+                                    <option value="first_available">⚡ First Available</option>
+                                </select>
+                                <small class="setting-help">How the system should choose models when multiple options are available</small>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2025 Knowledge App. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- 🛡️ SECURITY FIX #17: Client-Side Input Sanitization -->
+    <script src="client_input_sanitizer.js"></script>
+    <!-- 🔒 SECURITY FIX #16: Secure API Key Management -->
+    <script src="secure_api_key_client.js"></script>
+    <!-- API Key Persistence Fix (deprecated but kept for compatibility) -->
+    <script src="api_key_persistence_fix.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

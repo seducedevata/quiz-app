@@ -1,0 +1,21 @@
+# 🚀 DYNAMIC TRAINING CONFIG: Parameters set by user in UI
+# This file now serves as a template - actual values come from user configuration
+
+# Static settings (not user-configurable)
+evaluation_strategy: steps
+greater_is_better: false
+load_best_model_at_end: true
+metric_for_best_model: eval_loss
+
+# Dynamic settings (configured by user in UI)
+# batch_size: USER_CONFIGURED
+# learning_rate: USER_CONFIGURED
+# max_epochs: USER_CONFIGURED
+# gradient_accumulation_steps: USER_CONFIGURED
+# warmup_steps: USER_CONFIGURED
+# eval_steps: USER_CONFIGURED
+# save_steps: USER_CONFIGURED
+# logging_steps: USER_CONFIGURED
+
+# Note: All training parameters are now set dynamically based on user input
+# from the training configuration UI. No hardcoded values are used.

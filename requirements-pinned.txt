@@ -1,0 +1,106 @@
+# 🚀 BUG FIX 30: Knowledge App - Pinned Requirements for Stable Deployment
+# This file contains exact versions that have been tested and verified to work together
+# Use this file for production deployments to ensure reproducible environments
+
+# ===== CORE FRAMEWORK =====
+PyQt5==5.15.10
+PyQtWebEngine==5.15.6
+
+# ===== AI/ML CORE LIBRARIES =====
+torch==2.1.0
+torchvision==0.16.0
+transformers==4.41.2
+sentence-transformers==2.7.0
+
+# ===== LOCAL MODEL INFERENCE =====
+llama-cpp-python==0.3.9
+requests==2.31.0
+
+# ===== ONLINE API PROVIDERS =====
+openai==1.35.15
+anthropic==0.25.9
+groq==0.9.0
+aiohttp==3.9.5
+aiofiles==23.2.0
+
+# ===== DATA PROCESSING =====
+numpy==1.26.4
+pandas==2.2.2
+pydantic==2.7.4
+python-dotenv==1.0.1
+
+# ===== DOCUMENT PROCESSING =====
+pdfplumber==0.11.1
+Pillow==10.4.0
+pdf2image==1.17.0
+opencv-python==4.10.0.84
+pytesseract==0.3.13
+
+# ===== VECTOR SEARCH & RAG =====
+faiss-cpu==1.8.0
+haystack==1.26.4
+
+# ===== ADVANCED ML (OPTIONAL BUT PINNED) =====
+peft==0.10.0
+bitsandbytes==0.43.1
+datasets==2.20.0
+accelerate==0.29.3
+
+# ===== WEB FRAMEWORK =====
+flask==3.0.3
+flask-cors==4.0.1
+
+# ===== UTILITIES =====
+six==1.16.0
+tqdm==4.66.4
+colorama==0.4.6
+psutil==5.9.8
+packaging==24.1
+
+# ===== LOGGING & MONITORING =====
+loguru==0.7.2
+
+# ===== TESTING =====
+pytest==8.2.2
+pytest-asyncio==0.23.7
+
+# ===== DEVELOPMENT TOOLS =====
+black==24.4.2
+isort==5.13.2
+flake8==7.1.0
+
+# ===== COMPATIBILITY NOTES =====
+# These versions have been tested together and are known to work
+# with the specific features used in the knowledge application:
+# - 4-bit quantization (load_in_4bit=True)
+# - bfloat16 precision
+# - Flash Attention 2 and SDPA attention implementations
+# - CUDA compatibility (if available)
+# - LoRA fine-tuning with PEFT
+# - Streaming inference with proper async handling
+
+# ===== INSTALLATION INSTRUCTIONS =====
+# To install these exact versions:
+# pip install -r requirements-pinned.txt
+#
+# To upgrade from loose requirements:
+# pip install -r requirements-pinned.txt --upgrade
+#
+# For development with loose requirements:
+# pip install -r requirements.txt
+
+# ===== VERSION COMPATIBILITY MATRIX =====
+# torch==2.1.0 + transformers==4.41.2 + accelerate==0.29.3 + peft==0.10.0
+# This combination supports:
+# - Flash Attention 2
+# - 4-bit quantization with bitsandbytes==0.43.1
+# - LoRA training with gradient checkpointing
+# - Mixed precision training (fp16/bf16)
+# - CUDA 11.8+ and CUDA 12.1+ compatibility
+
+# ===== CRITICAL DEPENDENCY RELATIONSHIPS =====
+# torch + torchvision: Must be compatible versions
+# transformers + accelerate + peft: Must support same model architectures
+# bitsandbytes + torch: Must be compiled for same CUDA version
+# PyQt5 + PyQtWebEngine: Must be compatible versions
+# aiohttp + aiofiles: Must support same async patterns

@@ -1,0 +1,413 @@
+{
+  "application": {
+    "name": "Knowledge App",
+    "version": "3.0",
+    "mode": "enterprise",
+    "debug": false,
+    "theme": "dark",
+    "language": "en",
+    "auto_save": true,
+    "save_interval": 300,
+    "max_recent_files": 10
+  },
+  "inference": {
+    "mode": "ollama_json",
+    "primary_engine": "ollama_json",
+    "fallback_engines": ["ollama", "enhanced_lmstudio", "lm_studio", "gguf", "offline"]
+  },
+  "models": {
+    "enhanced_lmstudio": {
+      "enabled": true,
+      "priority": "primary",
+      "description": "🔥 FIRE: Enhanced LM Studio with official SDK, grammar-constrained JSON, and Pydantic validation",
+      "url": "http://127.0.0.1:1234",
+      "use_dynamic_model_selection": true,
+      "generation": {
+        "temperature": 0.1,
+        "max_tokens": 800,
+        "top_p": 0.9,
+        "frequency_penalty": 0.05,
+        "presence_penalty": 0.0,
+        "stop": ["###", "---", "\n\n\n"],
+        "schema_enforcement": "grammar_constrained",
+        "pydantic_validation": true,
+        "hardware_acceleration": "automatic"
+      }
+    },
+    "lm_studio": {
+      "enabled": true,
+      "priority": "fallback",
+      "description": "LM Studio provides superior JSON/structured output models optimized for MCQ generation",
+      "url": "http://127.0.0.1:1234",
+      "use_dynamic_model_selection": true,
+      "generation": {
+        "max_tokens": 800,
+        "temperature": 0.1,
+        "top_p": 0.9,
+        "top_k": 40,
+        "repetition_penalty": 1.05,
+        "stop_sequences": ["\n\n", "###", "---", "Question:"],
+        "structured_output": true,
+        "json_mode": true
+      }
+    },
+    "gguf": {
+      "enabled": true,
+      "priority": "fallback",
+      "description": "GGUF engine provides stable, crash-proof inference for consumer hardware",
+      "primary_model": "models/gguf_models/MiMo-7B-RL-Q8_0.gguf",
+      "fallback_models": [
+        "models/gguf_models/mimo-7b-rl-q6_k.gguf",
+        "models/gguf_models/mimo-7b-rl-q4_k_m.gguf",
+        "models/gguf_models/mistral-7b-instruct-v0.2.Q5_K_M.gguf"
+      ],
+      "settings": {
+        "n_ctx": 8192,
+        "n_gpu_layers": 50,
+        "n_batch": 1024,
+        "n_threads": 16,
+        "n_parallel": 4,
+        "use_mmap": true,
+        "use_mlock": true,
+        "low_vram": false,
+        "numa": false,
+        "rope_freq_base": 10000.0,
+        "rope_freq_scale": 1.0,
+        "mul_mat_q": true,
+        "f16_kv": true,
+        "logits_all": false,
+        "vocab_only": false,
+        "use_mlock": true,
+        "embedding": false
+      },
+      "generation": {
+        "max_tokens": 700,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "top_k": 40,
+        "repeat_penalty": 1.1,
+        "stop_sequences": ["\n\n", "###", "---", "Question:"]
+      }
+    },
+    "ollama": {
+      "enabled": true,
+      "use_dynamic_model_selection": true,
+      "url": "http://localhost:11434"
+    },
+    "ollama_json": {
+      "enabled": true,
+      "priority": "primary",
+      "description": "🔥 FIRE: Direct Ollama JSON generator with intelligent parsing for maximum local control",
+      "url": "http://localhost:11434",
+      "use_dynamic_model_selection": true,
+      "generation": {
+        "temperature": 0.8,
+        "top_p": 0.95,
+        "top_k": 80,
+        "num_predict": 800,
+        "num_ctx": 4096,
+        "repeat_penalty": 1.2,
+        "seed": -1,
+        "stop_sequences": ["\\n\\n---", "```", "END_JSON", "###"],
+        "json_mode": true,
+        "intelligent_parsing": true
+      }
+    },
+    "offline": {
+      "enabled": true,
+      "primary_model": "mistralai/Mistral-7B-Instruct-v0.2",
+      "use_dynamic_fallback_selection": true,
+      "quantization": {
+        "load_in_4bit": true,
+        "bnb_4bit_compute_dtype": "float16",
+        "bnb_4bit_quant_type": "nf4"
+      },
+      "generation": {
+        "max_new_tokens": 600,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "top_k": 50,
+        "repetition_penalty": 1.1,
+        "do_sample": true
+      }
+    },
+    "cloud": {
+      "enabled": false,
+      "api_key": null,
+      "endpoint": null,
+      "model_name": "gpt-3.5-turbo",
+      "timeout": 30,
+      "retry_attempts": 3
+    },
+    "model_config": {
+      "model_type": "simple",
+      "hidden_size": 256,
+      "num_layers": 2,
+      "dropout": 0.1
+    }
+  },
+  "training": {
+    "enabled": true,
+    "presets": {
+      "quick_training": {
+        "name": "Quick Training",
+        "description": "Fast training for testing - 1 epoch, small batch",
+        "base_model": "microsoft/DialoGPT-small",
+        "lora": {
+          "r": 8,
+          "alpha": 16,
+          "dropout": 0.1,
+          "target_modules": ["c_attn", "c_proj"]
+        },
+        "training": {
+          "epochs": 1,
+          "batch_size": 2,
+          "learning_rate": 0.0001,
+          "gradient_accumulation_steps": 4,
+          "warmup_steps": 50
+        },
+        "output_dir": "lora_adapters_mistral/quick_test"
+      },
+      "standard_training": {
+        "name": "Standard Training", 
+        "description": "Balanced training - 3 epochs, good quality",
+        "base_model": "microsoft/DialoGPT-medium",
+        "lora": {
+          "r": 16,
+          "alpha": 32,
+          "dropout": 0.1,
+          "target_modules": ["c_attn", "c_proj", "c_fc"]
+        },
+        "training": {
+          "epochs": 3,
+          "batch_size": 4,
+          "learning_rate": 0.0002,
+          "gradient_accumulation_steps": 2,
+          "warmup_steps": 100
+        },
+        "output_dir": "lora_adapters_mistral/standard"
+      },
+      "intensive_training": {
+        "name": "Intensive Training",
+        "description": "High-quality training - 5 epochs, larger model",
+        "base_model": "mistralai/Mistral-7B-Instruct-v0.2",
+        "lora": {
+          "r": 32,
+          "alpha": 64,
+          "dropout": 0.05,
+          "target_modules": ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+        },
+        "training": {
+          "epochs": 5,
+          "batch_size": 8,
+          "learning_rate": 0.0003,
+          "gradient_accumulation_steps": 1,
+          "warmup_steps": 200
+        },
+        "output_dir": "lora_adapters_mistral/intensive"
+      }
+    },
+    "model_config": {
+      "selected_model": "mistral-7b",
+      "custom_model_path": null,
+      "use_flash_attention": false,
+      "trust_remote_code": true,
+      "use_xformers": true,
+      "attn_implementation": "dynamic"
+    },
+    "quantization": {
+      "use_qlora": true,
+      "use_4bit": true,
+      "bnb_4bit_compute_dtype": "float16",
+      "bnb_4bit_quant_type": "nf4",
+      "use_nested_quant": false,
+      "load_in_8bit": false
+    },
+    "lora": {
+      "r": 16,
+      "alpha": 32,
+      "dropout": 0.1,
+      "bias": "none",
+      "task_type": "CAUSAL_LM",
+      "target_modules": ["q_proj", "v_proj"]
+    },
+    "parameters": {
+      "output_dir": "data/lora_adapters_mistral/real_7b",
+      "num_train_epochs": 3,
+      "per_device_train_batch_size": 1,
+      "gradient_accumulation_steps": 32,
+      "learning_rate": 0.0002,
+      "weight_decay": 0.001,
+      "max_grad_norm": 0.3,
+      "warmup_ratio": 0.03,
+      "lr_scheduler_type": "constant",
+      "save_steps": 500,
+      "logging_steps": 10,
+      "save_total_limit": 3,
+      "batch_size": 32,
+      "epochs": 10,
+      "target_accuracy": 0.85
+    },
+    "data": {
+      "max_seq_length": 2048,
+      "dataset_text_field": "text",
+      "train_data_path": "lora_adapters_mistral/default/training_data_augmented_default.txt",
+      "validation_split": 0.1,
+      "preprocessing": {
+        "remove_empty_lines": true,
+        "min_line_length": 10,
+        "max_line_length": 2048
+      },
+      "packing": true
+    },
+    "hardware": {
+      "device_map": "auto",
+      "max_memory": null,
+      "low_cpu_mem_usage": true,
+      "use_cache": false,
+      "dataloader_pin_memory": false,
+      "dataloader_num_workers": 0
+    },
+    "optimization": {
+      "gradient_checkpointing": true,
+      "fp16": true,
+      "bf16": false,
+      "tf32": true,
+      "optim": "paged_adamw_8bit",
+      "group_by_length": true,
+      "length_column_name": "length"
+    }
+  },
+  "mcq": {
+    "offline_mode": true,
+    "default_difficulty": "medium",
+    "max_questions_per_batch": 5,
+    "enable_fallback": true,
+    "mcq_generator_type": "ollama_json",
+    "generation": {
+      "timeout": 90,
+      "expert_timeout": 300,
+      "hard_timeout": 150,
+      "retry_attempts": 3,
+      "cache_results": true,
+      "schema_enforcement": true,
+      "pydantic_validation": true,
+      "grammar_constrained": true,
+      "expert_mode": {
+        "use_deepseek_pipeline": true,
+        "parallel_processing": true,
+        "gpu_acceleration": true,
+        "max_thinking_tokens": 4000,
+        "max_json_tokens": 1000,
+        "temperature_thinking": 0.9,
+        "temperature_json": 0.3,
+        "enable_caching": true,
+        "optimize_for_speed": true,
+        "force_gpu_layers": 50
+      }
+    }
+  },
+  "ui": {
+    "theme": "dark",
+    "window": {
+      "width": 1400,
+      "height": 900,
+      "min_width": 1200,
+      "min_height": 800,
+      "center_on_startup": true
+    },
+    "features": {
+      "enable_animations": true,
+      "enable_tooltips": true,
+      "enable_keyboard_shortcuts": true,
+      "auto_save_settings": true
+    },
+    "font_size": 12,
+    "toolbar_position": "top"
+  },
+  "paths": {
+    "models": "models",
+    "gguf_models": "models/gguf_models",
+    "data": "data",
+    "uploads": "data/uploaded_books",
+    "cache": "data/cache",
+    "logs": "logs",
+    "image_cache": "data/image_cache",
+    "user_data": "data/user_data",
+    "uploaded_books": "data/uploaded_books",
+    "lora_adapters": [
+      "data/lora_adapters_mistral",
+      "data/lora_adapters",
+      "lora_adapters_mistral",
+      "lora_adapters"
+    ],
+    "fine_tuned_models": [
+      "data/fine_tuned_models",
+      "fine_tuned_models",
+      "data/models"
+    ]
+  },
+  "storage": {
+    "image_cache_limit": 524288000,
+    "model_cache_limit": 2147483648,
+    "memory_cache_limit": 1073741824,
+    "max_cache_size": 4294967296,
+    "cleanup_threshold": 0.85,
+    "cache_ttl": 3600,
+    "cleanup_threshold_mb": 0.9,
+    "max_book_size_mb": 100,
+    "max_image_size_mb": 5
+  },
+  "limits": {
+    "max_file_size": 10485760,
+    "max_cache_size": 104857600
+  },
+  "logging": {
+    "level": "INFO",
+    "enable_file_logging": true,
+    "enable_console_logging": true,
+    "log_file": "logs/app.log",
+    "max_log_size_mb": 10,
+    "backup_count": 5,
+    "detailed_logs": {
+      "model_loading": true,
+      "generation": true,
+      "training": true,
+      "ui_events": false
+    }
+  },
+  "performance": {
+    "memory": {
+      "max_memory_mb": null,
+      "enable_gc": true,
+      "gc_threshold": 0.8
+    },
+    "processing": {
+      "max_threads": 16,
+      "thread_pool_size": 8,
+      "enable_multiprocessing": true,
+      "cpu_optimization": true,
+      "parallel_inference": true,
+      "batch_processing": true
+    },
+    "gpu": {
+      "enable_gpu": true,
+      "gpu_memory_fraction": 0.95,
+      "allow_gpu_growth": true,
+      "force_gpu_layers": 50,
+      "gpu_split": "auto",
+      "tensor_split": null,
+      "main_gpu": 0,
+      "low_vram": false,
+      "f16_kv": true,
+      "use_mmap": true,
+      "use_mlock": true
+    }
+  },
+  "security": {
+    "enable_sandbox": false,
+    "allowed_file_types": [".pdf", ".txt", ".md", ".json"],
+    "max_file_size_mb": 100,
+    "enable_content_validation": true
+  }
+}

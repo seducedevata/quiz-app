@@ -1,0 +1,13 @@
+{
+  "theme": "light",
+  "font_size": 10,
+  "storage_limit": 324009984,
+  "auto_switch_images": false,
+  "offline_mode": false,
+  "default_timer": 30,
+  "show_answers": true,
+  "default_game_mode": "casual",
+  "default_difficulty": "medium",
+  "default_submode": "mixed",
+  "default_quiz_mode": "auto"
+}

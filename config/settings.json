@@ -1,0 +1,1 @@
+{"inference": {"batch_size": 10, "epochs": 40}, "cloud": {"provider": "Custom", "api_key": "", "endpoint_url": "", "region": "us-east-1", "model": ""}}
