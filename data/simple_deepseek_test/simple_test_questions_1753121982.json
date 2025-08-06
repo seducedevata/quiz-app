@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "test_type": "simple_deepseek_generation",
+    "source_document": "2404.01023v1.pdf",
+    "chunk_size": 1000,
+    "total_questions": 2,
+    "timestamp": 1753121982,
+    "model_used": "deepseek-r1:14b"
+  },
+  "test_chunk": "Published as a workshop paper at ICLR 2024\nLARGE LANGUAGE MODEL EVALUATION VIA MULTI\nAI AGENTS: PRELIMINARY RESULTS\nZeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson\nFaculty of Information Technology and Communication Science, Tampere University\nFaculty of Information Technology, Jyväskylä University\nTampere & Jyväskylä , Finland\n{zeeshan.rasheed & pekka.abrahamsson}@tuni.fi\nABSTRACT\nThe increasing significance of Large Language Models (LLMs) in both the aca-\ndemic and industrial sectors can be attributed to their exceptional performance\nacross a diverse range of applications. As LLMs have become integral to both\nresearch and daily operations, rigorous evaluation is crucial. This assessment is\nimportant not only for individual tasks but also for understanding their societal\nimpact and potential risks. Despite extensive efforts to examine LLMs from var-\nious perspectives, there is a noticeable lack of multi-agent AI models specifically\ndesigned to evaluate the performance",
+  "questions": [
+    {
+      "question": "What is a key reason for the rigorous evaluation of Large Language Models (LLMs)?",
+      "options": [
+        "A) To ensure they are user-friendly",
+        "B) To understand their societal impact and risks",
+        "C) To make them faster",
+        "D) To reduce their cost"
+      ],
+      "correct_answer": "B",
+      "explanation": "The research emphasizes that evaluation is crucial for understanding the societal impact and potential risks of LLMs.",
+      "difficulty": "easy",
+      "topic": "evaluation_importance"
+    },
+    {
+      "question": "What does the paper suggest about multi-agent AI models in evaluating LLMs?",
+      "options": [
+        "A) They are widely available",
+        "B) There is a lack of them",
+        "C) They are outdated",
+        "D) They are overrated"
+      ],
+      "correct_answer": "B",
+      "explanation": "The paper highlights the noticeable lack of multi-agent AI models specifically designed for evaluating LLMs.",
+      "difficulty": "medium",
+      "topic": "evaluation_methods"
+    }
+  ]
+}

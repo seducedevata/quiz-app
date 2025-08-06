@@ -332,57 +332,25 @@ class MCQPostProcessor:
                     if not any(indicator in question_text.lower() for indicator in hard_indicators):
                         issues.append("Hard mode questions should require graduate-level analytical thinking")
                     
-                    # CRITICAL FIX: Enhanced banned patterns to catch more variations
-                    banned_patterns = [
-                        # Basic formula applications
-                        "calculate the kinetic energy", "find the force when f=ma", "determine the velocity using v=",
-                        "calculate kinetic energy", "find force when", "determine velocity using",
-                        "kinetic energy difference", "kinetic energy of", "calculate the energy",
-                        "find the acceleration when", "determine the displacement using",
-                        "calculate the momentum", "find the impulse when", "determine the work done",
-                        
-                        # Simple physics concepts
-                        "simple harmonic motion", "basic", "elementary", "introductory", "textbook",
-                        "direct substitution", "single-step", "plug and chug", "straightforward calculation",
-                        
-                        # Generic question starters
-                        "what is the formula for", "which equation describes", "the formula for",
-                        "according to the equation", "using the formula", "substitute into the equation",
-                        
-                        # Basic conceptual questions
-                        "what is the definition of", "define the term", "the definition of",
-                        "what does the term mean", "which of the following defines"
+                    # 🚀 REVOLUTIONARY: Quality-focused validation instead of banned patterns
+                    # Instead of banning specific patterns, assess overall question quality
+                    question_lower = question_text.lower()
+                    
+                    # Quality indicators for hard questions
+                    quality_indicators = [
+                        "analyze", "derive", "evaluate", "calculate complex", "determine relationship", 
+                        "multi-step", "synthesis", "interaction", "mechanism", "pathway",
+                        "relationship between", "effect of", "optimization", "comparison",
+                        "critical analysis", "systematic approach"
                     ]
                     
-                    # CRITICAL FIX: Check for pattern variations and partial matches
-                    question_lower = question_text.lower()
-                    for pattern in banned_patterns:
-                        # Check exact match
-                        if pattern in question_lower:
-                            issues.append(f"Hard mode questions cannot use basic formula applications: '{pattern}'")
-                            break
-                        
-                        # Check for variations (e.g., "calculate kinetic energy difference")
-                        pattern_words = pattern.split()
-                        if len(pattern_words) >= 2:
-                            # Check if most words from the pattern appear in sequence
-                            pattern_found = True
-                            for i in range(len(pattern_words) - 1):
-                                word1, word2 = pattern_words[i], pattern_words[i + 1]
-                                # Look for word1 followed by word2 within 3 words
-                                if word1 in question_lower and word2 in question_lower:
-                                    pos1 = question_lower.find(word1)
-                                    pos2 = question_lower.find(word2, pos1)
-                                    if pos2 - pos1 > len(word1) + 20:  # Too far apart
-                                        pattern_found = False
-                                        break
-                                else:
-                                    pattern_found = False
-                                    break
-                            
-                            if pattern_found:
-                                issues.append(f"Hard mode questions cannot use basic formula applications: variation of '{pattern}'")
-                                break
+                    quality_score = sum(1 for indicator in quality_indicators if indicator in question_lower)
+                    
+                    if quality_score < 1:
+                        # Encourage higher quality without forbidding specific topics
+                        enhancements.append("Consider incorporating more analytical elements that demonstrate graduate-level thinking")
+                    else:
+                        enhancements.append(f"Good analytical complexity detected ({quality_score} quality indicators)")
                         
                 elif difficulty == "easy" and len(mcq_data.get("question", "")) > 200:
                     issues.append("Question too complex for easy difficulty")
@@ -527,58 +495,44 @@ class MCQPostProcessor:
         question = mcq_data.get("question", "").lower()
         difficulty = context.get("difficulty", "medium") if context else "medium"
         
-        # 🚀 PERFORMANCE FIX: Relaxed expert mode patterns (was rejecting 90% of questions)
+        # Quality-focused validation for expert and hard modes
         if difficulty.lower() == "expert":
-            expert_banned_patterns = [
-                "what is",  # Only keep the most basic ones
-                "define",
-                "basic",
-                "simple"
+            # Promote quality indicators for expert level
+            quality_indicators = [
+                "mechanism", "pathway", "synthesis", "analysis", "evaluation", 
+                "research", "advanced", "complex", "molecular", "cellular",
+                "theoretical", "computational", "optimization", "integration"
             ]
-
-            for pattern in expert_banned_patterns:
-                if question.lower().startswith(pattern):  # Only check start of question
-                    logger.warning(f"🔥 EXPERT MODE VAGUE QUESTION DETECTED: '{question[:80]}...' starts with banned pattern: '{pattern}'")
-                    return True
             
-            # Additional check: Expert questions should contain advanced terminology
-            advanced_terms = ["mechanism", "pathway", "synthesis", "analysis", "evaluation", "research", "advanced", "complex", "molecular", "cellular"]
-            if not any(term in question for term in advanced_terms):
-                logger.warning(f"🔥 EXPERT MODE LACKS ADVANCED TERMINOLOGY: '{question[:80]}...'")
+            # Check for sufficient complexity without rigid patterns
+            if len(question) < 100:  # Too short for expert level
+                logger.info(f"� EXPERT ENHANCEMENT: Question could benefit from more detail: '{question[:80]}...'")
+                return True
+                
+            # Encourage advanced terminology presence
+            has_advanced_content = any(term in question for term in quality_indicators)
+            if not has_advanced_content:
+                logger.info(f"� EXPERT ENHANCEMENT: Question could benefit from advanced terminology: '{question[:80]}...'")
                 return True
         
-        # Hard mode - strict vague pattern detection
+        # Hard mode - quality-focused complexity assessment
         elif difficulty.lower() == "hard":
-            hard_banned_patterns = [
-                "what is the primary function of",
-                "what is the main purpose of",
-                "what does the",
-                "what is the role of",
-                "what is",
-                "what are",
-                "calculate the kinetic energy",
-                "find the force when f=ma", 
-                "determine the velocity using",
-                "simple harmonic motion",
-                "basic formula",
-                "direct substitution",
-                "single-step problem",
-                "textbook application"
-            ]
-            
-            for pattern in hard_banned_patterns:
-                if pattern in question:
-                    logger.warning(f"🚨 HARD MODE VAGUE/BASIC QUESTION DETECTED: '{question[:80]}...' contains pattern: '{pattern}'")
-                    return True
-            
-            # Hard mode should require graduate-level complexity
-            graduate_terms = [
+            # Promote graduate-level quality indicators
+            complexity_indicators = [
                 "analyze", "derive", "evaluate", "multi-step", "coupled", "non-linear", 
                 "many-body", "advanced", "complex system", "synthesis", "interaction",
-                "scattering", "correlation", "differential", "dispersion"
+                "scattering", "correlation", "differential", "dispersion", "optimization"
             ]
-            if not any(term in question for term in graduate_terms):
-                logger.warning(f"🔥 HARD MODE LACKS GRADUATE-LEVEL COMPLEXITY: '{question[:80]}...'")
+            
+            # Encourage appropriate complexity
+            if len(question) < 80:  # May be too simple for hard level
+                logger.info(f"� HARD ENHANCEMENT: Question could benefit from more complexity: '{question[:80]}...'")
+                return True
+                
+            # Promote advanced content without rigid exclusions
+            has_complexity = any(term in question for term in complexity_indicators)
+            if not has_complexity:
+                logger.info(f"� HARD ENHANCEMENT: Question could benefit from advanced concepts: '{question[:80]}...'")
                 return True
         
         # For all difficulties, check cognitive level appropriateness

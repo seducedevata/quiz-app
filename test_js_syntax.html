@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Syntax Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #console-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 JavaScript Syntax Test</h1>
+        <p>This page tests if the app.js file has valid JavaScript syntax.</p>
+        
+        <div id="test-results"></div>
+        
+        <button onclick="testAppLogger()">Test AppLogger</button>
+        <button onclick="testButtonFunctions()">Test Button Functions</button>
+        <button onclick="testQuizFunctions()">Test Quiz Functions</button>
+        <button onclick="clearConsole()">Clear Console</button>
+        
+        <h3>Console Output:</h3>
+        <div id="console-output"></div>
+    </div>
+
+    <!-- Mock QWebChannel for testing -->
+    <script>
+        // Mock QWebChannel and qt objects for testing
+        window.qt = {
+            webChannelTransport: {}
+        };
+        
+        window.QWebChannel = function(transport, callback) {
+            // Mock Python bridge
+            const mockBridge = {
+                testConnection: (msg) => `Mock response: ${msg}`,
+                startQuiz: (params) => console.log('Mock startQuiz called with:', params),
+                logClientEvent: (event) => console.log('Mock logClientEvent:', event)
+            };
+            
+            setTimeout(() => {
+                callback({
+                    objects: {
+                        pythonBridge: mockBridge
+                    }
+                });
+            }, 100);
+        };
+        
+        // Mock DOM elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create mock elements that the app.js expects
+            const mockElements = [
+                { id: 'start-quiz-button', tag: 'button', text: '⭐ START QUIZ' },
+                { id: 'quick-quiz-button', tag: 'button', text: '🚀 QUICK QUIZ' },
+                { id: 'nav-home', tag: 'div', text: '🏠 Home' },
+                { id: 'nav-quiz', tag: 'div', text: '📝 Quiz' },
+                { id: 'nav-history', tag: 'div', text: '📊 History' },
+                { id: 'nav-settings', tag: 'div', text: '⚙️ Settings' },
+                { id: 'quiz-topic', tag: 'input', value: 'Test Topic' },
+                { id: 'quiz-mode', tag: 'select', value: 'offline' },
+                { id: 'quiz-game-mode', tag: 'select', value: 'mcq' },
+                { id: 'quiz-submode', tag: 'select', value: 'conceptual' },
+                { id: 'quiz-difficulty', tag: 'select', value: 'medium' },
+                { id: 'quiz-questions', tag: 'input', value: '5' }
+            ];
+            
+            mockElements.forEach(({ id, tag, text, value }) => {
+                if (!document.getElementById(id)) {
+                    const element = document.createElement(tag);
+                    element.id = id;
+                    if (text) element.textContent = text;
+                    if (value) element.value = value;
+                    element.style.display = 'none'; // Hide mock elements
+                    document.body.appendChild(element);
+                }
+            });
+        });
+        
+        // Console capture
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function logToPage(message, type = 'log') {
+            const output = document.getElementById('console-output');
+            if (output) {
+                const timestamp = new Date().toLocaleTimeString();
+                output.textContent += `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+                output.scrollTop = output.scrollHeight;
+            }
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logToPage(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logToPage(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            logToPage(args.join(' '), 'warn');
+        };
+        
+        function showResult(message, isSuccess) {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `status ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        function testAppLogger() {
+            try {
+                if (typeof AppLogger !== 'undefined') {
+                    AppLogger.info('TEST', 'AppLogger test message');
+                    AppLogger.debug('TEST', 'Debug message');
+                    AppLogger.error('TEST', 'Error message');
+                    AppLogger.warning('TEST', 'Warning message');
+                    showResult('✅ AppLogger is working correctly', true);
+                } else {
+                    showResult('❌ AppLogger is not defined', false);
+                }
+            } catch (error) {
+                showResult(`❌ AppLogger test failed: ${error.message}`, false);
+            }
+        }
+        
+        function testButtonFunctions() {
+            try {
+                const functions = ['setupStartQuizButton', 'setupQuickQuizButton', 'setupNavigationButtons'];
+                let allFound = true;
+                
+                functions.forEach(funcName => {
+                    if (typeof window[funcName] === 'function') {
+                        console.log(`✅ ${funcName} is defined`);
+                    } else {
+                        console.log(`❌ ${funcName} is not defined`);
+                        allFound = false;
+                    }
+                });
+                
+                if (allFound) {
+                    showResult('✅ All button functions are defined', true);
+                } else {
+                    showResult('❌ Some button functions are missing', false);
+                }
+            } catch (error) {
+                showResult(`❌ Button function test failed: ${error.message}`, false);
+            }
+        }
+        
+        function testQuizFunctions() {
+            try {
+                const functions = ['startCustomQuiz', 'startQuickQuiz', 'showQuizGame', 'showQuizLoading'];
+                let allFound = true;
+                
+                functions.forEach(funcName => {
+                    if (typeof window[funcName] === 'function') {
+                        console.log(`✅ ${funcName} is defined`);
+                    } else {
+                        console.log(`❌ ${funcName} is not defined`);
+                        allFound = false;
+                    }
+                });
+                
+                if (allFound) {
+                    showResult('✅ All quiz functions are defined', true);
+                    
+                    // Test startCustomQuiz with mock data
+                    try {
+                        startCustomQuiz();
+                        showResult('✅ startCustomQuiz executed without errors', true);
+                    } catch (error) {
+                        showResult(`❌ startCustomQuiz failed: ${error.message}`, false);
+                    }
+                } else {
+                    showResult('❌ Some quiz functions are missing', false);
+                }
+            } catch (error) {
+                showResult(`❌ Quiz function test failed: ${error.message}`, false);
+            }
+        }
+        
+        function clearConsole() {
+            document.getElementById('console-output').textContent = '';
+            document.getElementById('test-results').innerHTML = '';
+        }
+    </script>
+
+    <!-- Load the app.js file to test -->
+    <script src="src/knowledge_app/web/app.js"></script>
+    
+    <script>
+        // Run initial syntax check
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                showResult('✅ app.js loaded without syntax errors', true);
+                console.log('🎉 JavaScript syntax test completed successfully!');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

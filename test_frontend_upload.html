@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend Upload Functionality</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .upload-area.drag-over {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .message.success { background: #d4edda; color: #155724; }
+        .message.error { background: #f8d7da; color: #721c24; }
+        .message.info { background: #d1ecf1; color: #0c5460; }
+        .message.warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Frontend Upload/Delete Test</h1>
+    
+    <div class="upload-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <div class="upload-icon">📄</div>
+        <p class="upload-text">Drag and drop files here or click to browse</p>
+        <p class="upload-hint">Supported formats: PDF, TXT, DOCX</p>
+        <input type="file" id="file-input" multiple accept=".pdf,.txt,.docx,.doc,.rtf" onchange="handleFileSelect(event)" style="display: none;">
+        <button class="btn" onclick="document.getElementById('file-input').click()">
+            📁 Browse Files
+        </button>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div id="files-section">
+        <h3>📚 Uploaded Files</h3>
+        <div id="files-list">
+            <p>No files uploaded yet</p>
+        </div>
+    </div>
+
+    <script>
+        // Mock uploaded files array
+        let uploadedFiles = [];
+        
+        // Mock Python bridge for testing
+        const pythonBridge = {
+            uploadFile: async function(filename, base64Data) {
+                // Simulate backend upload
+                console.log(`Mock upload: ${filename} (${base64Data.length} chars)`);
+                
+                // Simulate some processing time
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Simulate success response
+                return JSON.stringify({
+                    success: true,
+                    message: `File '${filename}' uploaded successfully`,
+                    file_name: filename,
+                    file_size: Math.floor(base64Data.length * 0.75), // Approximate decoded size
+                    file_path: `data/uploaded_books/${filename}`
+                });
+            },
+            
+            deleteUploadedFile: async function(filename) {
+                console.log(`Mock delete: ${filename}`);
+                
+                // Simulate some processing time
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                // Simulate success response
+                return JSON.stringify({
+                    success: true,
+                    message: `File '${filename}' deleted successfully`,
+                    deleted_count: 2
+                });
+            },
+            
+            getUploadedFiles: async function() {
+                console.log('Mock getUploadedFiles called');
+                
+                // Return current uploaded files
+                const filesInfo = uploadedFiles.map(file => ({
+                    name: file.name,
+                    size: file.size,
+                    path: `data/uploaded_books/${file.name}`
+                }));
+                
+                return `JSON_STRING:${JSON.stringify(filesInfo)}`;
+            }
+        };
+
+        // Include the fixed upload/delete functions from app.js
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const uploadArea = event.currentTarget;
+            uploadArea.classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            handleFiles(files);
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            handleFiles(files);
+        }
+
+        function isValidFile(file) {
+            const validTypes = ['.pdf', '.txt', '.docx', '.doc', '.rtf'];
+            const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            return validTypes.includes(extension);
+        }
+
+        // Fixed handleFiles function from app.js
+        async function handleFiles(files) {
+            const filesToUpload = [];
+            
+            // First, validate all files
+            for (let file of files) {
+                if (isValidFile(file)) {
+                    filesToUpload.push(file);
+                } else {
+                    showTemporaryMessage(`❌ Invalid file type: ${file.name}`, 'error');
+                }
+            }
+            
+            if (filesToUpload.length === 0) {
+                return;
+            }
+            
+            // Show upload progress
+            showTemporaryMessage(`🔄 Uploading ${filesToUpload.length} file(s)...`, 'info');
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            // Upload each file to the backend
+            for (let file of filesToUpload) {
+                try {
+                    await uploadFileToBackend(file);
+                    successCount++;
+                    console.log(`✅ Successfully uploaded: ${file.name}`);
+                } catch (error) {
+                    errorCount++;
+                    console.error(`❌ Failed to upload ${file.name}:`, error);
+                    showTemporaryMessage(`❌ Failed to upload ${file.name}: ${error.message}`, 'error');
+                }
+            }
+            
+            // Show final result
+            if (successCount > 0) {
+                showTemporaryMessage(`✅ Successfully uploaded ${successCount} file(s)`, 'success');
+                
+                // Reload files from backend to update UI
+                await loadExistingFiles();
+            }
+            
+            if (errorCount > 0) {
+                showTemporaryMessage(`⚠️ ${errorCount} file(s) failed to upload`, 'warning');
+            }
+        }
+
+        async function uploadFileToBackend(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    try {
+                        // Convert to base64 (remove data URL prefix)
+                        const base64Data = e.target.result.split(',')[1];
+                        
+                        if (!pythonBridge || !pythonBridge.uploadFile) {
+                            throw new Error('Backend upload not available');
+                        }
+                        
+                        // Call backend upload method
+                        const result = await pythonBridge.uploadFile(file.name, base64Data);
+                        
+                        let uploadResult;
+                        try {
+                            uploadResult = JSON.parse(result);
+                        } catch (parseError) {
+                            throw new Error('Invalid response from backend');
+                        }
+                        
+                        if (uploadResult.success) {
+                            // Add to uploaded files list
+                            uploadedFiles.push({
+                                name: file.name,
+                                size: file.size,
+                                path: uploadResult.file_path
+                            });
+                            resolve(uploadResult);
+                        } else {
+                            throw new Error(uploadResult.error || 'Upload failed');
+                        }
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = function() {
+                    reject(new Error('Failed to read file'));
+                };
+                
+                // Read file as data URL (base64)
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Fixed removeFile function from app.js
+        async function removeFile(filename) {
+            try {
+                console.log('🗑️ Removing file:', filename);
+
+                // Show immediate feedback
+                showTemporaryMessage(`🔄 Removing ${filename}...`, 'info');
+
+                // Remove from backend first
+                if (pythonBridge && pythonBridge.deleteUploadedFile) {
+                    const result = await pythonBridge.deleteUploadedFile(filename);
+
+                    let deleteResult;
+                    try {
+                        deleteResult = JSON.parse(result);
+                    } catch (e) {
+                        throw new Error('Invalid response from backend');
+                    }
+
+                    if (deleteResult.success) {
+                        console.log('✅ File deleted from backend:', deleteResult);
+                        showTemporaryMessage(`✅ ${filename} removed successfully`, 'success');
+                        
+                        // Remove from frontend list
+                        uploadedFiles = uploadedFiles.filter(file => file.name !== filename);
+                        
+                        // Reload files from backend to ensure UI is in sync
+                        console.log('🔄 Reloading files from backend to sync UI...');
+                        await loadExistingFiles();
+                        
+                    } else {
+                        throw new Error(deleteResult.error || 'Deletion failed');
+                    }
+                } else {
+                    throw new Error('Backend deletion not available');
+                }
+
+            } catch (error) {
+                console.error('❌ File removal failed:', error);
+                showTemporaryMessage(`❌ Failed to remove ${filename}: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadExistingFiles() {
+            try {
+                if (pythonBridge && pythonBridge.getUploadedFiles) {
+                    const filesData = await pythonBridge.getUploadedFiles();
+                    
+                    let existingFiles;
+                    if (typeof filesData === 'string' && filesData.startsWith('JSON_STRING:')) {
+                        const jsonString = filesData.substring('JSON_STRING:'.length);
+                        existingFiles = JSON.parse(jsonString);
+                    } else if (Array.isArray(filesData)) {
+                        existingFiles = filesData;
+                    } else {
+                        existingFiles = JSON.parse(filesData);
+                    }
+                    
+                    // Update UI
+                    updateFilesDisplay(existingFiles);
+                }
+            } catch (error) {
+                console.error('❌ Error loading existing files:', error);
+                showTemporaryMessage('❌ Error loading files', 'error');
+            }
+        }
+
+        function updateFilesDisplay(files) {
+            const filesList = document.getElementById('files-list');
+            
+            if (files.length === 0) {
+                filesList.innerHTML = '<p>No files uploaded yet</p>';
+                return;
+            }
+            
+            filesList.innerHTML = files.map(file => `
+                <div class="file-item">
+                    <label>
+                        <input type="checkbox" name="selected_files" value="${file.name}" checked>
+                        📄 ${file.name} (${formatFileSize(file.size)})
+                    </label>
+                    <button onclick="removeFile('${file.name}')" class="remove-btn">×</button>
+                </div>
+            `).join('');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function showTemporaryMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            
+            messagesDiv.appendChild(messageDiv);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 5000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Frontend upload test initialized');
+            loadExistingFiles();
+        });
+    </script>
+</body>
+</html>

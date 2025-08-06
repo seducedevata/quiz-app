@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<training_data>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 1, example 1: Published as a workshop paper at ICLR 2024
+LARGE LANGUAGE MODEL EVALUATION VIA MULTI
+AI AGENTS: PRELIMINARY RESULTS
+Zeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson
+Faculty of Informat...]]></input>
+    <output><![CDATA[Processed training data from chunk 1, example 1]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 1, example 2: Published as a workshop paper at ICLR 2024
+LARGE LANGUAGE MODEL EVALUATION VIA MULTI
+AI AGENTS: PRELIMINARY RESULTS
+Zeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson
+Faculty of Informat...]]></input>
+    <output><![CDATA[Processed training data from chunk 1, example 2]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 2, example 1: Additionally, we will share the model
+with twenty diverse practitioners for real-world testing and feedback, underlining our com-
+mitment to technical excellence and practical application in language ...]]></input>
+    <output><![CDATA[Processed training data from chunk 2, example 1]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 2, example 2: Additionally, we will share the model
+with twenty diverse practitioners for real-world testing and feedback, underlining our com-
+mitment to technical excellence and practical application in language ...]]></input>
+    <output><![CDATA[Processed training data from chunk 2, example 2]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 3, example 1: 01. A simple Python program for creating and using flashcards for study, allowing users to
+test their knowledge on various subjects
+02. An interactive Python game that tests users on various academic ...]]></input>
+    <output><![CDATA[Processed training data from chunk 3, example 1]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 3, example 2: 01. A simple Python program for creating and using flashcards for study, allowing users to
+test their knowledge on various subjects
+02. An interactive Python game that tests users on various academic ...]]></input>
+    <output><![CDATA[Processed training data from chunk 3, example 2]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 4, example 1: Are deep neural networks the best choice for
+modeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software
+engineering, pp. 763–773, 2017. Xinyi Hou, Yanjie Zhao, Yue ...]]></input>
+    <output><![CDATA[Processed training data from chunk 4, example 1]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+  <example>
+    <input><![CDATA[Document content from 2404.01023v1.pdf, chunk 4, example 2: Are deep neural networks the best choice for
+modeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software
+engineering, pp. 763–773, 2017. Xinyi Hou, Yanjie Zhao, Yue ...]]></input>
+    <output><![CDATA[Processed training data from chunk 4, example 2]]></output>
+    <type>conceptual</type>
+    <difficulty>expert</difficulty>
+  </example>
+</training_data>

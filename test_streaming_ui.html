@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streaming UI Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-container { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #streaming-container {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #007bff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            font-family: 'Courier New', monospace;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+        .streaming-header h3 { margin: 0 0 10px 0; color: #007bff; }
+        .streaming-stats { font-size: 0.9em; color: #6c757d; }
+        .streaming-content { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-top: 15px;
+            min-height: 100px;
+        }
+        .streaming-cursor {
+            display: inline-block;
+            animation: cursorBlink 1s infinite;
+            color: #007bff;
+            margin-left: 2px;
+        }
+        @keyframes cursorBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Streaming UI Test</h1>
+    <p>This test will help debug why the streaming UI is not appearing.</p>
+
+    <div class="test-container">
+        <h3>Quiz Settings (Simulate your app settings)</h3>
+        <label>Mode: <select id="quiz-mode"><option value="offline">Offline</option><option value="online">Online</option></select></label><br><br>
+        <label>Difficulty: <select id="quiz-difficulty"><option value="expert">Expert</option><option value="hard">Hard</option><option value="easy">Easy</option></select></label><br><br>
+        <label><input type="checkbox" id="token-streaming-enabled" checked> Enable Token Streaming</label><br><br>
+    </div>
+
+    <div class="test-container">
+        <h3>Test Functions</h3>
+        <button onclick="testStreamingCondition()">Test Streaming Condition</button>
+        <button onclick="testUICreation()">Test UI Creation</button>
+        <button onclick="testFullFlow()">Test Full Flow</button>
+        <button onclick="simulateTokens()">Simulate Tokens</button>
+        <button onclick="hideUI()">Hide UI</button>
+    </div>
+
+    <div id="test-results" class="test-container">
+        <h3>Test Results</h3>
+        <div id="results-content">Click a test button to see results...</div>
+    </div>
+
+    <!-- Hidden elements to simulate your app -->
+    <div id="deepseek-section" style="display: none;"></div>
+
+    <script>
+        let tokenStreamContainer = null;
+
+        // Copy of your shouldEnableTokenStreaming function
+        function shouldEnableTokenStreaming(mode, difficulty) {
+            const tokenStreamingCheckbox = document.getElementById('token-streaming-enabled');
+            const userEnabled = tokenStreamingCheckbox?.checked || false;
+            
+            console.log(`🌊 Token streaming check: checkbox=${!!tokenStreamingCheckbox}, enabled=${userEnabled}, difficulty=${difficulty}, mode=${mode}`);
+
+            const isReasoningDifficulty = ['expert', 'hard'].includes(difficulty);
+            const isOfflineMode = mode === 'offline';
+            
+            if (isOfflineMode && isReasoningDifficulty) {
+                console.log('🌊 ENABLED: Reasoning model streaming detected (DeepSeek, Qwen, etc.)');
+                console.log('🌊 REASON: Offline mode with expert/hard difficulty suggests reasoning model usage');
+                return true;
+            }
+
+            if (userEnabled) {
+                console.log('🌊 ENABLED: Token streaming by user preference');
+                return true;
+            }
+
+            if (isReasoningModelContext()) {
+                console.log('🌊 ENABLED: Reasoning model context detected');
+                return true;
+            }
+
+            console.log('🌊 DISABLED: No reasoning model conditions met');
+            return false;
+        }
+
+        function isReasoningModelContext() {
+            const deepSeekSection = document.getElementById('deepseek-section');
+            const deepSeekAvailable = deepSeekSection && deepSeekSection.style.display !== 'none';
+            
+            if (deepSeekAvailable) {
+                console.log('🧠 Reasoning model context: DeepSeek section visible');
+                return true;
+            }
+            
+            const topic = document.getElementById('quiz-topic')?.value?.toLowerCase() || '';
+            const reasoningTopics = ['reasoning', 'logic', 'analysis', 'complex', 'advanced'];
+            
+            if (reasoningTopics.some(keyword => topic.includes(keyword))) {
+                console.log('🧠 Reasoning model context: Reasoning-related topic detected');
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Copy of your streaming UI functions
+        function initializeStreamingUI() {
+            let streamingContainer = document.getElementById('streaming-container');
+            if (!streamingContainer) {
+                streamingContainer = createStreamingContainer();
+            }
+            
+            streamingContainer.style.display = 'block';
+            streamingContainer.innerHTML = `
+                <div class="streaming-header">
+                    <h3>🧠 Reasoning Model Streaming</h3>
+                    <div class="streaming-stats">
+                        <span id="token-count">0 tokens</span>
+                        <span id="streaming-speed">0 tok/s</span>
+                    </div>
+                </div>
+                <div class="streaming-content" id="streaming-content">
+                    <div class="streaming-cursor">▋</div>
+                </div>
+            `;
+            
+            tokenStreamContainer = document.getElementById('streaming-content');
+            return streamingContainer;
+        }
+
+        function createStreamingContainer() {
+            const container = document.createElement('div');
+            container.id = 'streaming-container';
+            container.className = 'streaming-container';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        function displayStreamingToken(token) {
+            if (!tokenStreamContainer) return;
+            
+            const cursor = tokenStreamContainer.querySelector('.streaming-cursor');
+            if (cursor) cursor.remove();
+            
+            const tokenSpan = document.createElement('span');
+            tokenSpan.textContent = token + ' ';
+            tokenSpan.style.color = '#333';
+            tokenStreamContainer.appendChild(tokenSpan);
+            
+            const newCursor = document.createElement('div');
+            newCursor.className = 'streaming-cursor';
+            newCursor.textContent = '▋';
+            tokenStreamContainer.appendChild(newCursor);
+        }
+
+        function handleStreamingStarted(message) {
+            console.log('🌊 Streaming started:', message);
+            initializeStreamingUI();
+            logResult(`✅ Streaming started: ${message}`, 'success');
+        }
+
+        // Test functions
+        function testStreamingCondition() {
+            const mode = document.getElementById('quiz-mode').value;
+            const difficulty = document.getElementById('quiz-difficulty').value;
+            
+            const result = shouldEnableTokenStreaming(mode, difficulty);
+            
+            logResult(`🧪 Streaming condition test:<br>
+                Mode: ${mode}, Difficulty: ${difficulty}<br>
+                Result: ${result ? '✅ ENABLED' : '❌ DISABLED'}`, 
+                result ? 'success' : 'error'
+            );
+        }
+
+        function testUICreation() {
+            try {
+                const container = initializeStreamingUI();
+                logResult(`✅ UI Created successfully!<br>
+                    Container ID: ${container.id}<br>
+                    Display: ${container.style.display}<br>
+                    Visible: ${container.offsetWidth > 0 && container.offsetHeight > 0}`, 'success');
+            } catch (error) {
+                logResult(`❌ UI Creation failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testFullFlow() {
+            const mode = document.getElementById('quiz-mode').value;
+            const difficulty = document.getElementById('quiz-difficulty').value;
+            
+            const shouldStream = shouldEnableTokenStreaming(mode, difficulty);
+            
+            if (shouldStream) {
+                handleStreamingStarted("🧠 Test streaming started...");
+                logResult(`✅ Full flow test PASSED!<br>
+                    Streaming UI should be visible now.`, 'success');
+            } else {
+                logResult(`❌ Full flow test FAILED!<br>
+                    Streaming not enabled for mode: ${mode}, difficulty: ${difficulty}`, 'error');
+            }
+        }
+
+        function simulateTokens() {
+            if (!tokenStreamContainer) {
+                testUICreation();
+            }
+            
+            const tokens = ['Analyzing', 'the', 'question', 'requirements...', '<think>', 'This', 'requires', 'careful', 'consideration', '</think>', 'Generating', 'response...'];
+            
+            tokens.forEach((token, index) => {
+                setTimeout(() => {
+                    displayStreamingToken(token);
+                }, index * 200);
+            });
+            
+            logResult('✅ Simulating token stream...', 'success');
+        }
+
+        function hideUI() {
+            const container = document.getElementById('streaming-container');
+            if (container) {
+                container.style.display = 'none';
+                logResult('✅ Streaming UI hidden', 'success');
+            } else {
+                logResult('❌ No streaming UI to hide', 'error');
+            }
+        }
+
+        function logResult(message, type) {
+            const results = document.getElementById('results-content');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML = `<div class="${type}">[${timestamp}] ${message}</div>` + results.innerHTML;
+        }
+
+        // Auto-run initial test
+        window.onload = function() {
+            logResult('🚀 Streaming UI Test loaded. Try the test buttons!', 'success');
+        };
+    </script>
+</body>
+</html>

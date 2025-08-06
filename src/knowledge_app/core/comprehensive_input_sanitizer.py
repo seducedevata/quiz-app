@@ -135,8 +135,10 @@ class ComprehensiveInputSanitizer:
             r'\.\.%5c',
         ]
         
-        # Prompt Injection Patterns
+        # SECURITY FIX: Enhanced Prompt Injection Patterns
+        # Add context-aware and ML-inspired detection patterns
         self.prompt_injection_patterns = [
+            # Basic injection patterns
             r'ignore\s+(?:all\s+)?(?:previous\s+)?(?:instructions?|tasks?|objectives?)',
             r'forget\s+(?:all\s+)?(?:previous\s+)?(?:instructions?|tasks?|objectives?)',
             r'new\s+(?:task|job|objective|instruction)',
@@ -149,7 +151,40 @@ class ComprehensiveInputSanitizer:
             r'role\s*play',
             r'forget\s+(?:your\s+)?(?:previous\s+)?(?:task|job|objective)',
             r'(?:previous\s+)?(?:task|instruction|objective)\s+(?:and|but)',
+            
+            # Advanced injection patterns (ML-inspired)
+            r'system\s*[:=]\s*["\'][^"\']*(?:ignore|forget|override)',
+            r'assistant\s*[:=]\s*["\'][^"\']*(?:creative|helpful|jailbreak)',
+            r'model\s*[:=]\s*["\'][^"\']*(?:uncensored|unrestricted)',
+            r'(?:jailbreak|bypass|override)\s+(?:safety|security|filters?)',
+            r'disable\s+(?:safety|security|censorship|filters?)',
+            r'unlock\s+(?:hidden|secret|developer)\s+mode',
+            r'activate\s+(?:god|admin|root)\s+mode',
+            r'switch\s+to\s+(?:creative|uncensored|developer)\s+mode',
+            r'enable\s+(?:debug|developer|admin)\s+(?:mode|access)',
+            r'set\s+(?:safety|security|censorship)\s+(?:to\s+)?(?:false|off|0)',
+            
+            # Context manipulation patterns
+            r'but\s+(?:now|instead|actually)',
+            r'however[,.]?\s*(?:now|instead|actually)',
+            r'(?:wait[,.]?\s*)?(?:actually|instead|but)[,.]?\s*(?:do|write|output)',
+            r'on\s+second\s+thought',
+            r'change\s+of\s+plans?',
+            r'new\s+(?:plan|approach|strategy)',
+            
+            # Encoding-based injection attempts
+            r'[a-fA-F0-9]{16,}',  # Suspicious hex strings
+            r'(?:base64|b64|encode|decode)\s*[:=]',
+            r'\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}){3,}',  # Unicode escapes
+            
+            # Template injection patterns
+            r'\{\{\s*[^}]*(?:system|eval|exec|import)\s*[^}]*\}\}',
+            r'\{\%\s*[^%]*(?:system|eval|exec|import)\s*[^%]*\%\}',
+            r'\$\{\s*[^}]*(?:system|eval|exec|import)\s*[^}]*\}',
         ]
+        
+        # Dynamic pattern confidence scoring
+        self.injection_confidence_threshold = 0.7
         
         # Dangerous file extensions
         self.dangerous_extensions = {
@@ -361,10 +396,19 @@ class ComprehensiveInputSanitizer:
         return sql
     
     def _sanitize_topic(self, topic: str) -> str:
-        """Sanitize quiz topic input"""
-        # Remove prompt injection patterns
+        """Sanitize quiz topic input with intelligent prompt injection detection"""
+        # SECURITY FIX: Use intelligent prompt injection detection
+        injection_score = self._calculate_injection_risk(topic)
+        
+        if injection_score > self.injection_confidence_threshold:
+            logger.warning(f"🚨 High-confidence prompt injection detected (score: {injection_score:.2f})")
+            return '[BLOCKED: SUSPICIOUS INPUT]'
+        
+        # Apply pattern-based filtering for known injection attempts
         for pattern in self.prompt_injection_patterns:
-            topic = re.sub(pattern, '[FILTERED]', topic, flags=re.IGNORECASE)
+            if re.search(pattern, topic, flags=re.IGNORECASE):
+                logger.warning(f"⚠️ Pattern-based prompt injection blocked: {pattern}")
+                topic = re.sub(pattern, '[FILTERED]', topic, flags=re.IGNORECASE)
         
         # Remove excessive special characters
         topic = re.sub(r'[{}]+', '', topic)
@@ -372,6 +416,62 @@ class ComprehensiveInputSanitizer:
         topic = re.sub(r'`{3,}', '``', topic)
         
         return topic
+    
+    def _calculate_injection_risk(self, text: str) -> float:
+        """
+        SECURITY FIX: Calculate prompt injection risk using multiple indicators
+        Returns a confidence score between 0.0 and 1.0
+        """
+        risk_score = 0.0
+        text_lower = text.lower()
+        
+        # Context manipulation indicators
+        context_switches = len(re.findall(r'\b(?:but|however|actually|instead|wait)\b', text_lower))
+        if context_switches > 1:
+            risk_score += 0.3
+        
+        # Command-like structure
+        command_patterns = [
+            r'(?:ignore|forget|override|disable|bypass)\s+\w+',
+            r'(?:set|configure|enable|activate)\s+\w+\s+(?:to|as|=)',
+            r'(?:switch|change)\s+to\s+\w+\s+mode'
+        ]
+        command_score = sum(1 for pattern in command_patterns 
+                           if re.search(pattern, text_lower)) / len(command_patterns)
+        risk_score += command_score * 0.4
+        
+        # Suspicious terminology
+        suspicious_terms = [
+            'jailbreak', 'bypass', 'override', 'uncensored', 'unrestricted',
+            'admin', 'root', 'developer', 'debug', 'system', 'prompt',
+            'instruction', 'task', 'objective', 'creative mode', 'god mode'
+        ]
+        suspicious_count = sum(1 for term in suspicious_terms if term in text_lower)
+        if suspicious_count > 0:
+            risk_score += min(suspicious_count * 0.15, 0.5)
+        
+        # Encoding indicators
+        encoding_patterns = [
+            r'[a-fA-F0-9]{16,}',  # Long hex strings
+            r'\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}){2,}',  # Unicode escapes
+            r'(?:base64|b64|encode|decode)',  # Encoding references
+        ]
+        encoding_score = sum(1 for pattern in encoding_patterns 
+                           if re.search(pattern, text)) / len(encoding_patterns)
+        risk_score += encoding_score * 0.2
+        
+        # Template injection indicators
+        template_patterns = [
+            r'\{\{[^}]*\}\}',  # Jinja-like templates
+            r'\{\%[^%]*\%\}',  # Django-like templates
+            r'\$\{[^}]*\}',    # Shell-like substitutions
+        ]
+        template_score = sum(1 for pattern in template_patterns 
+                           if re.search(pattern, text)) / len(template_patterns)
+        risk_score += template_score * 0.3
+        
+        # Cap at 1.0
+        return min(risk_score, 1.0)
     
     def _sanitize_quiz_answer(self, answer: str) -> str:
         """Sanitize quiz answer input"""
@@ -457,23 +557,92 @@ class ComprehensiveInputSanitizer:
         return text
 
     def _is_academic_content(self, text: str) -> bool:
-        """Check if text contains academic/research content that should be allowed"""
-        # Check for mathematical expressions
+        """
+        SECURITY FIX: More sophisticated academic content detection
+        Uses multiple indicators and context analysis instead of simple regex patterns
+        """
+        # Count academic indicators
+        academic_score = 0
+        total_words = len(text.split())
+        
+        # Weight different types of academic indicators
+        weights = {
+            'math': 3,      # Mathematical content is strong indicator
+            'code': 2,      # Code examples in educational context
+            'technical': 2, # Technical terminology
+            'structure': 1, # Academic document structure
+            'citations': 3  # Citation patterns are strong indicators
+        }
+        
+        # Check for mathematical expressions with context
+        math_indicators = 0
         for pattern in self.academic_math_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return True
-
-        # Check for code examples
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            math_indicators += len(matches)
+        if math_indicators > 0:
+            academic_score += weights['math'] * min(math_indicators, 5)  # Cap at 5 matches
+        
+        # Check for code examples with educational context
+        code_indicators = 0
         for pattern in self.academic_code_patterns:
             if re.search(pattern, text, re.IGNORECASE):
-                return True
-
+                code_indicators += 1
+        # Only count as academic if code appears with explanatory text
+        if code_indicators > 0 and total_words > 50:  # Ensure sufficient explanatory content
+            academic_score += weights['code'] * min(code_indicators, 3)
+        
         # Check for technical terms
+        technical_indicators = 0
         for pattern in self.academic_technical_terms:
             if re.search(pattern, text, re.IGNORECASE):
-                return True
-
-        return False
+                technical_indicators += 1
+        if technical_indicators > 0:
+            academic_score += weights['technical'] * min(technical_indicators, 4)
+        
+        # Check for academic document structure
+        structure_patterns = [
+            r'\babstract\b.*?\bintroduction\b',
+            r'\bfigure\s+\d+',
+            r'\btable\s+\d+',
+            r'\bsection\s+\d+',
+            r'\btheorem\s+\d+',
+            r'\blemma\s+\d+',
+            r'\bproposition\s+\d+',
+            r'\bdefinition\s+\d+',
+            r'\breferences?\b.*?\bconclusion\b'
+        ]
+        structure_indicators = sum(1 for pattern in structure_patterns 
+                                 if re.search(pattern, text, re.IGNORECASE | re.DOTALL))
+        if structure_indicators > 0:
+            academic_score += weights['structure'] * structure_indicators
+        
+        # Check for citation patterns
+        citation_patterns = [
+            r'\([A-Za-z]+\s+et\s+al\.,?\s+\d{4}\)',  # (Author et al., 2023)
+            r'\[[A-Za-z]+\s+et\s+al\.,?\s+\d{4}\]',  # [Author et al., 2023]
+            r'\[\d+\]',  # [1], [2], etc.
+            r'\bdoi:\s*10\.\d+',  # DOI references
+            r'\barxiv:\d+\.\d+',  # ArXiv references
+        ]
+        citation_indicators = sum(len(re.findall(pattern, text, re.IGNORECASE)) 
+                                for pattern in citation_patterns)
+        if citation_indicators > 0:
+            academic_score += weights['citations'] * min(citation_indicators, 10)
+        
+        # Calculate threshold based on content length
+        min_threshold = 8  # Minimum score needed
+        length_factor = min(1.0, total_words / 200)  # Scale threshold with content length
+        threshold = min_threshold * length_factor
+        
+        # SECURITY FIX: Require multiple indicators for academic classification
+        is_academic = academic_score >= threshold and citation_indicators > 0
+        
+        if is_academic:
+            logger.debug(f"📚 Academic content detected (score: {academic_score:.1f}, threshold: {threshold:.1f})")
+        else:
+            logger.debug(f"📝 Non-academic content (score: {academic_score:.1f}, threshold: {threshold:.1f})")
+            
+        return is_academic
 
     def _apply_security_filtering(self, text: str, input_type: InputType) -> str:
         """Apply security-level specific filtering"""

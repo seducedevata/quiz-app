@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX Rendering Test - Knowledge App</title>
+    
+    <!-- Enhanced MathJax Configuration (same as our app) -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['noerrors', 'textmacros', 'ams', 'newcommand', 'mathtools']},
+                tags: 'none',
+                macros: {
+                    degree: '^{\\circ}',
+                    angstrom: '\\text{Å}',
+                    celsius: '^{\\circ}\\text{C}',
+                    kelvin: '\\text{K}',
+                    joule: '\\text{J}',
+                    kilojoule: '\\text{kJ}',
+                    mol: '\\text{mol}',
+                    electronvolt: '\\text{eV}',
+                    meter: '\\text{m}',
+                    nanometer: '\\text{nm}',
+                    picometer: '\\text{pm}',
+                    bohr: 'a_0'
+                },
+                formatError: function (jax, error) {
+                    console.warn('MathJax error:', error.message);
+                    return ['span', {style: 'font-family: monospace; color: #333;'}, jax.math];
+                }
+            },
+            svg: {
+                fontCache: 'global',
+                displayAlign: 'left',
+                displayIndent: '0'
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                typeset: false,
+                ready() {
+                    console.log('✅ MathJax loaded and ready');
+                    MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                }
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f8fafc;
+        }
+        
+        .test-case {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .test-case h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+        
+        .original {
+            background: #fef3c7;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .processed {
+            background: #ecfdf5;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #10b981;
+        }
+        
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        .test-button:hover {
+            background: #2563eb;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .success { background: #d1fae5; color: #065f46; }
+        .error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>🧮 LaTeX Rendering Test - Knowledge App Style</h1>
+    <p>Testing the same MathJax configuration used in the Knowledge App with complex mathematical expressions.</p>
+    
+    <div id="status" class="status">⏳ Waiting for MathJax to load...</div>
+    
+    <button class="test-button" onclick="testLaTeX()">🧪 Test LaTeX Rendering</button>
+    <button class="test-button" onclick="clearTests()">🧹 Clear All</button>
+    
+    <div class="test-case">
+        <h3>🔬 Physics Expression (from your screenshot)</h3>
+        <div class="original">
+            <strong>Original:</strong> Consider a hydrogen atom in its ground state, with principal quantum number n = 1 and orbital angular momentum quantum number l = 0. Calculate the expectation value of the radial probability density for an electron in this atom using the formula: ⟨r⟩ = 2/a₀ ∫₀^∞ r⁴ e^(-2r/a₀) dr, where a0 is the Bohr radius (approximately 5.29 × 10^{-11} m).
+        </div>
+        <div class="processed" id="physics-result">
+            <strong>Processed (Click Test to see):</strong>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h3>🌊 Wave Function</h3>
+        <div class="original">
+            <strong>Original:</strong> ψ(r) = 1/√π (a₀/r)^(3/2) e^(-r/a₀)
+        </div>
+        <div class="processed" id="wave-result">
+            <strong>Processed:</strong>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h3>🔢 Complex Integral</h3>
+        <div class="original">
+            <strong>Original:</strong> ∫ r |ψ(r)|^2 d³r
+        </div>
+        <div class="processed" id="integral-result">
+            <strong>Processed:</strong>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h3>⚗️ Chemistry</h3>
+        <div class="original">
+            <strong>Original:</strong> The reaction H2 + O2 → H2O releases 463 kJ/mol at T = 298 K
+        </div>
+        <div class="processed" id="chemistry-result">
+            <strong>Processed:</strong>
+        </div>
+    </div>
+
+    <script>
+        // Our enhanced LaTeX processor function (same as in the app)
+        function processLatexText(text) {
+            if (!text) return text;
+
+            console.log("🔧 Processing LaTeX for:", text.substring(0, 100) + "...");
+
+            // Protect existing LaTeX expressions
+            const protectedLatex = [];
+            let protectedIndex = 0;
+            
+            text = text.replace(/\$\$([^$]+)\$\$/g, (match, content) => {
+                const placeholder = `__PROTECTED_DISPLAY_${protectedIndex++}__`;
+                protectedLatex.push({ placeholder, content: `$$${content}$$` });
+                return placeholder;
+            });
+            
+            text = text.replace(/\$([^$]+)\$/g, (match, content) => {
+                const placeholder = `__PROTECTED_INLINE_${protectedIndex++}__`;
+                protectedLatex.push({ placeholder, content: `$${content}$` });
+                return placeholder;
+            });
+
+            // Handle complex fractions with parentheses and exponents
+            text = text.replace(/\(([a-zA-Z_0-9]+)\s*\/\s*([a-zA-Z_0-9]+)\)\s*\^\s*\(([^)]+)\)/g, '$$\\left(\\frac{$1}{$2}\\right)^{$3}$$');
+            
+            // Handle integrals
+            text = text.replace(/∫\s*([^d]+)\s*d\s*([a-zA-Z])/g, '$$\\int $1 \\, d$2$$');
+            text = text.replace(/∫₀\^∞/g, '$$\\int_0^{\\infty}$$');
+            text = text.replace(/∫₀\^\∞/g, '$$\\int_0^{\\infty}$$');
+            
+            // Handle exponentials
+            text = text.replace(/e\^(-([^)]+))/g, '$$e^{-$1}$$');
+            text = text.replace(/e\^([^,\s\)]+)/g, '$$e^{$1}$$');
+            
+            // Handle fractions
+            text = text.replace(/(\d+(?:\.\d+)?)\s*\/\s*([a-zA-Z_0-9]+)/g, '$$\\frac{$1}{$2}$$');
+            text = text.replace(/([a-zA-Z_0-9]+)\s*\/\s*([a-zA-Z_0-9]+)/g, '$$\\frac{$1}{$2}$$');
+            
+            // Handle subscripts and superscripts
+            text = text.replace(/([a-zA-Z])₀/g, '$1_0');
+            text = text.replace(/([a-zA-Z])₁/g, '$1_1');
+            text = text.replace(/([a-zA-Z])₂/g, '$1_2');
+            text = text.replace(/([a-zA-Z])₃/g, '$1_3');
+            text = text.replace(/([a-zA-Z])₄/g, '$1_4');
+            
+            text = text.replace(/([a-zA-Z0-9])²/g, '$1^2');
+            text = text.replace(/([a-zA-Z0-9])³/g, '$1^3');
+            text = text.replace(/([a-zA-Z0-9])⁴/g, '$1^4');
+            
+            // Handle variables with subscripts
+            text = text.replace(/\b([a-zA-Z])_([a-zA-Z0-9]+)\b/g, '$$\\ $1_{$2}$$');
+            
+            // Handle Greek letters
+            text = text.replace(/ψ/g, '$$\\psi$$');
+            text = text.replace(/π/g, '$$\\pi$$');
+            text = text.replace(/√/g, '$$\\sqrt$$');
+            
+            // Handle mathematical operators
+            text = text.replace(/×/g, '$$\\times$$');
+            text = text.replace(/∞/g, '$$\\infty$$');
+            
+            // Handle scientific notation
+            text = text.replace(/(\d+(?:\.\d+)?)\s*[×xX]\s*10\^([+-]?\d+)/g, '$$\\ $1 \\times 10^{$2}$$');
+            
+            // Handle units
+            text = text.replace(/(\d+(?:\.\d+)?)\s*kJ\/mol/g, '$$\\ $1 \\text{ kJ/mol}$$');
+            text = text.replace(/(\d+(?:\.\d+)?)\s*K\b/g, '$$\\ $1 \\text{ K}$$');
+            text = text.replace(/(\d+(?:\.\d+)?)\s*m\b/g, '$$\\ $1 \\text{ m}$$');
+            
+            // Handle chemical formulas
+            text = text.replace(/\bH2O\b/g, '$$\\text{H}_2\\text{O}$$');
+            text = text.replace(/\bH2\b/g, '$$\\text{H}_2$$');
+            text = text.replace(/\bO2\b/g, '$$\\text{O}_2$$');
+            
+            // Clean up
+            text = text.replace(/\$\$\s*\$\$/g, '');
+            text = text.replace(/\$\$([^$]*)\$\$\s*\$\$([^$]*)\$\$/g, '$$\\ $1 $2$$');
+            text = text.replace(/\$\$\s*\$\$/g, '');
+            text = text.replace(/\$\s*\$/g, '');
+            
+            // Restore protected LaTeX
+            protectedLatex.forEach(({ placeholder, content }) => {
+                text = text.replace(placeholder, content);
+            });
+
+            console.log("✅ LaTeX processing completed");
+            return text;
+        }
+
+        function updateStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+
+        function testLaTeX() {
+            if (!window.MathJax || !window.mathJaxReady) {
+                updateStatus('❌ MathJax not ready yet, please wait...', 'error');
+                return;
+            }
+
+            updateStatus('🧪 Testing LaTeX processing...', 'success');
+
+            // Test cases
+            const testCases = [
+                {
+                    id: 'physics-result',
+                    text: "Consider a hydrogen atom in its ground state, with principal quantum number n = 1 and orbital angular momentum quantum number l = 0. Calculate the expectation value of the radial probability density for an electron in this atom using the formula: ⟨r⟩ = 2/a₀ ∫₀^∞ r⁴ e^(-2r/a₀) dr, where a0 is the Bohr radius (approximately 5.29 × 10^{-11} m)."
+                },
+                {
+                    id: 'wave-result',
+                    text: "ψ(r) = 1/√π (a₀/r)^(3/2) e^(-r/a₀)"
+                },
+                {
+                    id: 'integral-result',
+                    text: "∫ r |ψ(r)|^2 d³r"
+                },
+                {
+                    id: 'chemistry-result',
+                    text: "The reaction H2 + O2 → H2O releases 463 kJ/mol at T = 298 K"
+                }
+            ];
+
+            testCases.forEach(({ id, text }) => {
+                const element = document.getElementById(id);
+                const processed = processLatexText(text);
+                element.innerHTML = `<strong>Processed:</strong> ${processed}`;
+            });
+
+            // Render all LaTeX
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise().then(() => {
+                    updateStatus('✅ LaTeX rendering completed successfully!', 'success');
+                }).catch(err => {
+                    updateStatus(`❌ MathJax rendering failed: ${err.message}`, 'error');
+                });
+            }
+        }
+
+        function clearTests() {
+            ['physics-result', 'wave-result', 'integral-result', 'chemistry-result'].forEach(id => {
+                const element = document.getElementById(id);
+                element.innerHTML = '<strong>Processed (Click Test to see):</strong>';
+            });
+            updateStatus('🧹 Tests cleared', 'success');
+        }
+
+        // Check MathJax loading
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.MathJax && window.mathJaxReady) {
+                    updateStatus('✅ MathJax loaded and ready for testing!', 'success');
+                } else {
+                    updateStatus('⏳ Still loading MathJax...', 'error');
+                    // Keep checking
+                    const checkInterval = setInterval(() => {
+                        if (window.MathJax && window.mathJaxReady) {
+                            updateStatus('✅ MathJax loaded and ready for testing!', 'success');
+                            clearInterval(checkInterval);
+                        }
+                    }, 500);
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

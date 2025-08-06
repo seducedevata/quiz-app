@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚨 BUTTON DEBUG TEST</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .debug-box { background: white; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        .error { background: #ffebee; border-color: #f44336; }
+        .success { background: #e8f5e9; border-color: #4caf50; }
+        .info { background: #e3f2fd; border-color: #2196f3; }
+        button { padding: 10px 20px; margin: 5px; font-size: 14px; cursor: pointer; }
+        .test-button { background: #ff5722; color: white; border: none; border-radius: 3px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🚨 Knowledge App Button Debug Test</h1>
+    
+    <div class="debug-box info">
+        <h3>Test Bridge Connection</h3>
+        <button onclick="testBridge()">Test Python Bridge</button>
+        <div id="bridge-result"></div>
+    </div>
+    
+    <div class="debug-box info">
+        <h3>Test Start Quiz Button</h3>
+        <button onclick="testButton()">Debug Start Quiz Button</button>
+        <div id="button-result"></div>
+    </div>
+    
+    <div class="debug-box info">
+        <h3>Force Test Quiz Button</h3>
+        <button onclick="forceTest()">Force Test Quiz Button</button>
+        <div id="force-result"></div>
+    </div>
+    
+    <div class="debug-box info">
+        <h3>Manual Button Test</h3>
+        <button onclick="manualTest()">Manual JavaScript Test</button>
+        <div id="manual-result"></div>
+    </div>
+    
+    <div class="debug-box info">
+        <h3>Console Output</h3>
+        <pre id="console-output">Waiting for tests...</pre>
+    </div>
+
+    <script>
+        // Capture console output
+        let consoleOutput = '';
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            consoleOutput += '[LOG] ' + args.join(' ') + '\n';
+            updateConsole();
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            consoleOutput += '[ERROR] ' + args.join(' ') + '\n';
+            updateConsole();
+            originalError.apply(console, args);
+        };
+        
+        function updateConsole() {
+            document.getElementById('console-output').textContent = consoleOutput;
+        }
+        
+        function testBridge() {
+            try {
+                console.log('🔗 Testing Python bridge...');
+                if (typeof qtBridge !== 'undefined' && qtBridge.testBridgeConnection) {
+                    const result = qtBridge.testBridgeConnection();
+                    document.getElementById('bridge-result').innerHTML = 
+                        '<div class="success">Bridge Result: ' + result + '</div>';
+                    console.log('✅ Bridge test result:', result);
+                } else {
+                    document.getElementById('bridge-result').innerHTML = 
+                        '<div class="error">❌ qtBridge not available!</div>';
+                    console.error('❌ qtBridge not available');
+                }
+            } catch (error) {
+                document.getElementById('bridge-result').innerHTML = 
+                    '<div class="error">❌ Bridge test error: ' + error.message + '</div>';
+                console.error('❌ Bridge test error:', error);
+            }
+        }
+        
+        function testButton() {
+            try {
+                console.log('🚨 Testing Start Quiz button via Python...');
+                if (typeof qtBridge !== 'undefined' && qtBridge.debugStartQuizButton) {
+                    const result = qtBridge.debugStartQuizButton();
+                    document.getElementById('button-result').innerHTML = 
+                        '<div class="success">Debug Result: ' + result + '</div>';
+                    console.log('🚨 Debug test result:', result);
+                } else {
+                    document.getElementById('button-result').innerHTML = 
+                        '<div class="error">❌ debugStartQuizButton not available!</div>';
+                    console.error('❌ debugStartQuizButton not available');
+                }
+            } catch (error) {
+                document.getElementById('button-result').innerHTML = 
+                    '<div class="error">❌ Debug test error: ' + error.message + '</div>';
+                console.error('❌ Debug test error:', error);
+            }
+        }
+        
+        function forceTest() {
+            try {
+                console.log('🚨 Force testing Start Quiz button...');
+                if (typeof qtBridge !== 'undefined' && qtBridge.forceTestQuizButton) {
+                    qtBridge.forceTestQuizButton();
+                    document.getElementById('force-result').innerHTML = 
+                        '<div class="success">✅ Force test executed (check console)</div>';
+                    console.log('🚨 Force test executed');
+                } else {
+                    document.getElementById('force-result').innerHTML = 
+                        '<div class="error">❌ forceTestQuizButton not available!</div>';
+                    console.error('❌ forceTestQuizButton not available');
+                }
+            } catch (error) {
+                document.getElementById('force-result').innerHTML = 
+                    '<div class="error">❌ Force test error: ' + error.message + '</div>';
+                console.error('❌ Force test error:', error);
+            }
+        }
+        
+        function manualTest() {
+            try {
+                console.log('🔍 Manual JavaScript test starting...');
+                
+                // Test 1: Check if testStartQuizButton function exists
+                if (typeof window.testStartQuizButton === 'function') {
+                    console.log('✅ testStartQuizButton function exists');
+                    window.testStartQuizButton();
+                } else {
+                    console.error('❌ testStartQuizButton function NOT FOUND');
+                }
+                
+                // Test 2: Check if startCustomQuiz function exists
+                if (typeof window.startCustomQuiz === 'function') {
+                    console.log('✅ startCustomQuiz function exists');
+                } else {
+                    console.error('❌ startCustomQuiz function NOT FOUND');
+                }
+                
+                // Test 3: Check if Start Quiz button exists
+                const button = document.getElementById('start-quiz-button');
+                if (button) {
+                    console.log('✅ Start Quiz button found:', button.textContent);
+                    console.log('✅ Button visible:', button.offsetParent !== null);
+                    console.log('✅ Button disabled:', button.disabled);
+                } else {
+                    console.error('❌ Start Quiz button NOT FOUND with ID start-quiz-button');
+                    
+                    // Try to find any button with "Start Quiz" text
+                    const allButtons = document.querySelectorAll('button');
+                    console.log('🔍 Found', allButtons.length, 'total buttons');
+                    
+                    let startQuizButtons = [];
+                    for (let i = 0; i < allButtons.length; i++) {
+                        const btn = allButtons[i];
+                        if (btn.textContent.includes('Start Quiz')) {
+                            startQuizButtons.push(btn);
+                            console.log('🔍 Found Start Quiz button:', btn.textContent, btn);
+                        }
+                    }
+                    
+                    if (startQuizButtons.length === 0) {
+                        console.error('❌ NO Start Quiz buttons found anywhere!');
+                    }
+                }
+                
+                document.getElementById('manual-result').innerHTML = 
+                    '<div class="success">✅ Manual test completed (check console)</div>';
+                    
+            } catch (error) {
+                document.getElementById('manual-result').innerHTML = 
+                    '<div class="error">❌ Manual test error: ' + error.message + '</div>';
+                console.error('❌ Manual test error:', error);
+            }
+        }
+        
+        console.log('🚨 Debug test page loaded successfully');
+    </script>
+</body>
+</html>

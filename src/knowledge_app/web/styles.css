@@ -206,7 +206,32 @@ body {
     font-size: 0.875rem;
 }
 
-/* Buttons */
+/* Dashboard Info Section */
+.dashboard-info {
+    background-color: var(--bg-secondary);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    margin-top: 1.5rem;
+}
+
+.dashboard-info p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.dashboard-info p:first-child {
+    margin-top: 0;
+}
+
+.dashboard-info p:last-child {
+    margin-bottom: 0;
+}
+
+/* Buttons - Enhanced for better clickability */
 .btn {
     padding: 0.75rem 1.5rem;
     border: none;
@@ -216,6 +241,15 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     display: inline-block;
+    position: relative;
+    z-index: 100;
+    pointer-events: auto !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    outline: none;
+    text-decoration: none;
 }
 
 .btn-primary {
@@ -227,6 +261,24 @@ body {
     background-color: var(--primary-hover);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px var(--shadow);
+}
+
+/* Specific fixes for critical buttons */
+#start-quiz-button,
+#quick-quiz-button {
+    position: relative !important;
+    z-index: 1000 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+}
+
+#start-quiz-button:disabled,
+#quick-quiz-button:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    pointer-events: auto !important; /* Still allow clicks for error handling */
 }
 
 .btn-secondary {
@@ -795,6 +847,86 @@ body {
     border-color: var(--warning-color);
 }
 
+/* 🌐 Tavily Configuration Styles */
+.tavily-config {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
+}
+
+.api-key-input {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.api-key-input input[type="password"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.api-key-input input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.api-key-input button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.api-key-input button:hover {
+    background: var(--accent-color-hover);
+    transform: translateY(-1px);
+}
+
+.api-key-input button:active {
+    transform: translateY(0);
+}
+
+.api-key-input button[id="test-tavily"] {
+    background: var(--success-color);
+}
+
+.api-key-input button[id="test-tavily"]:hover {
+    background: var(--success-color-dark);
+}
+
+.api-status-message {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+}
+
+.api-status-message a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.api-status-message a:hover {
+    text-decoration: underline;
+}
+
 .api-help {
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
@@ -863,9 +995,56 @@ body {
     color: var(--danger-color);
 }
 
+.provider-status.disabled {
+    color: var(--text-secondary);
+}
+
 .provider-status.testing {
     color: var(--warning-color);
     animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Provider Enable/Disable Toggle */
+.provider-toggle {
+    display: flex;
+    align-items: center;
+    margin-left: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.provider-toggle input[type="checkbox"] {
+    margin-right: 0.3rem;
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.provider-toggle:hover {
+    color: var(--primary-color);
+}
+
+.provider-toggle input[type="checkbox"]:checked + .toggle-text {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.provider-toggle input[type="checkbox"]:not(:checked) + .toggle-text {
+    color: var(--text-secondary);
+}
+
+/* Disabled provider styling */
+.api-provider-card.disabled {
+    opacity: 0.6;
+    filter: grayscale(0.3);
+}
+
+.api-provider-card.disabled .api-key-input {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
 }
 
 .api-key-input {
@@ -3085,6 +3264,11 @@ option:disabled {
 .token-chunk.special {
     color: #ec4899;
     font-weight: 600;
+}
+
+@keyframes thinkPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 @keyframes tokenFadeIn {

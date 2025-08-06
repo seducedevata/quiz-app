@@ -423,22 +423,19 @@ Only return valid JSON, no other text."""
             except Exception as e:
                 logger.warning(f"[WARNING] Error processing DeepSeek response: {e}")
 
-        # Fallback to placeholder if parsing failed
+        # CRITICAL: No fallback questions - fail if parsing failed
         if not final_question:
-            logger.warning("[WARNING] Using placeholder question - DeepSeek parsing failed")
-            final_question = {
-                "question": f"Generated question about {session.topic}",
-                "options": ["Option A", "Option B", "Option C", "Option D"],
-                "correct_answer": "Option A",
-                "explanation": f"This {session.difficulty} question tests understanding of {session.topic}",
-                "metadata": {
-                    "session_id": session.session_id,
-                    "tokens_streamed": session.tokens_streamed,
-                    "generation_time": time.time() - session.start_time,
-                    "difficulty": session.difficulty,
-                    "question_type": session.question_type
-                }
-            }
+            logger.error(f"[CRITICAL] Question generation failed for {session.topic} - No fallback questions allowed")
+            # Mark session as failed instead of using placeholder
+            session.final_question = None
+            session.is_active = False
+            
+            # Notify completion with failure
+            if self.token_callback:
+                self.token_callback(session.session_id, "STREAM_FAILED")
+            
+            logger.error(f"[FAILED] Token stream failed - Session: {session.session_id}, Topic: {session.topic}")
+            return
 
         # Store the final question (either parsed or placeholder)
         session.final_question = final_question

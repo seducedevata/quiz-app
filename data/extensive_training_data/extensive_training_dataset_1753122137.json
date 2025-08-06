@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "source_document": "2404.01023v1.pdf",
+    "title": "Large Language Model Evaluation via Multi AI Agents",
+    "authors": "Zeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson",
+    "conference": "ICLR 2024 Workshop",
+    "total_chunks_processed": 2,
+    "total_questions": 4,
+    "generation_timestamp": 1753122137,
+    "model_used": "deepseek-r1:14b",
+    "quality_level": "PhD/Expert",
+    "processing_method": "semantic_chunking_with_deepseek"
+  },
+  "chunk_summaries": [
+    {
+      "chunk_id": 1,
+      "chunk_length": 26973,
+      "questions_generated": 1,
+      "chunk_preview": "Published as a workshop paper at ICLR 2024\nLARGE LANGUAGE MODEL EVALUATION VIA MULTI\nAI AGENTS: PRELIMINARY RESULTS\nZeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson\nFaculty of Informat..."
+    },
+    {
+      "chunk_id": 3,
+      "chunk_length": 3991,
+      "questions_generated": 3,
+      "chunk_preview": "Are deep neural networks the best choice for\nmodeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software\nengineering, pp. 763–773, 2017. Xinyi Hou, Yanjie Zhao, Yue ..."
+    }
+  ],
+  "training_questions": [
+    {
+      "question": "What is the primary purpose of hypothesis testing in research methodology?",
+      "options": [
+        "A) To determine the validity of a research design",
+        "B) To assess the effectiveness of interventions",
+        "C) To evaluate the relationship between variables",
+        "D) All of the above"
+      ],
+      "correct_answer": "D",
+      "explanation": "Hypothesis testing is used to validate assumptions and analyze data patterns in research.",
+      "difficulty": "intermediate",
+      "topic": "research_methods",
+      "chunk_id": 1,
+      "generation_timestamp": 1753122092
+    },
+    {
+      "question": "Which methodology is considered a state-of-the-art approach for evaluating code generation using large language models?",
+      "options": [
+        "A) Manual code review by developers",
+        "B) Using automated metrics like BLEU or ROUGE",
+        "C) Large Language Models as evaluators",
+        "D) Crowdsourcing evaluations with human annotators"
+      ],
+      "correct_answer": "C",
+      "explanation": "According to the research, Terry Yue Zhuo (2023) highlights that large language models (LLMs) are state-of-the-art evaluators for code generation. This approach leverages the inherent understanding of code structure and semantics within LLMs to assess generated code more effectively than traditional metrics which may not capture nuances in programming languages.",
+      "difficulty": "advanced",
+      "topic": "evaluation_methodologies",
+      "chunk_id": 3,
+      "generation_timestamp": 1753122134
+    },
+    {
+      "question": "In multi-agent systems for software development, what role does each agent typically play?",
+      "options": [
+        "A) Each agent independently solves a specific problem without coordination",
+        "B) Agents collaborate to cover different aspects of the software development lifecycle",
+        "C) Agents compete against each other to improve system performance",
+        "D) Agents function as part of a single integrated system with no distinct roles"
+      ],
+      "correct_answer": "B",
+      "explanation": "The research by Rasheed et al. (2024a, 2024b) discusses the use of multi-agent systems where each agent is specialized for specific tasks within software development, such as code analysis or testing, allowing them to collaborate effectively across different stages of the SDLC.",
+      "difficulty": "advanced",
+      "topic": "multiagent_systems",
+      "chunk_id": 3,
+      "generation_timestamp": 1753122134
+    },
+    {
+      "question": "What challenge is addressed by using open-vocabulary models for source code analysis as discussed in recent studies?",
+      "options": [
+        "A) The lack of pre-trained models dedicated to programming languages",
+        "B) The difficulty in handling domain-specific jargon and syntax in code",
+        "C) The inefficiency of traditional tokenization methods for code tokens",
+        "D) The scalability issues with large language models"
+      ],
+      "correct_answer": "B",
+      "explanation": "Rafael-Michael Karampatsis et al. (2020) address the challenge that open-vocabulary models help overcome by better handling domain-specific jargon and syntax in source code, which traditional closed vocabulary models struggle with.",
+      "difficulty": "advanced",
+      "topic": "model_architecture",
+      "chunk_id": 3,
+      "generation_timestamp": 1753122134
+    }
+  ]
+}

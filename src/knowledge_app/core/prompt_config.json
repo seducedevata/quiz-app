@@ -1,0 +1,358 @@
+{
+  "personas": {
+    "expert": "You are a distinguished researcher who recognizes advanced intellectual capabilities. Your role is to create questions that honor this student's readiness for complex material while building their confidence in tackling sophisticated concepts. Guide them toward discovering insights they're capable of understanding.",
+    "hard": "You are an experienced educator who sees potential in students ready for challenge. Create questions that stretch their analytical abilities while ensuring they feel supported. Show them how their growing knowledge can tackle real-world complexity.",
+    "medium": "You are a skilled teacher who believes in student growth. Design questions that build understanding progressively, connecting concepts they know to new ideas. Help them see their capabilities expanding.",
+    "easy": "You are a patient educator who makes learning accessible. Create questions that build confidence while introducing important concepts. Show students they can understand more than they think they can."
+  },
+  
+  "difficulty_guidance": {
+    "expert": "This student has strong foundations and is ready for advanced material. Create questions that challenge their analytical thinking while building confidence. Focus on concepts that connect multiple areas and require synthesis of complex ideas.",
+    "hard": "This student has developed solid understanding and can handle increased complexity. Design questions that require multi-step reasoning and application to new scenarios. Help them see how concepts work together.",
+    "medium": "This student is building their knowledge base and ready for moderate challenges. Create questions that test understanding while teaching new connections. Balance challenge with support.",
+    "easy": "This student is developing fundamental understanding. Focus on core concepts presented clearly. Build confidence while ensuring solid foundational knowledge."
+  },
+  
+  "examples": {
+    "physics": {
+      "expert_numerical": {
+        "question": "Calculate the one-loop QED correction to the Lamb shift for the 2S₁/₂ state of hydrogen, accounting for both vacuum polarization and electron self-energy contributions, and determine how this compares to recent precision measurements at NIST.",
+        "options": {
+          "A": "1057.845(9) MHz, agreeing with NIST measurements within experimental uncertainty and validating QED to α³ order",
+          "B": "1057.862(15) MHz, showing slight discrepancy that suggests need for higher-order QED corrections",
+          "C": "1057.834(12) MHz, indicating possible systematic errors in either theory or experimental setup",
+          "D": "1057.851(8) MHz, confirming QED predictions but requiring inclusion of hadronic vacuum polarization effects"
+        },
+        "correct": "A",
+        "explanation": "The Lamb shift arises from quantum fluctuations of the electromagnetic field. The one-loop QED correction includes vacuum polarization (Uehling potential) contributing approximately -27 MHz and electron self-energy contributing +1084 MHz, yielding the observed 1057.845 MHz shift that matches NIST precision measurements within 9 kHz uncertainty."
+      },
+      "expert_conceptual": {
+        "question": "Why does the breakdown of the Born-Oppenheimer approximation at conical intersections fundamentally alter photochemical reaction pathways, and how do modern ultrafast spectroscopy techniques reveal these non-adiabatic dynamics?",
+        "options": {
+          "A": "Non-adiabatic coupling terms become divergent when electronic energy surfaces approach degeneracy, enabling efficient population transfer between states during molecular motion, observable through coherent vibrational wavepacket dynamics in femtosecond pump-probe spectroscopy",
+          "B": "Electronic and nuclear timescales become comparable near intersections, requiring explicit time-dependent treatment of both degrees of freedom, measurable via attosecond transient absorption spectroscopy of electronic coherences",
+          "C": "Spin-orbit coupling mixes electronic states of different multiplicities, changing photochemical selection rules and branching ratios, detectable through time-resolved photoelectron spectroscopy",
+          "D": "Quantum tunneling through energy barriers becomes dominant near intersections, bypassing classical transition states and creating new reaction pathways visible in two-dimensional electronic spectroscopy"
+        },
+        "correct": "A",
+        "explanation": "At conical intersections, the Born-Oppenheimer approximation fails because non-adiabatic coupling terms (∇ᵣψₑ|∇ᵣψₑ) become large as the energy gap approaches zero. This enables ultrafast internal conversion between electronic states, fundamentally changing reaction dynamics from adiabatic to non-adiabatic pathways. Femtosecond spectroscopy reveals these dynamics through coherent vibrational wavepackets that reflect the coupling between electronic and nuclear motion."
+      },
+      "hard_numerical": {
+        "question": "Calculate the binding energy of the last neutron in ²⁰⁹Bi using the semi-empirical mass formula, including pairing and shell correction terms, and determine how this relates to its position near the neutron drip line.",
+        "options": {
+          "A": "3.14 MeV, indicating ²⁰⁹Bi is bound but close to neutron drip line due to decreasing shell effects in heavy nuclei",
+          "B": "5.87 MeV, showing strong binding enhanced by Z=82 shell closure and favorable N/Z ratio for heavy elements", 
+          "C": "1.62 MeV, demonstrating weak binding characteristic of nuclei approaching neutron separation threshold",
+          "D": "7.23 MeV, indicating unusually strong binding due to magic number effects and optimal nuclear structure"
+        },
+        "correct": "A",
+        "explanation": "Using SEMF: BE = aᵥA - aₛA²/³ - aᴄZ²/A¹/³ - aₐ(N-Z)²/A + δ(N,Z). For ²⁰⁹Bi (N=126, Z=83), the binding energy per nucleon is ~7.85 MeV, giving total BE ≈ 1640 MeV. The neutron separation energy Sₙ = BE(²⁰⁹Bi) - BE(²⁰⁸Bi) ≈ 3.14 MeV, indicating it's bound but approaching the drip line where Sₙ → 0."
+      },
+      "medium_numerical": {
+        "question": "A photon with wavelength 500 nm strikes a metal surface with work function 2.1 eV. Calculate the maximum kinetic energy of the emitted photoelectrons and determine if photoelectric effect occurs.",
+        "options": {
+          "A": "0.38 eV - photoelectric effect occurs since photon energy exceeds work function",
+          "B": "2.48 eV - maximum kinetic energy when all photon energy converts to electron kinetic energy",
+          "C": "No emission occurs - photon energy is less than the work function threshold",
+          "D": "1.15 eV - partial energy transfer occurs even below threshold due to thermal effects"
+        },
+        "correct": "A",
+        "explanation": "First calculate photon energy: E = hc/λ = (6.63×10⁻³⁴)(3×10⁸)/(500×10⁻⁹) = 3.98×10⁻¹⁹ J = 2.48 eV. Since E_photon > work function (2.48 > 2.1 eV), photoelectric effect occurs. Maximum kinetic energy: KE_max = E_photon - φ = 2.48 - 2.1 = 0.38 eV."
+      },
+      "easy_conceptual": {
+        "question": "What happens to the wavelength of light when it travels from air into water?",
+        "options": {
+          "A": "The wavelength decreases because light slows down in water while maintaining the same frequency",
+          "B": "The wavelength increases because water molecules stretch the light waves as they pass through",
+          "C": "The wavelength stays the same because it's a fundamental property of the light source",
+          "D": "The wavelength doubles because water has twice the density of air"
+        },
+        "correct": "A",
+        "explanation": "When light enters a denser medium like water, its speed decreases due to the higher refractive index, but its frequency remains constant (determined by the source). Since wave speed = frequency × wavelength, and speed decreases while frequency stays constant, the wavelength must decrease proportionally."
+      }
+    },
+    
+    "chemistry": {
+      "expert_conceptual": {
+        "question": "How does the Marcus theory of electron transfer explain the inverted region phenomenon observed in photoinduced charge separation reactions, and why does this have profound implications for optimizing solar cell efficiency?",
+        "options": {
+          "A": "In the inverted region (ΔG° > λ), the activation energy increases with increasing driving force due to poor Franck-Condon overlap, leading to slower electron transfer rates that limit photovoltaic performance unless reorganization energy is minimized through molecular design",
+          "B": "Quantum tunneling becomes dominant when ΔG° exceeds the reorganization energy, creating temperature-independent kinetics that can be exploited in low-temperature photovoltaic applications",
+          "C": "Spin-orbit coupling increases dramatically in the inverted region, enabling efficient intersystem crossing that enhances triplet formation for singlet fission solar cells",
+          "D": "The inverted region eliminates back electron transfer reactions, creating irreversible charge separation ideal for photovoltaic applications without further optimization"
+        },
+        "correct": "A",
+        "explanation": "Marcus theory predicts that electron transfer rate decreases when the driving force (-ΔG°) exceeds the reorganization energy λ, creating the 'inverted region.' This occurs because large driving forces require significant nuclear rearrangement to reach the transition state, reducing Franck-Condon overlap. In solar cells, this limits the efficiency of highly exergonic charge separation steps, making molecular design crucial to optimize λ and maintain fast forward electron transfer while slowing recombination."
+      }
+    },
+    
+    "mathematics": {
+      "expert_numerical": {
+        "question": "Prove that the Riemann zeta function ζ(s) has no zeros in the region Re(s) > 1, and calculate ζ(2) using both the Euler product formula and Fourier analysis of the Bernoulli function.",
+        "options": {
+          "A": "The proof uses the absolute convergence of the Euler product for Re(s) > 1, and ζ(2) = π²/6 ≈ 1.6449, confirmed by both methods within numerical precision",
+          "B": "Non-trivial zeros are excluded by the functional equation symmetry, yielding ζ(2) = π²/8 ≈ 1.2337 from Fourier series analysis",
+          "C": "The proof relies on the prime number theorem and yields ζ(2) = π²/4 ≈ 2.4674 from direct summation convergence",
+          "D": "Analytic continuation excludes zeros in this region, giving ζ(2) = π²/12 ≈ 0.8225 from Bernoulli number calculations"
+        },
+        "correct": "A",
+        "explanation": "For Re(s) > 1, the Euler product ζ(s) = ∏(1-p⁻ˢ)⁻¹ converges absolutely since ∑p⁻ˢ converges. Each factor (1-p⁻ˢ)⁻¹ ≠ 0, so ζ(s) ≠ 0. For ζ(2): Euler product gives ζ(2) = ∏(1-p⁻²)⁻¹, while Fourier analysis of f(x) = x² on [0,2π] yields ζ(2) = π²/6 through Parseval's theorem."
+      }
+    },
+    
+    "biology": {
+      "expert_conceptual": {
+        "question": "How do phase separation dynamics in membrane-less organelles regulate transcriptional bursting, and what role does intrinsically disordered protein regions play in fine-tuning gene expression noise?",
+        "options": {
+          "A": "Liquid-liquid phase separation creates dynamic condensates that concentrate transcription factors and RNA polymerase II, modulating burst frequency and amplitude through local concentration effects, while IDR flexibility allows rapid association/dissociation kinetics that tune transcriptional noise levels",
+          "B": "Phase-separated compartments exclude transcriptional machinery, creating repressive environments that reduce gene expression noise through spatial isolation of competing regulatory pathways",
+          "C": "Intrinsically disordered regions prevent phase separation by disrupting protein-protein interactions, leading to uniform nuclear distribution and constitutive gene expression",
+          "D": "Phase separation creates stable, membrane-bound compartments that sequester transcription factors, reducing transcriptional bursting through permanent spatial organization"
+        },
+        "correct": "A",
+        "explanation": "Recent research shows that membrane-less organelles formed by liquid-liquid phase separation (LLPS) create dynamic condensates enriched in transcriptional machinery. These condensates increase local concentrations of factors like RNA Pol II, enhancing transcriptional bursting. IDRs in transcription factors enable rapid exchange between condensed and dilute phases, allowing fine-tuning of residence times and thus controlling gene expression noise through kinetic proofreading mechanisms."
+      }
+    },
+    
+    "history": {
+      "expert_conceptual": {
+        "question": "How did the complex interplay between economic decline, military pressures, and administrative fragmentation contribute to the transformation of the Roman Empire in the 3rd century Crisis, and what does this reveal about the structural vulnerabilities of large imperial systems?",
+        "options": {
+          "A": "The simultaneous collapse of trade networks, barbarian invasions along extended frontiers, and the breakdown of centralized taxation created a cascade of institutional failures that forced decentralization and military autocracy, demonstrating how imperial overextension makes systems vulnerable to multiple synchronized shocks",
+          "B": "Religious transformation from paganism to Christianity fundamentally altered Roman social cohesion, leading to internal conflicts that weakened military effectiveness against external threats",
+          "C": "Climate change and plague epidemics reduced agricultural productivity, forcing economic contraction that made the empire unable to maintain its military and administrative apparatus",
+          "D": "Barbarian cultural assimilation gradually transformed Roman identity from within, creating loyalty conflicts that undermined central authority and military discipline"
+        },
+        "correct": "A",
+        "explanation": "The Crisis of the Third Century exemplifies how complex systems can experience cascading failures when multiple vulnerabilities are stressed simultaneously. Economic decline (inflation, taxation breakdown), military pressure (barbarian invasions, civil wars), and administrative fragmentation (provincial autonomy, military emperors) created feedback loops that transformed imperial governance, showing how overextended systems become vulnerable to synchronized shocks that exceed their adaptive capacity."
+      },
+      "hard_conceptual": {
+        "question": "Why did the Treaty of Westphalia (1648) fundamentally reshape the European state system, and how did it establish principles that continue to influence international relations today?",
+        "options": {
+          "A": "It established the principle of cuius regio, eius religio, ending religious wars by linking political sovereignty to territorial control and creating the foundation for modern nation-state diplomacy based on non-interference in domestic affairs",
+          "B": "It created the first international court system for resolving disputes between nations, establishing precedents for modern international law and collective security arrangements",
+          "C": "It unified European currencies and trade standards, creating economic integration that served as a model for later commercial treaties and common markets",
+          "D": "It established permanent diplomatic missions and protocols, creating the institutional framework for continuous international negotiation and conflict prevention"
+        },
+        "correct": "A",
+        "explanation": "The Peace of Westphalia established the principle of territorial sovereignty and non-interference in domestic affairs, ending the Thirty Years' War by accepting that rulers could determine their territories' religion. This created the 'Westphalian system' of sovereign nation-states that remains fundamental to international law, diplomacy, and the UN Charter's emphasis on territorial integrity and non-intervention."
+      },
+      "medium_conceptual": {
+        "question": "What factors led to the rapid spread of the Black Death across 14th century Europe, and how did it transform medieval society?",
+        "options": {
+          "A": "Trade routes, urban overcrowding, and poor sanitation facilitated disease transmission, while massive population loss disrupted feudalism, increased labor value, and accelerated social mobility",
+          "B": "Religious pilgrimage networks spread the disease, leading to increased persecution of minorities and strengthening of church authority over daily life",
+          "C": "Military campaigns and mercenary armies carried plague across borders, resulting in the collapse of medieval warfare and the rise of professional standing armies",
+          "D": "Agricultural expansion into new lands exposed populations to new diseases, causing rural abandonment and the growth of centralized monarchies"
+        },
+        "correct": "A",
+        "explanation": "The Black Death spread rapidly through medieval Europe via trade routes (especially from Asia through Italian ports), thriving in overcrowded, unsanitary urban conditions. By killing 30-60% of the population, it disrupted the feudal system's labor relationships, increased wages for survivors, weakened serfdom, and accelerated social and economic transformation toward more modern structures."
+      }
+    },
+    
+    "literature": {
+      "expert_conceptual": {
+        "question": "How does Joyce's use of stream-of-consciousness technique in 'Ulysses' function as both a modernist literary innovation and a philosophical statement about the nature of human consciousness and narrative truth?",
+        "options": {
+          "A": "Stream-of-consciousness reveals the fragmentary, associative nature of thought, challenging linear narrative conventions and suggesting that subjective experience, rather than objective reality, constitutes authentic human truth, thus questioning traditional assumptions about coherent identity and reliable narration",
+          "B": "The technique primarily serves to create psychological realism by accurately depicting how people actually think, providing readers with deeper character understanding while maintaining traditional narrative structures",
+          "C": "Joyce uses stream-of-consciousness to demonstrate the universality of human experience by showing how different characters share similar thought patterns and emotional responses to common situations",
+          "D": "The technique functions as an experimental writing exercise that prioritizes formal innovation over meaning, representing modernist art's emphasis on technique and style over traditional content and themes"
+        },
+        "correct": "A",
+        "explanation": "Joyce's stream-of-consciousness technique revolutionizes both literary form and philosophical understanding by revealing consciousness as fragmentary, associative, and subjective rather than linear and logical. This challenges traditional narrative assumptions about coherent characters and objective truth, suggesting that authentic human experience exists in the realm of subjective perception rather than external reality, fundamentally questioning Enlightenment concepts of rational, unified identity."
+      },
+      "hard_conceptual": {
+        "question": "How does the concept of the 'unreliable narrator' in works like Nabokov's 'Lolita' challenge readers' moral and interpretive responsibilities?",
+        "options": {
+          "A": "Unreliable narrators force readers to actively question and reconstruct truth from biased accounts, making them complicit in moral judgment while demonstrating how narrative perspective shapes ethical interpretation",
+          "B": "These narrators primarily serve to create mystery and suspense by withholding information, challenging readers to solve puzzles and discover hidden plot elements",
+          "C": "Unreliable narration demonstrates the author's superior moral position by showing characters' flawed perspectives, guiding readers toward correct ethical conclusions",
+          "D": "The technique mainly functions to create postmodern ambiguity and moral relativism, suggesting that no perspective can be trusted and all interpretations are equally valid"
+        },
+        "correct": "A",
+        "explanation": "Unreliable narrators like Humbert Humbert force readers into active ethical engagement by presenting morally problematic perspectives with compelling rhetoric. Readers must navigate between narrative seduction and moral judgment, becoming complicit in the interpretive process while recognizing how storytelling itself can manipulate perception and rationalize evil, thus exploring the relationship between aesthetic beauty and moral truth."
+      },
+      "medium_conceptual": {
+        "question": "What role does the concept of social class play in Jane Austen's novels, particularly in shaping character relationships and moral development?",
+        "options": {
+          "A": "Class distinctions create both obstacles and opportunities for character growth, with true worth often emerging through characters' ability to transcend class prejudices while still respecting social stability",
+          "B": "Austen primarily criticizes the class system by showing how it corrupts moral values and prevents genuine human connection between people of different social levels",
+          "C": "Social class serves mainly as a plot device to create romantic complications, with little deeper significance for character development or moral themes",
+          "D": "Class differences are portrayed as natural and beneficial social organization that should be maintained without question or change"
+        },
+        "correct": "A",
+        "explanation": "Austen uses class distinctions to explore moral development, showing how characters like Elizabeth Bennet and Mr. Darcy must overcome class-based prejudices to achieve genuine understanding. While respecting social structure, she demonstrates that true worth comes from character rather than birth, and that moral growth requires seeing beyond surface social distinctions to recognize individual merit."
+      }
+    },
+    
+    "philosophy": {
+      "expert_conceptual": {
+        "question": "How does Heidegger's concept of 'Being-toward-death' (Sein-zum-Tode) function in his analysis of authentic existence, and what does this reveal about the relationship between temporality and human freedom?",
+        "options": {
+          "A": "Being-toward-death individualizes Dasein by confronting it with its ownmost possibility that cannot be shared or avoided, thereby liberating it from the 'they-self' and enabling authentic temporal existence that embraces finitude as the ground of meaningful choice and commitment",
+          "B": "The concept primarily serves to generate existential anxiety that motivates individuals to seek religious or philosophical consolation, thus demonstrating the necessity of metaphysical beliefs for psychological stability",
+          "C": "Being-toward-death reveals the absurdity of human existence by showing that all projects ultimately end in meaninglessness, leading to nihilistic conclusions about the value of human endeavors",
+          "D": "Heidegger uses death to argue for the priority of collective over individual existence, showing how mortality connects all humans in shared fate that transcends personal concerns"
+        },
+        "correct": "A",
+        "explanation": "For Heidegger, Being-toward-death confronts Dasein with its most personal, non-relational possibility - its own death - which cannot be experienced by others or avoided. This confrontation with finitude liberates Dasein from conformist 'everydayness' and the 'they-self,' enabling authentic existence that embraces temporality and mortality as the foundation for meaningful commitment and genuine choice, making finitude the ground rather than the limitation of human freedom."
+      },
+      "hard_conceptual": {
+        "question": "How does Kant's distinction between the phenomenal and noumenal realms resolve the apparent conflict between determinism and moral responsibility?",
+        "options": {
+          "A": "By placing moral agents in the noumenal realm beyond spatial-temporal causation, Kant allows them to be free rational beings who can initiate moral action while still existing as determined phenomena in the empirical world",
+          "B": "Kant demonstrates that determinism and freedom are compatible within the same realm by showing how rational choice emerges naturally from causal processes in the brain",
+          "C": "The distinction proves that moral responsibility is an illusion by showing that all human action occurs in the determined phenomenal realm where free will cannot exist",
+          "D": "Kant resolves the conflict by arguing that moral responsibility applies only to intentions while determinism governs actions, creating separate spheres for ethics and natural science"
+        },
+        "correct": "A",
+        "explanation": "Kant's transcendental idealism places rational moral agents in the noumenal realm (things-in-themselves) where they exist as free rational beings capable of moral choice, while simultaneously existing as determined phenomena in the empirical world of space, time, and causation. This allows the same person to be both causally determined (as phenomenon) and morally free (as noumenon), resolving the conflict between natural necessity and moral responsibility."
+      }
+    },
+    
+    "economics": {
+      "expert_numerical": {
+        "question": "Calculate the optimal patent length that maximizes social welfare in a market with innovation costs of $100M, monopoly profits of $50M annually, consumer surplus loss of $30M annually under monopoly, and discount rate of 5%. Assume competitive profits would be $10M annually.",
+        "options": {
+          "A": "8.7 years - balancing innovation incentives with deadweight loss minimization, where present value of monopoly rents equals innovation costs",
+          "B": "12.4 years - ensuring full cost recovery plus reasonable return on investment while limiting consumer welfare loss",
+          "C": "6.2 years - minimizing total social cost by prioritizing consumer welfare over innovation incentives",
+          "D": "15.0 years - maximizing innovation incentives to encourage future R&D investment and technological progress"
+        },
+        "correct": "A",
+        "explanation": "Optimal patent length occurs where marginal benefit of innovation incentive equals marginal cost of deadweight loss. Setting PV of monopoly rents = innovation costs: ($50M - $10M)/0.05 × (1 - e^(-0.05×T)) = $100M. Solving for T gives approximately 8.7 years, where the innovation is exactly incentivized while minimizing consumer welfare loss."
+      },
+      "hard_conceptual": {
+        "question": "How does behavioral economics challenge the traditional assumption of rational choice in consumer theory, and what are the implications for market efficiency?",
+        "options": {
+          "A": "Behavioral economics reveals systematic cognitive biases like loss aversion, present bias, and bounded rationality that lead to predictable deviations from utility maximization, suggesting markets may not achieve Pareto efficiency and justifying targeted policy interventions",
+          "B": "While people make occasional mistakes, market competition eliminates irrational behavior over time as successful strategies spread and unsuccessful ones disappear, maintaining overall market efficiency",
+          "C": "Behavioral findings apply only to laboratory settings and individual decisions, having little relevance for aggregate market outcomes where randomness and averaging eliminate bias effects",
+          "D": "Behavioral economics proves that all economic models are meaningless since human behavior is fundamentally unpredictable and cannot be analyzed using mathematical tools"
+        },
+        "correct": "A",
+        "explanation": "Behavioral economics demonstrates systematic, predictable deviations from rational choice through cognitive biases (anchoring, framing effects), present bias (hyperbolic discounting), and bounded rationality. These findings challenge market efficiency assumptions, suggesting systematic welfare losses and creating rationales for policies like automatic enrollment, cooling-off periods, and choice architecture that help people make decisions more aligned with their long-term interests."
+      }
+    },
+    
+    "psychology": {
+      "expert_conceptual": {
+        "question": "How do modern neuroscientific findings about brain plasticity and the default mode network challenge traditional cognitive psychological theories about fixed personality traits and executive control?",
+        "options": {
+          "A": "Neuroplasticity research shows that personality traits and cognitive abilities remain malleable throughout life through experience-dependent brain changes, while default mode network studies reveal that much of cognition occurs through automatic, unconscious processes rather than deliberate executive control, requiring revision of models emphasizing fixed traits and conscious control",
+          "B": "Brain plasticity confirms that personality is entirely determined by early childhood experiences, while default mode network activity proves that consciousness plays no role in behavioral control",
+          "C": "Neuroscientific findings validate traditional personality psychology by showing that brain structure determines stable traits, while executive control systems operate independently of automatic processes",
+          "D": "Default mode network research demonstrates that all behavior is consciously controlled, while plasticity studies show that brain changes only occur during critical developmental periods"
+        },
+        "correct": "A",
+        "explanation": "Neuroplasticity research demonstrates that brain structure and function remain modifiable throughout life, challenging assumptions about fixed personality traits and suggesting greater potential for behavioral change. Default mode network studies reveal that much mental activity occurs automatically and unconsciously, questioning models that emphasize conscious executive control and suggesting that adaptive behavior emerges from complex interactions between controlled and automatic processes."
+      },
+      "hard_conceptual": {
+        "question": "How does the concept of 'theory of mind' develop in children, and what does autism spectrum research reveal about its neural mechanisms?",
+        "options": {
+          "A": "Theory of mind develops through stages from understanding desires (age 2) to false beliefs (age 4-5), involving integration of temporal-parietal junction, medial prefrontal cortex, and superior temporal sulcus, with autism showing atypical activation patterns suggesting different rather than deficient social cognition",
+          "B": "Children develop theory of mind suddenly around age 3 through language acquisition, with autism representing a complete absence of this ability due to mirror neuron system dysfunction",
+          "C": "Theory of mind is present from birth but becomes more sophisticated through practice, with autism showing delayed but ultimately normal development of these abilities",
+          "D": "The concept develops primarily through formal education and cultural transmission, with autism reflecting cultural rather than neurological differences in social understanding"
+        },
+        "correct": "A",
+        "explanation": "Theory of mind develops progressively: understanding others have desires (18-24 months), understanding others have beliefs (age 3), understanding false beliefs (age 4-5). Neuroimaging reveals involvement of temporal-parietal junction, medial prefrontal cortex, and superior temporal sulcus. Autism spectrum research shows atypical but not absent activation patterns, suggesting alternative neural strategies for social cognition rather than simple deficits."
+      }
+    },
+    
+    "art": {
+      "expert_conceptual": {
+        "question": "How did the development of linear perspective during the Renaissance fundamentally transform not only artistic representation but also cultural understanding of space, knowledge, and human perception?",
+        "options": {
+          "A": "Linear perspective created a unified, mathematical system for representing three-dimensional space that reinforced humanist emphasis on individual viewpoint and empirical observation, while also reflecting broader cultural shifts toward scientific rationalism and the privileging of visual knowledge over other forms of understanding",
+          "B": "Perspective techniques simply improved artistic realism by allowing more accurate depiction of objects and architectural spaces, without broader cultural implications beyond aesthetic enhancement",
+          "C": "The development primarily served religious purposes by creating more convincing sacred spaces for devotional contemplation, strengthening medieval spiritual traditions rather than challenging them",
+          "D": "Linear perspective represented a return to classical Greek and Roman artistic techniques, restoring ancient wisdom rather than creating genuinely new ways of seeing and understanding"
+        },
+        "correct": "A",
+        "explanation": "Linear perspective, developed by artists like Brunelleschi and theorized by Alberti, created a mathematical system for representing space that positioned the individual observer as the central organizing principle. This reinforced Renaissance humanism's emphasis on individual experience and empirical observation while reflecting broader cultural shifts toward scientific rationalism, mathematical understanding of nature, and the privileging of sight as the primary means of knowledge acquisition."
+      },
+      "hard_conceptual": {
+        "question": "How does the concept of the 'readymade' in Marcel Duchamp's work challenge traditional definitions of art and artistic creation?",
+        "options": {
+          "A": "Readymades question the boundary between art and non-art by removing craftsmanship and aesthetic beauty as defining criteria, shifting emphasis to conceptual content and institutional context, thereby challenging the art world's authority to determine artistic value",
+          "B": "Duchamp's readymades primarily demonstrate superior technical skill by transforming ordinary objects through subtle artistic modifications that reveal hidden aesthetic qualities",
+          "C": "The readymade concept serves mainly as cultural criticism, using shock value to attack bourgeois values without seriously questioning fundamental assumptions about art itself",
+          "D": "Readymades represent a temporary avant-garde experiment that ultimately confirms traditional artistic values by showing what art is not"
+        },
+        "correct": "A",
+        "explanation": "Duchamp's readymades (like 'Fountain,' 1917) radically challenged art's definition by removing traditional criteria like manual skill, aesthetic beauty, and original creation. By placing mass-produced objects in art contexts, Duchamp shifted focus to conceptual content and institutional framing, questioning who has authority to define art and suggesting that artistic meaning emerges from context and interpretation rather than inherent object qualities."
+      }
+    },
+    
+    "music": {
+      "expert_conceptual": {
+        "question": "How did Schoenberg's development of twelve-tone serialism represent both a logical extension of late Romantic harmonic practices and a revolutionary break with tonal tradition?",
+        "options": {
+          "A": "Twelve-tone technique systematized the chromatic saturation already present in late Wagner and Strauss, providing compositional structure for atonal music while completely abandoning hierarchical pitch relationships and functional harmony that had organized Western music for centuries",
+          "B": "Serialism primarily represented a return to mathematical principles from medieval music theory, restoring rational order to composition while maintaining traditional harmonic progressions in new forms",
+          "C": "The twelve-tone system simply expanded traditional harmony by adding more complex chords, maintaining tonal centers while increasing available harmonic resources for composers",
+          "D": "Schoenberg's method represented pure experimentation without connection to musical tradition, creating entirely new sound worlds unrelated to previous compositional practices"
+        },
+        "correct": "A",
+        "explanation": "Schoenberg's twelve-tone technique emerged from late Romantic harmony's increasing chromaticism (seen in Wagner's 'Tristan' and Strauss's operas), which had weakened tonal centers. By systematically using all twelve pitches equally, serialism provided organizational structure for atonal composition while completely abandoning the hierarchical pitch relationships and functional harmony that had governed Western music since the Renaissance, representing both historical continuity and revolutionary transformation."
+      },
+      "hard_conceptual": {
+        "question": "How does the concept of 'swing' in jazz demonstrate the interaction between rhythmic structure and cultural expression?",
+        "options": {
+          "A": "Swing emerges from the tension between written rhythmic notation and performed rhythmic feel, creating syncopated patterns that reflect African-American cultural resistance to European musical conventions while establishing jazz as a distinctly American art form",
+          "B": "Swing simply represents technical rhythmic complexity that demonstrates musicians' virtuosity, without deeper cultural significance beyond entertainment value",
+          "C": "The concept functions primarily as a marketing term used to categorize different jazz styles for commercial purposes, lacking substantial musical or cultural meaning",
+          "D": "Swing reflects universal human rhythmic preferences that transcend cultural boundaries, representing natural musical tendencies rather than specific cultural expression"
+        },
+        "correct": "A",
+        "explanation": "Swing creates rhythmic sophistication through the tension between notated rhythms and performed feel, often involving subtle timing alterations, syncopation, and rhythmic layers that cannot be precisely notated. This reflects African-American musical traditions' emphasis on rhythmic complexity and improvisation, representing both cultural resistance to European musical rigidity and the creation of distinctly American musical expression that influenced global popular music."
+      }
+    },
+    
+    "linguistics": {
+      "expert_conceptual": {
+        "question": "How does Chomsky's Universal Grammar hypothesis challenge both behaviorist learning theories and cultural relativist approaches to language acquisition?",
+        "options": {
+          "A": "Universal Grammar proposes that humans possess innate linguistic structures that constrain possible languages, contradicting behaviorist stimulus-response models while suggesting that despite surface diversity, all languages share deep structural principles that reflect biological rather than purely cultural determination",
+          "B": "The hypothesis primarily supports cultural relativism by showing how different languages create fundamentally different ways of thinking, while rejecting behaviorist approaches through emphasis on creativity",
+          "C": "Universal Grammar confirms behaviorist theories by identifying the specific environmental stimuli that trigger language learning in all cultures, while rejecting relativist claims about linguistic diversity",
+          "D": "Chomsky's theory demonstrates that language acquisition is entirely determined by social interaction, supporting both behaviorist and relativist approaches while rejecting biological explanations"
+        },
+        "correct": "A",
+        "explanation": "Universal Grammar challenges behaviorism by arguing that language acquisition cannot be explained by simple stimulus-response conditioning, given the poverty of stimulus (children learn complex grammar from limited input). It challenges cultural relativism by proposing that despite surface differences, all languages share deep structural constraints reflecting innate biological endowment, suggesting that human linguistic capacity has universal rather than purely cultural foundations."
+      }
+    },
+    
+    "general": {
+      "expert_mixed": {
+        "question": "How does the observer effect in quantum mechanics relate to information theory, and what are the implications for consciousness studies?",
+        "options": {
+          "A": "Quantum measurement requires information gain about the system, which necessarily disturbs the system through the uncertainty principle, suggesting consciousness might emerge from information integration processes",
+          "B": "The observer effect is purely classical, arising from measurement apparatus interaction, with no relevance to consciousness or information theory",
+          "C": "Consciousness creates quantum collapse through non-physical interaction, violating information conservation in quantum systems",
+          "D": "Information theory shows that quantum measurement is reversible, making the observer effect an illusion with no implications for consciousness"
+        },
+        "correct": "A",
+        "explanation": "Quantum measurement fundamentally involves information gain about a system's state, which requires irreversible interaction that disturbs the system (complementarity principle). This connects to information theory through concepts like quantum Fisher information and has led to theories like Integrated Information Theory (IIT) suggesting consciousness might emerge from complex information integration processes."
+      }
+    }
+  },
+  
+  "output_format": {
+    "json_schema": {
+      "question": "The actual question text ending with ?",
+      "options": {
+        "A": "First option with detailed explanation",
+        "B": "Second option with detailed explanation", 
+        "C": "Third option with detailed explanation",
+        "D": "Fourth option with detailed explanation"
+      },
+      "correct": "A",
+      "explanation": "Comprehensive explanation demonstrating deep understanding"
+    }
+  },
+  
+  "base_prompt_template": "{persona}\n\n**OBJECTIVE:**\nCreate a question that builds understanding while maintaining appropriate academic rigor. Focus on helping the student discover their capabilities rather than testing what they might not know.\n\n**TOPIC:** {topic}\n\n**GUIDANCE:**\n{difficulty_guidance}\n\n**QUALITY EXAMPLE:**\n```json\n{example_json}\n```\n\n**CONTEXT:**\n{context}\n\n**CREATE YOUR QUESTION:**\nDesign a question that balances challenge with support, ensuring the student feels capable while learning something meaningful.\n\n**OUTPUT (JSON ONLY):**"
+}

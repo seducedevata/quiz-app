@@ -1,0 +1,12 @@
+{
+  "test_metadata": {
+    "generated_at": 1752801574,
+    "source_pdf": "data\\uploaded_books\\41 Years IIT JEE Mathematics by Amit M Agarwal.pdf",
+    "total_examples": 0,
+    "max_pages_processed": 3,
+    "max_chunks_created": 3,
+    "pipeline_version": "small_test_1.0",
+    "model_used": null
+  },
+  "training_examples": []
+}

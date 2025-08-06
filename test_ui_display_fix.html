@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test UI Display Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .screen {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .screen.active {
+            display: block;
+        }
+        .nav-item {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            background: #007bff;
+            color: white;
+        }
+        .training-simple {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .files-list {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .no-files {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .message.success { background: #d4edda; color: #155724; }
+        .message.error { background: #f8d7da; color: #721c24; }
+        .message.info { background: #d1ecf1; color: #0c5460; }
+        .message.warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🧪 UI Display Fix Test</h1>
+    
+    <div class="navigation">
+        <div class="nav-item" onclick="showScreen('home', this)">🏠 Home</div>
+        <div class="nav-item active" onclick="showScreen('train', this)">🚀 Train Model</div>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div id="home-screen" class="screen">
+        <h2>Home Screen</h2>
+        <p>This is the home screen.</p>
+    </div>
+    
+    <div id="train-screen" class="screen active">
+        <h2>Train Model Screen</h2>
+        <div id="train-content">
+            <!-- Training UI will be populated here by JavaScript -->
+            <p>Loading training configuration...</p>
+        </div>
+    </div>
+
+    <script>
+        // Mock data and functions
+        let trainingConfigurationLoaded = false;
+        let trainingConfigurationLoading = false;
+        
+        // Mock Python bridge
+        const pythonBridge = {
+            getTrainingConfiguration: async function() {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return JSON.stringify({
+                    selected_files: [],
+                    adapter_name: "test_adapter",
+                    base_model: "microsoft/DialoGPT-small",
+                    training_preset: "standard_training"
+                });
+            },
+            
+            getAvailableBaseModels: async function() {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                return JSON.stringify([{
+                    id: "microsoft/DialoGPT-small",
+                    name: "DialoGPT Small",
+                    description: "Default model",
+                    size: "small",
+                    recommended: true
+                }]);
+            },
+            
+            getTrainingPresets: async function() {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                return JSON.stringify([{
+                    id: "standard_training",
+                    name: "Standard Training",
+                    description: "Default training",
+                    estimated_time: "15-45 minutes",
+                    recommended: true,
+                    config: {epochs: 2, batch_size: 4, learning_rate: 0.0002}
+                }]);
+            },
+            
+            getUploadedFiles: async function() {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                // Simulate uploaded files
+                const mockFiles = [
+                    {
+                        name: "Comprehensive-Chemistry-Jee-Advanced-K-L-Kapoor-(2019).pdf",
+                        size: 33554432, // 32MB
+                        path: "data/uploaded_books/Comprehensive-Chemistry-Jee-Advanced-K-L-Kapoor-(2019).pdf"
+                    },
+                    {
+                        name: "test-document.txt",
+                        size: 1024,
+                        path: "data/uploaded_books/test-document.txt"
+                    }
+                ];
+                return `JSON_STRING:${JSON.stringify(mockFiles)}`;
+            }
+        };
+
+        // Include the fixed functions from app.js
+        function showScreen(screenName, navElement) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show selected screen
+            document.getElementById(`${screenName}-screen`).classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            if (navElement) {
+                navElement.classList.add('active');
+            }
+            
+            // If showing train screen, load training configuration
+            if (screenName === 'train') {
+                console.log('🔄 Train screen activated, loading training configuration...');
+                
+                // Reset the configuration loaded flag to force reload
+                trainingConfigurationLoaded = false;
+                
+                // Load training configuration which includes uploaded files
+                setTimeout(async () => {
+                    if (pythonBridge && typeof pythonBridge.getTrainingConfiguration === 'function') {
+                        await loadTrainingConfiguration();
+                    } else {
+                        console.error('❌ Python bridge not ready');
+                    }
+                }, 100);
+            }
+        }
+
+        async function loadTrainingConfiguration() {
+            // Prevent multiple rapid calls
+            if (trainingConfigurationLoading || trainingConfigurationLoaded) {
+                console.log('🔄 Training configuration already loading or loaded, skipping...');
+                return;
+            }
+            
+            trainingConfigurationLoading = true;
+            
+            try {
+                // Load configuration
+                let config = {};
+                try {
+                    const configData = await pythonBridge.getTrainingConfiguration();
+                    config = JSON.parse(configData);
+                } catch (configError) {
+                    console.error('Config parsing failed:', configError);
+                    config = {
+                        selected_files: [],
+                        adapter_name: "fallback_adapter",
+                        base_model: "microsoft/DialoGPT-small",
+                        training_preset: "standard_training"
+                    };
+                }
+                
+                // Load base models
+                let baseModels = [];
+                try {
+                    const baseModelsData = await pythonBridge.getAvailableBaseModels();
+                    baseModels = JSON.parse(baseModelsData);
+                } catch (modelsError) {
+                    console.error('Base models parsing failed:', modelsError);
+                    baseModels = [{
+                        id: "microsoft/DialoGPT-small",
+                        name: "DialoGPT Small",
+                        description: "Default model",
+                        size: "small",
+                        recommended: true
+                    }];
+                }
+                
+                // Load presets
+                let presets = [];
+                try {
+                    const presetsData = await pythonBridge.getTrainingPresets();
+                    presets = JSON.parse(presetsData);
+                } catch (presetsError) {
+                    console.error('Presets parsing failed:', presetsError);
+                    presets = [{
+                        id: "standard_training",
+                        name: "Standard Training",
+                        description: "Default training",
+                        estimated_time: "15-45 minutes",
+                        recommended: true,
+                        config: {epochs: 2, batch_size: 4, learning_rate: 0.0002}
+                    }];
+                }
+                
+                // Load uploaded files
+                let uploadedFiles = [];
+                try {
+                    const uploadedFilesData = await pythonBridge.getUploadedFiles();
+                    console.log('🔍 Raw uploaded files data:', uploadedFilesData);
+                    console.log('🔍 Raw uploaded files data type:', typeof uploadedFilesData);
+                    
+                    if (uploadedFilesData) {
+                        if (typeof uploadedFilesData === 'string') {
+                            if (uploadedFilesData.startsWith('JSON_STRING:')) {
+                                const jsonString = uploadedFilesData.substring('JSON_STRING:'.length);
+                                console.log('🔍 Parsing JSON string:', jsonString);
+                                uploadedFiles = JSON.parse(jsonString);
+                            } else {
+                                console.log('🔍 Parsing regular JSON string');
+                                uploadedFiles = JSON.parse(uploadedFilesData);
+                            }
+                        } else if (Array.isArray(uploadedFilesData)) {
+                            console.log('🔍 Using array data directly');
+                            uploadedFiles = uploadedFilesData;
+                        }
+                    }
+                    
+                    console.log('🔍 Parsed uploaded files:', uploadedFiles);
+                    console.log('🔍 Number of uploaded files:', uploadedFiles.length);
+                    
+                } catch (filesError) {
+                    console.error('❌ Uploaded files parsing failed:', filesError);
+                    uploadedFiles = [];
+                }
+                
+                console.log('📊 Final parsed data:', {
+                    config: config,
+                    baseModels: baseModels.length,
+                    presets: presets.length,
+                    uploadedFiles: uploadedFiles.length
+                });
+                
+                console.log('🎯 About to populate training UI with files:', uploadedFiles.map(f => f.name));
+                populateTrainingUI(config, baseModels, presets, uploadedFiles);
+                
+                trainingConfigurationLoaded = true;
+                trainingConfigurationLoading = false;
+                
+            } catch (error) {
+                console.error('Failed to load training configuration:', error);
+                trainingConfigurationLoading = false;
+            }
+        }
+
+        // Populate training UI with configuration options
+        function populateTrainingUI(config, baseModels, presets, uploadedFiles) {
+            console.log('🎨 populateTrainingUI called with:');
+            console.log('   - config:', config);
+            console.log('   - baseModels:', baseModels.length, 'models');
+            console.log('   - presets:', presets.length, 'presets');
+            console.log('   - uploadedFiles:', uploadedFiles.length, 'files');
+            console.log('   - uploadedFiles details:', uploadedFiles);
+            
+            const trainContent = document.getElementById('train-content');
+            if (!trainContent) {
+                console.error('❌ Train content element not found');
+                trainingConfigurationLoading = false;
+                return;
+            }
+            
+            console.log('✅ Train content element found:', trainContent);
+            
+            const hasFiles = uploadedFiles && uploadedFiles.length > 0;
+            console.log('📊 Has files:', hasFiles);
+            
+            if (hasFiles) {
+                console.log('📄 Files to display:');
+                uploadedFiles.forEach((file, index) => {
+                    console.log(`   ${index + 1}. ${file.name} (${file.size} bytes)`);
+                });
+            }
+            
+            const htmlContent = `
+                <div class="training-simple">
+                    <h3>🚀 Start Training</h3>
+                    
+                    ${hasFiles ? `
+                        <div class="files-list">
+                            <h4>📚 Uploaded Files (${uploadedFiles.length})</h4>
+                            ${uploadedFiles.map(file => `
+                                <div class="file-item">
+                                    <label>
+                                        <input type="checkbox" name="selected_files" value="${file.name}" checked>
+                                        📄 ${file.name} (${formatFileSize(file.size || 0)})
+                                    </label>
+                                    <button onclick="removeFile('${file.name}')" class="remove-btn">×</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button onclick="startSimpleTraining()" class="btn-primary" id="start-training-btn">
+                            🚀 Start Training
+                        </button>
+                    ` : `
+                        <p class="no-files">📤 Upload some documents first to start training</p>
+                    `}
+                    
+                    <div id="training-progress" style="display: none;">
+                        <div class="progress-simple">
+                            <div class="progress-bar" id="progress-bar"></div>
+                            <span id="progress-text">Training...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            console.log('🖼️ Setting innerHTML with content length:', htmlContent.length);
+            trainContent.innerHTML = htmlContent;
+            
+            console.log('✅ Training UI populated successfully');
+            
+            // Verify the content was set
+            setTimeout(() => {
+                const filesListElement = document.querySelector('.files-list');
+                const noFilesElement = document.querySelector('.no-files');
+                console.log('🔍 Post-render verification:');
+                console.log('   - files-list element:', filesListElement ? 'found' : 'not found');
+                console.log('   - no-files element:', noFilesElement ? 'found' : 'not found');
+                
+                if (hasFiles && !filesListElement) {
+                    console.error('❌ Files list element not found after render!');
+                }
+                if (!hasFiles && !noFilesElement) {
+                    console.error('❌ No files element not found after render!');
+                }
+            }, 100);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function removeFile(filename) {
+            console.log('🗑️ Remove file clicked:', filename);
+            showTemporaryMessage(`🔄 Removing ${filename}...`, 'info');
+            
+            // Simulate removal and refresh
+            setTimeout(() => {
+                showTemporaryMessage(`✅ ${filename} removed successfully`, 'success');
+                trainingConfigurationLoaded = false;
+                loadTrainingConfiguration();
+            }, 1000);
+        }
+
+        function startSimpleTraining() {
+            console.log('🚀 Start training clicked');
+            showTemporaryMessage('🚀 Training started!', 'success');
+        }
+
+        function showTemporaryMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            
+            messagesDiv.appendChild(messageDiv);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Test page initialized');
+            // Auto-load training configuration
+            setTimeout(() => {
+                loadTrainingConfiguration();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

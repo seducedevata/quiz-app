@@ -585,19 +585,15 @@ class DynamicModelDetector:
             logger.warning(f"🤖 Failed to save model cache: {e}")
     
     def _get_user_preferred_model(self, task_type: str) -> Optional[str]:
-        """Get user's preferred model for a specific task"""
+        """🔧 BUG FIX #25: Get user's preferred model via unified config manager"""
         try:
-            from pathlib import Path
-            import json
-
-            user_settings_path = Path("user_data/user_settings.json")
-            if not user_settings_path.exists():
-                return None
-
-            with open(user_settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-
-            model_prefs = settings.get('model_preferences', {})
+            # 🔧 FIX: Use unified config manager instead of direct file access
+            from .unified_config_manager import get_unified_config_manager
+            
+            config_manager = get_unified_config_manager()
+            logger.info("👤 Using unified config manager for model preferences")
+            
+            model_prefs = config_manager.get_model_preferences()
 
             if task_type == "mcq_generation":
                 preferred = model_prefs.get('preferred_mcq_model', '')
@@ -613,21 +609,23 @@ class DynamicModelDetector:
             return None
 
         except Exception as e:
-            logger.warning(f"👤 Failed to load user model preferences: {e}")
+            logger.warning(f"👤 Failed to load user model preferences via unified config: {e}")
             return None
 
     def _get_user_selection_strategy(self) -> str:
-        """Get user's model selection strategy"""
+        """🔧 BUG FIX #25: Get user's model selection strategy via unified config manager"""
         try:
-            from pathlib import Path
-            import json
+            # 🔧 FIX: Use unified config manager instead of direct file access
+            from .unified_config_manager import get_unified_config_manager
+            
+            config_manager = get_unified_config_manager()
+            logger.info("👤 Using unified config manager for selection strategy")
+            
+            return config_manager.get_selection_strategy()
 
-            user_settings_path = Path("user_data/user_settings.json")
-            if not user_settings_path.exists():
-                return "intelligent"  # Default
-
-            with open(user_settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
+        except Exception as e:
+            logger.warning(f"👤 Failed to load selection strategy via unified config: {e}")
+            return "intelligent"  # Default
 
             model_prefs = settings.get('model_preferences', {})
             strategy = model_prefs.get('selection_strategy', 'intelligent')

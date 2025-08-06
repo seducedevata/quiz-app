@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "passed": 6,
+    "failed": 2,
+    "success_rate": 75.0
+  },
+  "tests": [
+    {
+      "test": "Unified Manager",
+      "passed": true,
+      "message": "Unified inference manager available",
+      "timestamp": 1753415547.870081
+    },
+    {
+      "test": "BatchTwoModelPipeline",
+      "passed": true,
+      "message": "OfflineMCQGenerator properly initialized",
+      "timestamp": 1753415547.8702343
+    },
+    {
+      "test": "Unified Prompt Builder",
+      "passed": true,
+      "message": "Unified prompt builder working",
+      "timestamp": 1753415547.8707044
+    },
+    {
+      "test": "Local Models",
+      "passed": true,
+      "message": "Local models available: True",
+      "timestamp": 1753415547.8707488
+    },
+    {
+      "test": "Generation Methods",
+      "passed": true,
+      "message": "Found current methods: ['generate_mcq_batch_sync']",
+      "timestamp": 1753415547.8707833
+    },
+    {
+      "test": "System Initialization",
+      "passed": true,
+      "message": "Unified inference manager initialized",
+      "timestamp": 1753415559.98789
+    },
+    {
+      "test": "Result Length",
+      "passed": false,
+      "message": "Empty result list after all attempts",
+      "timestamp": 1753415571.533603
+    },
+    {
+      "test": "Molecules Result",
+      "passed": false,
+      "message": "Invalid result structure",
+      "timestamp": 1753415575.349415
+    }
+  ]
+}

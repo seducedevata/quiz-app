@@ -1,8 +1,12 @@
-# COMPREHENSIVE KNOWLEDGE APP .gitignore
-# This .gitignore is designed to keep ONLY essential source code and exclude all data/model files
+# KNOWLEDGE APP .gitignore
+# Keep: Qt WebEngine UI + Python Backend + Next.js
+# Exclude: React Native Windows + Build artifacts + Large files
 
-# ===== CRITICAL: LARGE FILES THAT SHOULD NEVER BE TRACKED =====
-# Large binary files and executables
+# ===== EXCLUDE REACT NATIVE WINDOWS ENTIRELY =====
+KnowledgeAppRNW/
+KnowledgeAppRNW/**
+
+# ===== LARGE FILES & BINARIES =====
 *.exe
 *.msi
 *.dmg
@@ -10,9 +14,12 @@
 *.deb
 *.rpm
 *.app
-
-# PDF files (can be very large)
 *.pdf
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+*.rar
 
 # Model files and weights
 *.gguf
@@ -26,37 +33,27 @@
 *.pkl
 *.pickle
 
-# Data and media files
-*.csv
-*.json.gz
-*.jsonl
-*.parquet
+# Database files
 *.sqlite
 *.sqlite3
 *.db
 *.mdb
 
-# Large text files (extracted content, etc.)
+# Large data files
+*.csv
+*.json.gz
+*.jsonl
+*.parquet
 *_extracted.txt
 *_processed.txt
 training_dataset.txt
 combined_training_dataset.txt
 
-# Archive files
-*.zip
-*.tar.gz
-*.tar.bz2
-*.7z
-*.rar
-
 # ===== PYTHON SPECIFIC =====
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -77,15 +74,16 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
+# Testing
 htmlcov/
 .tox/
 .nox/
@@ -99,78 +97,19 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-# Translations
-*.mo
-*.pot
+# ===== NEXT.JS SPECIFIC =====
+# Next.js build output
+knowledge-app-next/.next/
+knowledge-app-next/out/
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+# Next.js dependencies
+knowledge-app-next/node_modules/
 
-# Flask stuff:
-instance/
-.webassets-cache
+# Next.js environment files
+knowledge-app-next/.env*
 
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
+# Next.js cache
+knowledge-app-next/.swc/
 
 # ===== SECURITY & SENSITIVE DATA =====
 # API Keys and secrets
@@ -179,7 +118,6 @@ config/api_keys.json
 *.keyfile
 *.pem
 *.crt
-.env*
 .secrets*
 
 # User data and uploads
@@ -188,22 +126,12 @@ uploaded_books/
 data/uploaded_books/
 
 # ===== IDE & EDITOR FILES =====
-# PyCharm
 .idea/
-
-# VSCode
 .vscode/
-
-# Sublime Text
 *.sublime-project
 *.sublime-workspace
-
-# Vim
 *.swp
 *.swo
-*~
-
-# Emacs
 *~
 \#*\#
 /.emacs.desktop
@@ -214,20 +142,14 @@ tramp
 .\#*
 
 # ===== SYSTEM FILES =====
-# Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-
-# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 Icon
-
-# Linux
-*~
 
 # ===== APPLICATION SPECIFIC =====
 # Cache directories
@@ -278,7 +200,7 @@ screenshots/
 *.tiff
 
 # ===== DEBUG & TESTING FILES =====
-# All debug, test, and analysis scripts (these clutter the repo)
+# Debug and test scripts (clutter)
 test_*.py
 debug_*.py
 *_test.py
@@ -317,7 +239,7 @@ iterative_*.py
 screenshot_*.py
 gpu_*.py
 
-# Generated markdown files (documentation that's auto-generated)
+# Generated markdown files
 *_SUMMARY.md
 *_RESULTS.md
 *_GUIDE.md
@@ -345,24 +267,39 @@ countloc.py
 test_*.html
 
 # ===== THIRD PARTY & EXTERNAL =====
-# Third-party directories
 .git/
 .qodo/
 .repomix/
 .vercel/
-node_modules/
 
-# ===== ESSENTIAL FILES TO KEEP =====
-# These patterns ensure we keep important files even if they match above patterns
-
-# Core source code (explicit inclusion)
+# ===== KEEP THESE IMPORTANT FILES =====
+# Core Python source code
 !src/
 !src/**/*.py
 !src/**/*.js
 !src/**/*.html
 !src/**/*.css
 
-# Essential config files (only templates/examples)
+# Next.js application (keep everything)
+!knowledge-app-next/
+!knowledge-app-next/src/
+!knowledge-app-next/src/**/*
+!knowledge-app-next/public/
+!knowledge-app-next/public/**/*
+!knowledge-app-next/scripts/
+!knowledge-app-next/scripts/**/*
+!knowledge-app-next/api-server/
+!knowledge-app-next/api-server/**/*
+!knowledge-app-next/package.json
+!knowledge-app-next/package-lock.json
+!knowledge-app-next/next.config.js
+!knowledge-app-next/tailwind.config.ts
+!knowledge-app-next/tsconfig.json
+!knowledge-app-next/next-env.d.ts
+!knowledge-app-next/*.bat
+!knowledge-app-next/*.md
+
+# Essential config files
 !config/app_settings.json
 !config/unified_config.json
 !config/settings.json
@@ -387,7 +324,11 @@ tests/test_*.py
 tests/debug_*.py
 tests/*_test.py
 tests/*_debug.py
-tests/gui_automation_debugger.py
+
+# Backend server
+!backend/
+!backend/**/*.py
+!backend/**/*.js
 
 # Documentation and configuration
 !README.md
@@ -395,6 +336,16 @@ tests/gui_automation_debugger.py
 !requirements-pinned.txt
 !main.py
 !.gitignore
+!GEMINI.md
+!CURSOR_UI_RECREATION_PROMPT.md
+
+# HTML debug files (for Qt WebEngine reference)
+!debug_navigation.html
+!test_js_syntax.html
+!*.html
+
+# Python bridge server
+!python_bridge_server.py
 
 # Kiro configuration
 !.kiro/
@@ -404,7 +355,6 @@ tests/gui_automation_debugger.py
 !.gitkeep
 
 # ===== FINAL SAFETY: Explicitly exclude problematic patterns =====
-# Even if something matches an inclusion pattern above, exclude these
 **/__pycache__/
 **/*.pyc
 **/*.log
@@ -414,3 +364,5 @@ tests/gui_automation_debugger.py
 **/*.pdf
 **/*.db
 **/*.sqlite
+**/node_modules/
+**/.next/

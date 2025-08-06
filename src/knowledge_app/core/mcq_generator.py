@@ -66,45 +66,5 @@ class DefaultMCQGenerator(MCQGenerator):
         return False
 
 
-# Factory function to create appropriate MCQ generator
-def create_mcq_generator(config: Optional[Dict[str, Any]] = None) -> MCQGenerator:
-    """Create and return an appropriate MCQ generator based on configuration"""
-
-    if not config:
-        config = {}
-
-    generator_type = config.get("mcq_generator_type", "default")
-
-    try:
-        if generator_type == "lm_studio":
-            from .lm_studio_mcq_generator import LMStudioMCQGenerator
-
-            generator = LMStudioMCQGenerator(config)
-            if generator.is_available():
-                return generator
-        elif generator_type == "ollama":
-            from .ollama_mcq_generator import OllamaMCQGenerator
-
-            generator = OllamaMCQGenerator(config)
-            if generator.is_available():
-                return generator
-        elif generator_type == "offline":
-            from .offline_mcq_generator import OfflineMCQGenerator
-
-            generator = OfflineMCQGenerator(config)
-            if generator.is_available():
-                return generator
-        elif generator_type == "rag":
-            from .rag_mcq_generator import RAGMCQGenerator
-
-            generator = RAGMCQGenerator(config)
-            if generator.is_available():
-                return generator
-    except ImportError as e:
-        logger.warning(f"Could not import {generator_type} generator: {e}")
-    except Exception as e:
-        logger.warning(f"Error creating {generator_type} generator: {e}")
-
-    # Fallback to default generator
-    logger.info("Using default MCQ generator")
-    return DefaultMCQGenerator(config)
+# Note: MCQ generation is now handled by UnifiedInferenceManager
+# This file only contains the base interface and default fallback

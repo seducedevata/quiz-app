@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "generated_at": 1752801994,
+    "source_pdf": "data\\uploaded_books\\41 Years IIT JEE Mathematics by Amit M Agarwal.pdf",
+    "total_examples": 2,
+    "model_used": "deepseek-r1:14b",
+    "pipeline_version": "working_deepseek_1.0"
+  },
+  "training_examples": [
+    {
+      "question": "If A is a square matrix of order 3 such that all its rows are identical, what is the determinant of A?",
+      "options": [
+        "A) 0",
+        "B) 1",
+        "C) 2",
+        "D) 3"
+      ],
+      "correct_answer": "A) 0",
+      "explanation": "If a square matrix has all its rows (or columns) identical, it means the rows are linearly dependent. A determinant of such a matrix is always zero because the matrix is singular and not invertible.",
+      "topic": "mathematics",
+      "difficulty": "medium",
+      "id": "question_001",
+      "source_chunk_id": "chunk_001",
+      "source_page": 4,
+      "source_preview": "10. Application of Derivatives \n225-262\n 7. Matrices and Determinants \n127-159\n 11. Indefinite Integration   \n263-277\n 13. Area \n311-334\n 12. Definite Integration \n278-310\n 15. Straight Line and Pair ...",
+      "generated_at": 1752801940.3046334,
+      "model_used": "deepseek-r1:14b"
+    },
+    {
+      "question": "In triangle ABC, if the sides opposite angles A, B, and C are 2, 3, and 4 respectively, then which angle is the largest?",
+      "options": [
+        "A) Angle A",
+        "B) Angle B",
+        "C) Angle C",
+        "D) All angles are equal"
+      ],
+      "correct_answer": "C) Angle C",
+      "explanation": "In a triangle, the largest side is opposite the largest angle. Here, side c (4 units) is the largest, so angle C is the largest.",
+      "topic": "mathematics",
+      "difficulty": "medium",
+      "id": "question_002",
+      "source_chunk_id": "chunk_002",
+      "source_page": 5,
+      "source_preview": "21. Trigonometrical Equations \n474-487\nŸ\nJEE Advanced Solved Paper 2019 \n1-18\n 19. Hyperbola \n450-460\n 23. Properties of Triangles  \n498-518\n 24. Vectors \n519-548\n 16. Circle \n383-416\n 20. Trigonometr...",
+      "generated_at": 1752801993.07435,
+      "model_used": "deepseek-r1:14b"
+    }
+  ]
+}

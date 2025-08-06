@@ -58,7 +58,7 @@ class OllamaJSONGenerator(MCQGenerator):
         self.session.mount("https://", adapter)
         
         # [HOT] GPU-OPTIMIZED GENERATION PARAMETERS (Non-DeepSeek models)
-        # [EMERGENCY] INCREASED RANDOMNESS TO PREVENT IDENTICAL QUESTIONS
+        # [INFO] Enhanced randomness to prevent identical questions
         self.generation_params = {
             'temperature': 0.8,         # [HOT] MUCH HIGHER temperature for diverse questions
             'top_p': 0.95,              # Slightly reduced for quality while maintaining diversity
@@ -337,11 +337,58 @@ class OllamaJSONGenerator(MCQGenerator):
                 else:
                     # Use intelligent prompt data
                     return self._intelligent_standard_generation(
-                        intelligent_prompt_data, num_questions, difficulty, game_mode, question_type
+                        intelligent_prompt_data, resolved_topic, num_questions, difficulty, game_mode, question_type
                     )
 
         except Exception as e:
             logger.error(f"[ERROR] Generation failed: {e}")
+            return []
+
+    def generate_mcq_with_custom_prompt(self, topic: str, custom_prompt: str, context: str = "", num_questions: int = 1, difficulty: str = "medium", game_mode: str = "casual", question_type: str = "mixed") -> List[Dict[str, Any]]:
+        """[BRAIN] Generate MCQ using PHI-ENHANCED CUSTOM PROMPT (Stage 2 Verification)"""
+        if not self.is_available():
+            logger.error("[ERROR] Ollama JSON generator not available")
+            return []
+
+        try:
+            logger.info(f"[BRAIN] Using PHI-ENHANCED CUSTOM PROMPT for '{topic}' ({difficulty}, {question_type})")
+            logger.info(f"[PROMPT] Enhanced prompt length: {len(custom_prompt)} characters")
+
+            results = []
+            for i in range(num_questions):
+                try:
+                    # Use the PHI-enhanced prompt directly
+                    logger.info(f"[BRAIN] Generating question {i+1}/{num_questions} with enhanced prompt")
+
+                    # Generate using Ollama with difficulty-based timeout
+                    response = self._call_ollama_api(custom_prompt, difficulty)
+                    if response:
+                        parsed_mcqs = self._parse_json_response(response, 1)  # Expecting 1 question
+                        if parsed_mcqs and len(parsed_mcqs) > 0:
+                            mcq = parsed_mcqs[0]
+                            # Add metadata about the enhancement
+                            mcq['generation_metadata'] = {
+                                'used_phi_enhanced_prompt': True,
+                                'stage_2_verification': True,
+                                'original_topic': topic,
+                                'difficulty': difficulty,
+                                'question_type': question_type
+                            }
+                            results.append(mcq)
+                            logger.info(f"[OK] Generated PHI-ENHANCED question {i+1}/{num_questions}")
+                        else:
+                            logger.warning(f"[WARNING] Failed to parse PHI-ENHANCED question {i+1}")
+                    else:
+                        logger.warning(f"[WARNING] No response for PHI-ENHANCED question {i+1}")
+
+                except Exception as e:
+                    logger.error(f"[ERROR] Failed to generate PHI-ENHANCED question {i+1}: {e}")
+
+            logger.info(f"[RESULT] PHI-ENHANCED generation completed: {len(results)}/{num_questions} questions")
+            return results
+
+        except Exception as e:
+            logger.error(f"[ERROR] PHI-ENHANCED generation failed: {e}")
             return []
 
     def _phi_instruction_generation(self, topic: str, phi_instructions: str, num_questions: int, difficulty: str, game_mode: str, question_type: str) -> List[Dict[str, Any]]:
@@ -358,12 +405,12 @@ class OllamaJSONGenerator(MCQGenerator):
                 numerical_enforcement = ""
                 if question_type.lower() == "numerical":
                     numerical_enforcement = """
-🔢 CRITICAL NUMERICAL REQUIREMENT:
-- Question MUST involve calculations, numbers, formulas, or quantitative analysis
+🔢 NUMERICAL EXCELLENCE FOCUS:
+- Question should involve calculations, numbers, formulas, or quantitative analysis
 - Include specific numerical values (masses, energies, wavelengths, frequencies, etc.)
-- All answer options MUST be numerical values with appropriate units
-- Question should require mathematical problem-solving
-- FORBIDDEN: Conceptual questions, theory explanations, qualitative comparisons"""
+- All answer options should be numerical values with appropriate units
+- Question should require mathematical problem-solving skills
+- Focus on quantitative analysis to maintain numerical question integrity"""
 
                 prompt = f"""You are an expert MCQ generator. {safe_phi_instructions}
 
@@ -382,8 +429,8 @@ Respond with valid JSON only:
   "explanation": "Brief explanation"
 }}"""
 
-                # Generate using Ollama
-                response = self._call_ollama_api(prompt)
+                # Generate using Ollama with difficulty-based timeout
+                response = self._call_ollama_api(prompt, difficulty)
                 if response:
                     parsed_mcqs = self._parse_json_response(response, 1)  # Expecting 1 question
                     if parsed_mcqs and len(parsed_mcqs) > 0:
@@ -426,7 +473,7 @@ Respond with valid JSON only:
         
         return all_results[:num_questions]
 
-    def _intelligent_standard_generation(self, intelligent_prompt_data: Dict, num_questions: int, difficulty: str, game_mode: str, question_type: str) -> List[Dict[str, Any]]:
+    def _intelligent_standard_generation(self, intelligent_prompt_data: Dict, topic: str, num_questions: int, difficulty: str, game_mode: str, question_type: str) -> List[Dict[str, Any]]:
         """[BRAIN] INTELLIGENT Standard generation using smart prompts"""
 
         logger.info(f"[BRAIN] Intelligent standard generation: {num_questions} questions")
@@ -437,28 +484,48 @@ Respond with valid JSON only:
                 # Use the intelligent prompt directly with numerical enforcement
                 base_prompt = intelligent_prompt_data.get("prompt", "") if intelligent_prompt_data else ""
 
-                # Handle None or empty base_prompt
-                if not base_prompt:
-                    logger.warning("[WARNING] Empty base_prompt, using fallback")
-                    base_prompt = f"Generate a {difficulty} level multiple choice question about {topic}."
+                # 🚀 REVOLUTIONARY: Use unified prompt system instead of hardcoded constraints
+                try:
+                    from .inquisitor_prompt import get_provider_optimized_prompt
+                    
+                    # Use the unified trust-based prompt system
+                    prompt = get_provider_optimized_prompt(
+                        topic=topic,
+                        difficulty=difficulty,
+                        question_type=question_type,
+                        context="",
+                        provider="ollama"
+                    )
+                    
+                    logger.info(f"[BRAIN] Using unified prompt system for question {i+1}/{num_questions}")
+                    
+                except ImportError:
+                    logger.warning("[WARNING] Unified prompt system not available, using simple fallback")
+                    
+                    # Simple fallback without hardcoded constraints
+                    difficulty_desc = {
+                        "expert": "PhD-level expert",
+                        "hard": "graduate-level advanced", 
+                        "medium": "undergraduate-level",
+                        "easy": "introductory-level"
+                    }.get(difficulty, "appropriate-level")
+                    
+                    # Trust-based prompt - guide quality without forbidding
+                    prompt = f"""Generate a {difficulty_desc} multiple choice question about {topic}.
 
-                # Add strong numerical enforcement if needed
-                if question_type.lower() == "numerical":
-                    numerical_enforcement = """
-🔢 CRITICAL NUMERICAL REQUIREMENT:
-- Question MUST involve calculations, numbers, formulas, or quantitative analysis
-- Include specific numerical values (masses, energies, wavelengths, frequencies, etc.)
-- All answer options MUST be numerical values with appropriate units
-- Question should require mathematical problem-solving
-- FORBIDDEN: Conceptual questions, theory explanations, qualitative comparisons"""
-                    prompt = f"{base_prompt}\n{numerical_enforcement}"
-                else:
-                    prompt = base_prompt
+Quality Expectations:
+- Demonstrate {difficulty_desc} understanding and reasoning
+- Use appropriate technical terminology for the subject
+- Create engaging questions that test real comprehension
+- For numerical questions: include calculations and quantitative analysis
+- For conceptual questions: focus on understanding and relationships
+
+Return as valid JSON with question, options (A-D), correct answer, and explanation."""
 
                 logger.info(f"[START] Generating question {i+1}/{num_questions} with intelligent prompt")
 
-                # Generate with Ollama
-                response = self._call_ollama_api(prompt)
+                # Generate with Ollama using difficulty-based timeout
+                response = self._call_ollama_api(prompt, difficulty)
 
                 if response:
                     # Parse the response
@@ -512,40 +579,132 @@ Respond with valid JSON only:
         return questions
 
     def _create_deepseek_json_prompt(self, topic: str, question_type: str, difficulty: str) -> str:
-        """[BRAIN] GOLD SOLUTION: Specialized prompt for DeepSeek-R1 that guides reasoning then clean JSON"""
+        """[BRAIN] GOLD SOLUTION: Specialized prompt for DeepSeek-R1 with proper difficulty differentiation"""
 
-        # Define question type requirements
-        question_type_requirements = {
-            "numerical": {
-                "focus": "mathematical calculations, quantitative analysis, and numerical problem-solving",
-                "requirements": [
-                    "MUST involve specific numbers, calculations, or quantitative analysis",
-                    "MUST require mathematical reasoning or computational steps",
-                    "MUST include units, formulas, or numerical relationships",
-                    "MUST test ability to solve problems with concrete numerical answers"
-                ],
-                "examples": "calculations, unit conversions, formula applications, data analysis"
-            },
-            "conceptual": {
-                "focus": "theoretical understanding, principles, and qualitative reasoning",
-                "requirements": [
-                    "MUST test understanding of concepts, theories, or principles",
-                    "MUST focus on 'why' and 'how' rather than 'what'",
-                    "MUST avoid numerical calculations or quantitative analysis",
-                    "MUST test deep conceptual understanding and relationships"
-                ],
-                "examples": "explanations, comparisons, cause-effect relationships, theoretical applications"
-            },
-            "mixed": {
-                "focus": "combination of numerical and conceptual elements",
-                "requirements": [
-                    "Can combine quantitative analysis with conceptual understanding",
-                    "May include both calculations and theoretical reasoning",
-                    "Should integrate multiple types of knowledge"
-                ],
-                "examples": "problems requiring both calculation and explanation"
+        # 🚀 CRITICAL FIX: Add proper difficulty level differentiation
+        if difficulty == "expert":
+            difficulty_level = "PhD-level expert"
+            complexity_desc = "research-level complexity requiring deep theoretical understanding and advanced mathematical analysis"
+            cognitive_level = "synthesis, evaluation, and expert-level application of advanced concepts"
+            min_length = "200+ characters with multi-step reasoning"
+        elif difficulty == "hard":
+            complexity_desc = "graduate-level complexity requiring advanced understanding of complex relationships"
+            cognitive_level = "analysis and application of sophisticated concepts"
+            difficulty_level = "Graduate-level advanced"
+            min_length = "150+ characters with detailed reasoning"
+        elif difficulty == "medium":
+            complexity_desc = "undergraduate-level complexity requiring solid understanding"
+            cognitive_level = "application and analysis of standard concepts"
+            difficulty_level = "Undergraduate-level"
+            min_length = "100+ characters with clear reasoning"
+        else:  # easy
+            complexity_desc = "introductory-level complexity with basic concepts"
+            cognitive_level = "understanding and basic application"
+            difficulty_level = "Introductory-level"
+            min_length = "80+ characters with simple reasoning"
+
+        # Define difficulty-aware question type requirements
+        if difficulty == "expert":
+            question_type_requirements = {
+                "numerical": {
+                    "focus": "advanced mathematical calculations, complex quantitative analysis, and multi-step numerical problem-solving requiring PhD-level expertise",
+                    "requirements": [
+                        "MUST involve complex calculations with multiple steps and advanced mathematical concepts",
+                        "MUST require deep mathematical reasoning involving calculus, differential equations, or advanced statistics",
+                        "MUST include sophisticated formulas, constants, and specialized units",
+                        "MUST test ability to solve research-level problems with precise numerical answers",
+                        "MUST demonstrate mastery of advanced mathematical techniques and computational methods"
+                    ],
+                    "examples": "quantum mechanical calculations, thermodynamic cycle analysis, electromagnetic field computations, statistical modeling"
+                },
+                "conceptual": {
+                    "focus": "advanced theoretical understanding, complex principles, and sophisticated qualitative reasoning at research level",
+                    "requirements": [
+                        "MUST test deep understanding of advanced theories, models, and research-level concepts",
+                        "MUST focus on complex 'why' and 'how' questions requiring synthesis of multiple theories",
+                        "MUST completely avoid numerical calculations or quantitative analysis",
+                        "MUST test expert-level conceptual understanding and multi-layered relationships",
+                        "MUST require knowledge of cutting-edge research and advanced theoretical frameworks"
+                    ],
+                    "examples": "theoretical mechanism explanations, advanced model comparisons, research methodology discussions"
+                },
+                "mixed": {
+                    "focus": "integration of advanced numerical and sophisticated conceptual elements at expert level",
+                    "requirements": [
+                        "Must combine complex quantitative analysis with advanced theoretical understanding",
+                        "Should integrate multiple advanced mathematical and conceptual knowledge domains",
+                        "Must require both computational expertise and deep theoretical insight"
+                    ],
+                    "examples": "research problems requiring both advanced calculations and theoretical interpretation"
+                }
             }
-        }
+        elif difficulty == "hard":
+            question_type_requirements = {
+                "numerical": {
+                    "focus": "complex mathematical calculations, advanced quantitative analysis, and multi-step numerical problem-solving at graduate level",
+                    "requirements": [
+                        "MUST involve multi-step calculations with intermediate to advanced mathematical concepts",
+                        "MUST require solid mathematical reasoning involving calculus, linear algebra, or statistics",
+                        "MUST include complex formulas, specialized constants, and appropriate units",
+                        "MUST test ability to solve graduate-level problems with detailed numerical solutions",
+                        "MUST demonstrate proficiency in advanced mathematical techniques"
+                    ],
+                    "examples": "advanced physics calculations, chemical kinetics, engineering analysis, mathematical modeling"
+                },
+                "conceptual": {
+                    "focus": "advanced theoretical understanding, complex principles, and sophisticated qualitative reasoning",
+                    "requirements": [
+                        "MUST test solid understanding of advanced theories, principles, and graduate-level concepts",
+                        "MUST focus on detailed 'why' and 'how' questions requiring integration of concepts",
+                        "MUST avoid numerical calculations or quantitative analysis",
+                        "MUST test advanced conceptual understanding and sophisticated relationships",
+                        "MUST require knowledge of advanced theories and their applications"
+                    ],
+                    "examples": "theoretical explanations, advanced comparisons, principle applications, mechanism analysis"
+                },
+                "mixed": {
+                    "focus": "combination of advanced numerical and conceptual elements at graduate level",
+                    "requirements": [
+                        "Must combine complex quantitative analysis with advanced theoretical understanding",
+                        "Should integrate multiple mathematical and conceptual knowledge areas",
+                        "Must require both computational skills and theoretical reasoning"
+                    ],
+                    "examples": "graduate-level problems requiring both calculation and theoretical explanation"
+                }
+            }
+        else:
+            # Medium and easy use existing simpler requirements
+            question_type_requirements = {
+                "numerical": {
+                    "focus": "mathematical calculations, quantitative analysis, and numerical problem-solving",
+                    "requirements": [
+                        "MUST involve specific numbers, calculations, or quantitative analysis",
+                        "MUST require mathematical reasoning or computational steps",
+                        "MUST include units, formulas, or numerical relationships",
+                        "MUST test ability to solve problems with concrete numerical answers"
+                    ],
+                    "examples": "calculations, unit conversions, formula applications, data analysis"
+                },
+                "conceptual": {
+                    "focus": "theoretical understanding, principles, and qualitative reasoning",
+                    "requirements": [
+                        "MUST test understanding of concepts, theories, or principles",
+                        "MUST focus on 'why' and 'how' rather than 'what'",
+                        "MUST avoid numerical calculations or quantitative analysis",
+                        "MUST test deep conceptual understanding and relationships"
+                    ],
+                    "examples": "explanations, comparisons, cause-effect relationships, theoretical applications"
+                },
+                "mixed": {
+                    "focus": "combination of numerical and conceptual elements",
+                    "requirements": [
+                        "Can combine quantitative analysis with conceptual understanding",
+                        "May include both calculations and theoretical reasoning",
+                        "Should integrate multiple types of knowledge"
+                    ],
+                    "examples": "problems requiring both calculation and explanation"
+                }
+            }
 
         type_config = question_type_requirements.get(question_type, question_type_requirements["mixed"])
         requirements_text = "\n".join(f"- {req}" for req in type_config['requirements'])
@@ -553,8 +712,14 @@ Respond with valid JSON only:
         return f"""<think>
 My goal is to generate a single, high-quality {question_type.upper()} multiple-choice question.
 Topic: {topic}
-Difficulty: {difficulty}
+Difficulty: {difficulty_level} ({difficulty})
 Question Type: {question_type.upper()}
+
+DIFFICULTY SPECIFICATIONS:
+- Level: {difficulty_level}
+- Complexity: {complexity_desc}
+- Cognitive Level: {cognitive_level}
+- Length Requirement: {min_length}
 
 CRITICAL QUESTION TYPE REQUIREMENTS for {question_type.upper()}:
 Focus: {type_config['focus']}
@@ -564,26 +729,26 @@ Requirements:
 Examples: {type_config['examples']}
 
 Plan:
-1. Analyze the topic '{topic}' specifically for {question_type.upper()} aspects
-2. Design a question that STRICTLY follows {question_type.upper()} requirements
-3. Ensure the question is clearly {question_type.upper()} in nature (not other types)
+1. Analyze the topic '{topic}' specifically for {question_type.upper()} aspects at {difficulty_level}
+2. Design a question that follows {question_type.upper()} excellence guidelines with {complexity_desc}
+3. Ensure the question demonstrates {cognitive_level}
 4. Create one unambiguously correct answer that fits {question_type.upper()} format
-5. Create three plausible but incorrect distractors appropriate for {question_type.upper()} questions
-6. Write explanation that demonstrates why this is a {question_type.upper()} question
+5. Create three plausible but incorrect distractors appropriate for {difficulty_level} {question_type.upper()} questions
+6. Write explanation that demonstrates {difficulty_level} understanding
 7. Output ONLY the JSON object
 
-IMPORTANT: This MUST be a {question_type.upper()} question - if numerical, include numbers and calculations; if conceptual, focus on understanding and principles.
+IMPORTANT: This MUST be a {difficulty_level} {question_type.upper()} question with {complexity_desc}.
 </think>
 
 {{
-  "question": "Your {difficulty} level {question_type.upper()} question about {topic}?",
+  "question": "Your {difficulty_level} {question_type.upper()} question about {topic}?",
   "options": ["Option A", "Option B", "Option C", "Option D"],
   "correct_answer": "A",
-  "explanation": "A detailed explanation showing why this is the correct {question_type.upper()} answer."
+  "explanation": "A detailed explanation showing why this is the correct {difficulty_level} {question_type.upper()} answer with {complexity_desc}."
 }}"""
 
     def _call_ollama_reasoning_api(self, prompt: str) -> Optional[str]:
-        """[HOT] GOLD SOLUTION: Optimized API call for DeepSeek R1 with proper keep_alive"""
+        """🚀 ENHANCED: Smart streaming for DeepSeek R1 with dynamic JSON detection"""
         
         # Extract keep_alive from params to include at top level
         reasoning_options = self.deepseek_r1_params.copy()
@@ -592,41 +757,100 @@ IMPORTANT: This MUST be a {question_type.upper()} question - if numerical, inclu
         payload = {
             "model": self.active_model,
             "prompt": prompt,
-            "stream": False,
+            "stream": True,  # 🚀 ENABLE STREAMING for immediate processing
             "keep_alive": keep_alive,  # CRITICAL: Keep model hot
             "options": reasoning_options
         }
         
         try:
-            logger.info(f"[HOT] GOLD: DeepSeek R1 API call with keep_alive={keep_alive}")
-            logger.debug(f"[START] GPU layers: {reasoning_options['n_gpu_layers']}")
-            logger.debug(f"[START] CPU threads: {reasoning_options['num_thread']}")
-            logger.debug(f"[HOT] Tokens: {reasoning_options['num_predict']}")
+            logger.info(f"[STREAM] DeepSeek R1 smart streaming with keep_alive={keep_alive}")
+            logger.debug(f"[GPU] layers: {reasoning_options['n_gpu_layers']}")
+            logger.debug(f"[CPU] threads: {reasoning_options['num_thread']}")
+            logger.debug(f"[TOKENS] predict: {reasoning_options['num_predict']}")
             
             start_time = time.time()
             response = self.session.post(
                 self.generate_url,
                 json=payload,
-                timeout=600  # Extended timeout for DeepSeek R1 reasoning
+                stream=True,
+                timeout=30  # Just connection timeout
             )
-            api_time = time.time() - start_time
-            
             response.raise_for_status()
-            logger.info(f"[HOT] GOLD: API call completed in {api_time:.1f}s")
             
-            result = response.json()
-            raw_response = result.get("response", "")
+            # 🧠 SMART JSON DETECTION for DeepSeek responses
+            accumulated_response = ""
+            json_bracket_count = 0
+            json_started = False
+            complete_json_detected = False
+            reasoning_complete = False
             
-            if raw_response:
-                logger.info(f"[HOT] GOLD: Received {len(raw_response)} chars from DeepSeek")
-                logger.debug(f"[HOT] Response preview: {raw_response[:100]}...")
-                return raw_response
+            max_time = 600  # 10 minutes absolute max for complex reasoning
+            
+            for line in response.iter_lines(decode_unicode=True):
+                if time.time() - start_time > max_time:
+                    logger.warning(f"[TIMEOUT] DeepSeek reached maximum time limit")
+                    break
+                    
+                if line:
+                    try:
+                        chunk_data = json.loads(line)
+                        chunk_text = chunk_data.get("response", "")
+                        
+                        if chunk_text:
+                            accumulated_response += chunk_text
+                            
+                            # 🧠 SPECIAL DEEPSEEK DETECTION: Look for reasoning completion
+                            if "<think>" in chunk_text:
+                                logger.debug("[REASON] DeepSeek reasoning started")
+                            elif "</think>" in chunk_text:
+                                logger.info(f"[REASON] DeepSeek reasoning completed after {time.time() - start_time:.1f}s")
+                                reasoning_complete = True
+                            
+                            # 🧠 DETECT JSON STRUCTURE after reasoning
+                            if reasoning_complete:
+                                for char in chunk_text:
+                                    if char == '{':
+                                        if not json_started:
+                                            json_started = True
+                                            logger.debug("[JSON] JSON object started after reasoning")
+                                        json_bracket_count += 1
+                                    elif char == '}':
+                                        json_bracket_count -= 1
+                                        if json_started and json_bracket_count == 0:
+                                            complete_json_detected = True
+                                            logger.info(f"[JSON] Complete JSON detected after {time.time() - start_time:.1f}s")
+                                            break
+                                
+                                # 🚀 IMMEDIATE PROCESSING: Return as soon as JSON is complete
+                                if complete_json_detected:
+                                    if '"question"' in accumulated_response and '"options"' in accumulated_response:
+                                        elapsed = time.time() - start_time
+                                        logger.info(f"[SUCCESS] Valid DeepSeek JSON ready in {elapsed:.1f}s")
+                                        return accumulated_response
+                                    else:
+                                        logger.debug("[JSON] Complete but missing MCQ fields, continuing...")
+                                        complete_json_detected = False
+                                        json_bracket_count = 0
+                        
+                        # Check if generation is complete
+                        if chunk_data.get("done", False):
+                            logger.info(f"[DONE] DeepSeek generation marked complete after {time.time() - start_time:.1f}s")
+                            break
+                            
+                    except json.JSONDecodeError:
+                        continue
+            
+            # Return accumulated response
+            if accumulated_response.strip():
+                elapsed = time.time() - start_time
+                logger.info(f"[COMPLETE] DeepSeek response ready after {elapsed:.1f}s")
+                return accumulated_response
             else:
-                logger.warning("[HOT] GOLD: Empty response from DeepSeek")
+                logger.warning("[EMPTY] No response accumulated from DeepSeek")
                 return None
             
         except Exception as e:
-            logger.error(f"[ERROR] GOLD: DeepSeek API error: {e}")
+            logger.error(f"[ERROR] DeepSeek smart streaming failed: {e}")
             return None
 
     def _standard_generation(self, topic: str, context: str, num_questions: int, difficulty: str, game_mode: str, question_type: str) -> List[Dict[str, Any]]:
@@ -641,7 +865,7 @@ IMPORTANT: This MUST be a {question_type.upper()} question - if numerical, inclu
         return results
 
     def _generate_single_question(self, topic: str, difficulty: str, question_type: str) -> Optional[Dict[str, Any]]:
-        """[HOT] GOLD SOLUTION: Adaptive generation for DeepSeek vs other models"""
+        """🚀 ENHANCED: Smart streaming single question generation with dynamic JSON detection"""
         
         # Detect if using DeepSeek model
         is_deepseek_model = 'deepseek' in self.active_model.lower()
@@ -663,29 +887,38 @@ IMPORTANT: This MUST be a {question_type.upper()} question - if numerical, inclu
             
             return None
         else:
+            # 🔥 DIFFICULTY-AWARE PROMPTS: Enhanced for dynamic streaming
+            logger.info(f"[STREAM] Using smart streaming for {difficulty} {question_type} about {topic}")
+
             # [CONFIG] CRITICAL FIX for Bug 3: Use inquisitor prompt for reliable JSON generation
             # Complex prompts cause malformed JSON - use ultra-strict inquisitor prompt instead
             from .inquisitor_prompt import _create_inquisitor_prompt
 
-            logger.info(f"[CONFIG] Using inquisitor prompt for {self.active_model} (local model optimized)")
+            logger.info(f"[CONFIG] Using enhanced inquisitor prompt for {self.active_model} (smart streaming)")
 
             # Use the ultra-strict inquisitor prompt designed for local models
             prompt = _create_inquisitor_prompt(
-                context_text=f"Generate a question about {topic}",
+                context=f"Generate a {difficulty} {question_type} question about {topic}",
                 topic=topic,
                 difficulty=difficulty,
                 question_type=question_type
             )
 
-            # Call the API with the inquisitor prompt
-            response = self._call_ollama_api(prompt)
+            # 🚀 SMART API CALL: Uses dynamic JSON detection instead of fixed timeouts
+            start_time = time.time()
+            response = self._call_ollama_api(prompt, difficulty)
+            elapsed = time.time() - start_time
+            
             if response:
+                logger.info(f"[SUCCESS] Got response in {elapsed:.1f}s via smart streaming")
                 return self._parse_single_json(response)
+            else:
+                logger.warning(f"[FAILED] No response after {elapsed:.1f}s")
 
             return None
 
-    def _call_ollama_api(self, prompt: str) -> Optional[str]:
-        """[START] GPU-optimized standard API call with JSON enforcement"""
+    def _call_ollama_api(self, prompt: str, difficulty: str = "medium") -> Optional[str]:
+        """🚀 DYNAMIC: Smart streaming API call that auto-detects JSON completion"""
 
         # [HOT] FORCE JSON OUTPUT: Add strong JSON enforcement to prompt
         json_enforced_prompt = f"""{prompt}
@@ -697,7 +930,7 @@ Start your response with {{ and end with }}. Nothing else."""
         payload = {
             "model": self.active_model,
             "prompt": json_enforced_prompt,
-            "stream": False,
+            "stream": True,  # 🚀 CRITICAL: Enable streaming for immediate processing
             "format": "json",  # Force JSON format
             "options": {
                 **self.generation_params,
@@ -707,19 +940,85 @@ Start your response with {{ and end with }}. Nothing else."""
         }
         
         try:
-            # Use shorter timeout to prevent UI freezing
+            # 🚀 SMART STREAMING: Process response as it comes in
+            logger.info(f"[STREAM] Starting smart streaming for {difficulty} question")
+            
             response = self.session.post(
                 self.generate_url,
                 json=payload,
-                timeout=30  # Reduced from 60 to 30 seconds
+                stream=True,
+                timeout=120  # Increased for DeepSeek-R1 14B model
             )
             response.raise_for_status()
 
-            result = response.json()
-            return result.get("response", "")
+            # 🧠 SMART JSON DETECTION: Accumulate response and detect completion
+            accumulated_response = ""
+            json_bracket_count = 0
+            json_started = False
+            complete_json_detected = False
+            
+            start_time = time.time()
+            max_time = 300  # Maximum 5 minutes as absolute safety limit
+            
+            for line in response.iter_lines(decode_unicode=True):
+                if time.time() - start_time > max_time:
+                    logger.warning(f"[TIMEOUT] Reached maximum time limit for {difficulty} question")
+                    break
+                    
+                if line:
+                    try:
+                        chunk_data = json.loads(line)
+                        chunk_text = chunk_data.get("response", "")
+                        
+                        if chunk_text:
+                            accumulated_response += chunk_text
+                            
+                            # 🧠 DETECT JSON STRUCTURE COMPLETION
+                            for char in chunk_text:
+                                if char == '{':
+                                    if not json_started:
+                                        json_started = True
+                                        logger.debug("[JSON] JSON object started")
+                                    json_bracket_count += 1
+                                elif char == '}':
+                                    json_bracket_count -= 1
+                                    if json_started and json_bracket_count == 0:
+                                        complete_json_detected = True
+                                        logger.info(f"[JSON] Complete JSON detected after {time.time() - start_time:.1f}s")
+                                        break
+                            
+                            # 🚀 IMMEDIATE PROCESSING: Return as soon as JSON is complete
+                            if complete_json_detected:
+                                # Verify it contains MCQ fields
+                                if '"question"' in accumulated_response and '"options"' in accumulated_response:
+                                    elapsed = time.time() - start_time
+                                    logger.info(f"[SUCCESS] Valid MCQ JSON ready in {elapsed:.1f}s")
+                                    return accumulated_response
+                                else:
+                                    logger.debug("[JSON] Complete but missing MCQ fields, continuing...")
+                                    complete_json_detected = False
+                                    json_bracket_count = 0  # Reset for next potential JSON
+                        
+                        # Check if generation is complete
+                        if chunk_data.get("done", False):
+                            logger.info(f"[DONE] Generation marked complete after {time.time() - start_time:.1f}s")
+                            break
+                            
+                    except json.JSONDecodeError:
+                        # Skip malformed JSON chunks
+                        continue
+            
+            # Return whatever we accumulated
+            if accumulated_response.strip():
+                elapsed = time.time() - start_time
+                logger.info(f"[COMPLETE] Returning accumulated response after {elapsed:.1f}s")
+                return accumulated_response
+            else:
+                logger.warning("[EMPTY] No response accumulated")
+                return None
             
         except Exception as e:
-            logger.error(f"[ERROR] API call failed: {e}")
+            logger.error(f"[ERROR] Smart streaming API call failed: {e}")
             return None
 
     def _parse_json_response(self, response: str, expected_count: int) -> List[Dict[str, Any]]:
@@ -937,15 +1236,15 @@ Start your response with {{ and end with }}. Nothing else."""
 
 
     def _generate_placeholder_questions(self, topic: str, num_questions: int, difficulty: str) -> List[Dict[str, Any]]:
-        """[FORBIDDEN] PLACEHOLDER QUESTIONS COMPLETELY DISABLED - AI models only"""
-        logger.error("[FORBIDDEN] PLACEHOLDER QUESTIONS COMPLETELY DISABLED")
-        logger.error(f"[ERROR] Cannot generate placeholder questions for topic '{topic}' with difficulty '{difficulty}'")
-        logger.error("[EMERGENCY] APPLICATION MUST USE AI MODELS ONLY - NO PLACEHOLDER CONTENT ALLOWED")
-        raise Exception(f"Placeholder generation disabled for '{topic}' - AI model generation required")
-        logger.error(f"[ERROR] Cannot generate {num_questions} placeholder questions for topic: '{topic}', difficulty: '{difficulty}'")
-        logger.error("[INFO] Configure proper Ollama models or cloud APIs instead of relying on placeholders")
+        """Dynamic content generation preferred - AI models recommended"""
+        logger.info("[INFO] Dynamic content generation preferred for quality assurance")
+        logger.info(f"[INFO] Cannot generate placeholder questions for topic '{topic}' with difficulty '{difficulty}'")
+        logger.info("[INFO] Application designed for AI-powered content generation")
+        raise Exception(f"Placeholder generation disabled for '{topic}' - AI model generation preferred")
+        logger.info(f"[INFO] Recommend {num_questions} AI-generated questions for topic: '{topic}', difficulty: '{difficulty}'")
+        logger.info("[INFO] Configure proper Ollama models or cloud APIs for best results")
         
-        # Return empty list to force proper error handling upstream
+        # Return empty list to maintain proper error handling upstream
         return []
 
     def _manual_json_construction(self, text: str, expected_count: int) -> List[Dict[str, Any]]:

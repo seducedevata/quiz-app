@@ -1,0 +1,23 @@
+FROM deepseek-r1:14b
+
+# 🔥 MAXIMUM GPU UTILIZATION PARAMETERS
+PARAMETER gpu_layers -1
+PARAMETER num_gpu -1
+PARAMETER main_gpu 0
+PARAMETER tensor_split [1.0]
+PARAMETER low_vram false
+PARAMETER f16_kv true
+PARAMETER use_mlock true
+PARAMETER use_mmap true
+PARAMETER num_batch 2048
+PARAMETER num_ctx 8192
+PARAMETER num_thread 16
+PARAMETER num_parallel 8
+
+# PERFORMANCE PARAMETERS  
+PARAMETER temperature 0.7
+PARAMETER top_k 50
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+
+SYSTEM You are a high-performance AI running on GPU acceleration. Provide detailed, comprehensive responses.

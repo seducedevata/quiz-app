@@ -1,0 +1,26 @@
+================================================================================
+KNOWLEDGE APP - COMPLETE CORE FUNCTIONALITY CODE DUMP
+🎯 INCLUDES: Python Backend + HTML/CSS/JavaScript UI
+🚫 EXCLUDES: Tests, utilities, demos, cache files
+================================================================================
+Generated: 2025-01-20 12:00:00
+Total Files: ~70+ core files (Backend + UI)
+
+FILE TYPE SUMMARY
+----------------------------------------
+HTML       1 files  (Main UI)
+CSS        1 files  (Styles)
+JS         3 files  (UI Logic)
+PY        65+ files (Backend Core)
+----------------------------------------
+
+COMPLETE CODE CONTENT
+================================================================================
+
+============================================================
+HTML FILES (1 files)
+============================================================
+
+--------------------------------------------------
+FILE: src/knowledge_app/web/app.html
+--------------------------------------------------

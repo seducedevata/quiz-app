@@ -1,5 +1,8 @@
 """
-Application configuration module
+🔧 DEPRECATED: Application configuration module
+
+This module is deprecated and has been replaced by UnifiedConfigManager.
+It now serves as a compatibility bridge to prevent breaking existing code.
 """
 
 from typing import Dict, Any, Optional
@@ -12,11 +15,16 @@ logger = logging.getLogger(__name__)
 
 
 class AppConfig:
-    """Application configuration class"""
+    """
+    🔧 DEPRECATED: Application configuration class
+    
+    This class now redirects to UnifiedConfigManager to prevent configuration conflicts.
+    All new code should use UnifiedConfigManager directly.
+    """
 
     def __init__(self, config_dict: Optional[Dict[str, Any]] = None):
         """
-        🔧 FIX: Initialize with UnifiedConfigManager backend
+        🔧 COMPATIBILITY BRIDGE: Initialize with UnifiedConfigManager backend
 
         This prevents configuration conflicts by using a single source of truth.
         """
@@ -29,66 +37,87 @@ class AppConfig:
 
         # Import here to avoid circular imports
         try:
-            from .unified_config_manager import UnifiedConfigManager
-            self._unified_manager = UnifiedConfigManager()
-            logger.info("🔧 AppConfig redirecting to UnifiedConfigManager to prevent conflicts")
-        except ImportError:
-            logger.error("❌ UnifiedConfigManager not available - falling back to legacy mode")
+            from .unified_config_manager import get_unified_config_manager
+            self._unified_manager = get_unified_config_manager()
+            logger.warning("🔧 AppConfig redirected to UnifiedConfigManager")
+            
+            # If config_dict provided, migrate it to unified manager
+            if config_dict:
+                for key, value in config_dict.items():
+                    if self._unified_manager.get(key) is None:  # Don't overwrite existing
+                        self._unified_manager.set(key, value)
+                        
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize UnifiedConfigManager bridge: {e}")
             self._unified_manager = None
-            self._init_legacy_mode()
+            self._fallback_config = config_dict or {}
+            
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        🔧 COMPATIBILITY: Get configuration value through unified manager
+        """
+        try:
+            if self._unified_manager:
+                return self._unified_manager.get(key, default)
+            else:
+                return self._fallback_config.get(key, default)
+        except Exception as e:
+            logger.error(f"❌ AppConfig.get failed for key '{key}': {e}")
+            return default
+            
+    def set(self, key: str, value: Any) -> None:
+        """
+        🔧 COMPATIBILITY: Set configuration value through unified manager
+        """
+        try:
+            if self._unified_manager:
+                self._unified_manager.set(key, value)
+            else:
+                self._fallback_config[key] = value
+                logger.warning(f"⚠️ AppConfig.set using fallback (not persistent): {key}")
+        except Exception as e:
+            logger.error(f"❌ AppConfig.set failed for key '{key}': {e}")
+            
+    def get_config(self) -> Dict[str, Any]:
+        """
+        🔧 COMPATIBILITY: Get all configuration as dict
+        """
+        try:
+            if self._unified_manager:
+                return self._unified_manager.get_all()
+            else:
+                return self._fallback_config.copy()
+        except Exception as e:
+            logger.error(f"❌ AppConfig.get_config failed: {e}")
+            return {}
+            
+    def save(self) -> None:
+        """
+        🔧 COMPATIBILITY: Save configuration (handled automatically by unified manager)
+        """
+        try:
+            if self._unified_manager:
+                # UnifiedConfigManager handles persistence automatically
+                logger.debug("Configuration automatically saved by UnifiedConfigManager")
+            else:
+                logger.warning("⚠️ AppConfig.save in fallback mode - changes not persistent")
+        except Exception as e:
+            logger.error(f"❌ AppConfig.save failed: {e}")
 
-        # Apply provided config if any
-        if config_dict and self._unified_manager:
-            self._apply_config_dict(config_dict)
 
-    def _init_legacy_mode(self):
-        """Initialize legacy mode if UnifiedConfigManager is not available"""
-        self.base_dir = Path(__file__).parent.parent.parent.parent
-        self.config_file = self.base_dir / "config" / "app_config.json"
-
-        # Default configuration
-        self._config = {
-            "paths": {
-                "base": str(self.base_dir),
-                "data": str(self.base_dir / "data"),
-                "image_cache": str(self.base_dir / "data" / "image_cache"),
-                "models": str(self.base_dir / "data" / "models"),
-                "user_data": str(self.base_dir / "data" / "user_data"),
-                "uploaded_books": str(self.base_dir / "data" / "uploaded_books"),
-                "logs": str(self.base_dir / "logs"),
-                "cache": str(self.base_dir / "data" / "cache"),
-                "processed_docs": str(self.base_dir / "data" / "processed_docs"),
-                "lora_adapters": str(self.base_dir / "data" / "lora_adapters"),
-                "sounds": str(self.base_dir / "assets" / "sounds"),
-                "music": str(self.base_dir / "assets" / "music"),
-            },
-            "storage_config": {
-                "image_cache_limit": 500 * 1024 * 1024,  # 500MB
-                "model_cache_limit": 1024 * 1024 * 1024,  # 1GB
-                "book_storage_limit": 100 * 1024 * 1024,  # 100MB
-                "max_cache_size": 4 * 1024 * 1024 * 1024,  # 4GB
-                "cleanup_threshold": 0.85,
-            },
-            "api_keys": {"cloud_inference": "", "tavily": ""},
-            "app_settings": {
-                "max_image_size": 1920,
-                "image_quality": 85,
-                "theme": "dark",
-                "font_size": 12,
-                "language": "en",
-            },
-            "storage_settings": {
-                "cleanup_threshold_mb": 0.9,
-                "cache_ttl": 3600,
-                "max_book_size_mb": 100,  # Default 100MB limit for book files
-                "max_image_size_mb": 5,  # Default 5MB limit for image files
-            },
-            "display_settings": {"enable_gpu": True, "enable_animations": True, "dark_mode": True},
-        }
-
-        # Update with provided config
-        if config_dict:
-            self.update_config(config_dict)
+# 🔧 LEGACY COMPATIBILITY: Keep this for existing imports
+def get_app_config(config_dict: Optional[Dict[str, Any]] = None) -> AppConfig:
+    """
+    🔧 COMPATIBILITY FUNCTION: Get AppConfig instance
+    
+    Issues deprecation warning and redirects to UnifiedConfigManager.
+    """
+    warnings.warn(
+        "get_app_config is deprecated. Use get_unified_config_manager() directly.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return AppConfig(config_dict)
 
     def update_config(self, config_dict: Dict[str, Any]) -> None:
         """Update configuration with new values"""
@@ -132,7 +161,11 @@ class AppConfig:
         if self._unified_manager:
             self._unified_manager.set(key, value, save_immediately=True)
         else:
-            # Legacy fallback
+            # Legacy fallback with type safety
+            if not isinstance(key, str):
+                logger.warning(f"⚠️ Config key expected string, got {type(key)}: {key}")
+                key = str(key)
+            
             keys = key.split(".")
             config = self._config
             for k in keys[:-1]:

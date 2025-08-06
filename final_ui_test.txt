@@ -1,0 +1,28 @@
+Final UI Test Document
+
+This is a test document to verify that both upload and delete functionality work correctly in the Knowledge App UI.
+
+Chapter 1: Testing Upload
+When this file is uploaded via the UI (drag & drop or browse button), it should:
+- Be converted to base64 by the JavaScript
+- Be sent to the Python backend via uploadFile() method
+- Be saved to both data/uploaded_books/ and uploaded_books/ directories
+- Appear in the file list in the Training tab
+- Be available for the enhanced training pipeline
+
+Chapter 2: Testing Delete
+When this file is deleted via the UI (clicking the × button), it should:
+- Call the removeFile() JavaScript function
+- Send a delete request to the Python backend via deleteUploadedFile() method
+- Be removed from both storage directories
+- Disappear from the file list in the Training tab
+- Update the UI immediately to reflect the change
+
+Chapter 3: Integration Testing
+Both upload and delete should work together without interfering with each other:
+- Upload should work after delete operations
+- Delete should work after upload operations
+- File list should always be accurate and up-to-date
+- No stale data should remain in the UI
+
+This document serves as a comprehensive test case for the complete upload and delete workflow in the Knowledge App.

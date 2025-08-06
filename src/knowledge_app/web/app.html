@@ -1,11 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // Ultra-fast startup optimization
+        console.time('⚡ DOM Ready');
+        
+        // Hardware acceleration detection
+        window.hardwareProfile = {
+            cores: navigator.hardwareConcurrency || 2,
+            memory: navigator.deviceMemory || 4,
+            timing: performance.now()
+        };
+        
+        // Preload critical resources
+        const preloadLinks = [
+            'app.js',
+            'styles.css'
+        ];
+        
+        preloadLinks.forEach(href => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.href = href;
+            link.as = href.endsWith('.js') ? 'script' : 'style';
+            document.head.appendChild(link);
+        });
+        
+        // Fast initialization queue
+        window.fastInit = {
+            critical: [],
+            background: [],
+            runCritical: function() {
+                return Promise.all(this.critical.map(fn => fn()));
+            },
+            runBackground: function() {
+                requestIdleCallback(() => {
+                    this.background.forEach(fn => fn());
+                });
+            }
+        };
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge App</title>
     <link rel="stylesheet" href="styles.css">
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script src="fix_button_overlap.js"></script>
     
     <!-- MathJax for LaTeX rendering -->
     <script>
@@ -15,11 +55,51 @@
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
                 processEscapes: true,
                 processEnvironments: true,
-                autoload: {
-                    color: [],
-                    colorv2: ['color']
+                packages: {'[+]': ['noerrors', 'textmacros', 'ams', 'newcommand', 'mathtools']},
+                tags: 'none',
+                macros: {
+                    // Add common macros for physics and chemistry
+                    degree: '^{\\circ}',
+                    angstrom: '\\text{Å}',
+                    celsius: '^{\\circ}\\text{C}',
+                    kelvin: '\\text{K}',
+                    joule: '\\text{J}',
+                    kilojoule: '\\text{kJ}',
+                    mol: '\\text{mol}',
+                    electronvolt: '\\text{eV}',
+                    meter: '\\text{m}',
+                    nanometer: '\\text{nm}',
+                    picometer: '\\text{pm}',
+                    bohr: 'a_0'
                 },
-                packages: {'[+]': ['noerrors']}
+                formatError: function (jax, error) {
+                    console.warn('🔧 MathJax format error:', error.message);
+                    console.warn('🔧 Problematic input:', jax.math);
+                    // Return the original text instead of error message
+                    return ['span', {style: 'font-family: monospace; color: #333;'}, jax.math];
+                },
+                // 🚀 CRITICAL FIX: Add numeric error handler to prevent NaN values
+                processError: function (math, error) {
+                    console.warn('🔧 MathJax processing error:', error.message);
+                    console.warn('🔧 Math content:', math);
+                    // Return safe fallback content
+                    return ['span', {
+                        style: 'font-family: monospace; color: #666; background: #f5f5f5; padding: 2px 4px; border-radius: 3px;'
+                    }, '[Math Error: ' + (math || 'unknown') + ']'];
+                }
+            },
+            svg: {
+                fontCache: 'global',
+                displayAlign: 'left',
+                displayIndent: '0',
+                // 🚀 CRITICAL FIX: Add safe defaults to prevent NaN values
+                scale: 1.0,
+                minScale: 0.5,
+                maxScale: 2.0,
+                // Error recovery for SVG rendering
+                internalSpeechTitles: false,
+                useFontCache: true,
+                useGlobalCache: true
             },
             options: {
                 skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
@@ -27,28 +107,84 @@
                 processHtmlClass: 'tex2jax_process'
             },
             loader: {
-                load: ['[tex]/noerrors']
+                load: ['[tex]/noerrors', '[tex]/textmacros', '[tex]/ams', '[tex]/newcommand', '[tex]/mathtools']
             },
             startup: {
-                typeset: false,  // We'll trigger typesetting manually
+                typeset: true,  // ✅ ENABLE AUTO TYPESETTING
                 ready() {
-                    console.log('✅ MathJax startup completed');
+                    console.log('✅ MathJax startup completed successfully');
                     MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                    
+                    // Add error recovery for rendering
+                    if (MathJax.startup.document && MathJax.startup.document.menu) {
+                        MathJax.startup.document.menu.settings.errorSettings = {
+                            message: ['[Math Processing Error]'],
+                            style: {color: '#CC0000', 'font-size': '90%'}
+                        };
+                    }
+                    
+                    // ✅ CRITICAL FIX: Auto-render math in dynamically added content
+                    window.renderMathInElement = function(element) {
+                        if (window.MathJax && window.MathJax.typesetPromise) {
+                            return MathJax.typesetPromise([element]).catch(err => {
+                                console.warn('MathJax rendering error:', err);
+                            });
+                        }
+                        return Promise.resolve();
+                    };
+                    
+                    // ✅ Set up mutation observer for auto-rendering
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            if (mutation.type === 'childList') {
+                                mutation.addedNodes.forEach((node) => {
+                                    if (node.nodeType === Node.ELEMENT_NODE) {
+                                        // Check if the added element contains math
+                                        if (node.textContent && (node.textContent.includes('$') || node.textContent.includes('\\('))) {
+                                            setTimeout(() => window.renderMathInElement(node), 10);
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true
+                    });
+                    
+                    console.log('✅ MathJax auto-rendering set up');
                 }
             }
         };
         
-        // Enhanced MathJax loading detection
+        // Enhanced MathJax loading detection with retry mechanism
         window.addEventListener('load', function() {
-            console.log('🔍 Window loaded, checking MathJax...');
-            if (window.MathJax) {
-                console.log('✅ MathJax found on window load');
-            } else {
-                console.warn('⚠️ MathJax not found on window load');
+            console.log('🔍 Window loaded, checking MathJax status...');
+            let retryCount = 0;
+            const maxRetries = 10;
+            
+            function checkMathJaxReady() {
+                if (window.MathJax && window.mathJaxReady && window.MathJax.typesetPromise) {
+                    console.log('✅ MathJax fully ready');
+                    return true;
+                } else if (retryCount < maxRetries) {
+                    retryCount++;
+                    console.log(`🔄 MathJax not ready, retry ${retryCount}/${maxRetries}`);
+                    setTimeout(checkMathJaxReady, 500);
+                    return false;
+                } else {
+                    console.warn('⚠️ MathJax failed to load after maximum retries');
+                    return false;
+                }
             }
+            
+            checkMathJaxReady();
         });
     </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
             onload="console.log('✅ MathJax script loaded from CDN'); window.mathJaxLoaded = true;"
             onerror="console.error('❌ Failed to load MathJax from CDN'); loadOfflineMathJax();"></script>
 
@@ -170,7 +306,11 @@
                                 <p>Questions Answered</p>
                             </div>
                         </div>
-                        <button class="btn btn-primary" onclick="startQuickQuiz()">Start Quiz</button>
+                        <!-- Dashboard Analytics - Use sidebar to navigate to Quiz -->
+                        <div class="dashboard-info">
+                            <p>📊 View your learning progress and statistics above</p>
+                            <p>🎯 Use the sidebar to start a new quiz or review questions</p>
+                        </div>
                     </div>
                 </div>
 
@@ -185,7 +325,6 @@
                             </div>
                             <div class="form-group">
                                 <label>Mode</label>
-                                <!-- 🚀 CRITICAL FIX: Remove hardcoded 'selected' to allow user preferences -->
                                 <select id="quiz-mode" onchange="updateModeInfo(); saveSettings();">
                                     <option value="offline">Offline (Local AI - TURBO)</option>
                                     <option value="auto" selected>Auto (Best Available)</option>
@@ -272,7 +411,14 @@
                                 </div>
                             </div>
 
-                            <button class="btn btn-primary" onclick="startCustomQuiz()">Start Quiz</button>
+                            <!-- FIXED BUTTON WITH MULTIPLE CLICK HANDLERS -->
+                            <button 
+                                class="btn btn-primary" 
+                                id="start-quiz-button"
+                                onclick="handleStartQuizClick(event)"
+                                style="background-color: #007bff; color: white; font-weight: bold; padding: 15px 30px; font-size: 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.3s ease; position: relative; z-index: 1000;">
+                                ⭐ START QUIZ
+                            </button>
                         </div>
 
                         <div id="quiz-game" class="quiz-game" style="display: none;">
@@ -475,8 +621,12 @@
                                         <span class="provider-icon">🧠</span>
                                         <span class="provider-name">OpenAI</span>
                                         <span id="openai-status" class="provider-status">❌</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="openai-enabled" checked onchange="handleProviderChange()">
+                                            <span class="toggle-text">Enable</span>
+                                        </label>
                                     </div>
-                                    <input type="password" id="openai-api-key" placeholder="sk-..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <input type="password" id="openai-api-key" placeholder="sk-..." class="api-key-input" onchange="handleProviderChange()">
                                     <div class="provider-info">
                                         <small>Powers GPT-4, GPT-3.5, and other OpenAI models</small>
                                     </div>
@@ -487,8 +637,12 @@
                                         <span class="provider-icon">🔮</span>
                                         <span class="provider-name">Anthropic</span>
                                         <span id="anthropic-status" class="provider-status">❌</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="anthropic-enabled" checked onchange="handleProviderChange()">
+                                            <span class="toggle-text">Enable</span>
+                                        </label>
                                     </div>
-                                    <input type="password" id="anthropic-api-key" placeholder="sk-ant-..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <input type="password" id="anthropic-api-key" placeholder="sk-ant-..." class="api-key-input" onchange="handleProviderChange()">
                                     <div class="provider-info">
                                         <small>Powers Claude 3.5 Sonnet and other Claude models</small>
                                     </div>
@@ -499,8 +653,12 @@
                                         <span class="provider-icon">🎯</span>
                                         <span class="provider-name">Google Gemini</span>
                                         <span id="gemini-status" class="provider-status">❌</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="gemini-enabled" checked onchange="handleProviderChange()">
+                                            <span class="toggle-text">Enable</span>
+                                        </label>
                                     </div>
-                                    <input type="password" id="gemini-api-key" placeholder="AIza..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <input type="password" id="gemini-api-key" placeholder="AIza..." class="api-key-input" onchange="handleProviderChange()">
                                     <div class="provider-info">
                                         <small>Powers Gemini Pro and other Google AI models</small>
                                     </div>
@@ -511,8 +669,12 @@
                                         <span class="provider-icon">⚡</span>
                                         <span class="provider-name">Groq</span>
                                         <span id="groq-status" class="provider-status">❌</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="groq-enabled" checked onchange="handleProviderChange()">
+                                            <span class="toggle-text">Enable</span>
+                                        </label>
                                     </div>
-                                    <input type="password" id="groq-api-key" placeholder="gsk_..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <input type="password" id="groq-api-key" placeholder="gsk_..." class="api-key-input" onchange="handleProviderChange()">
                                     <div class="provider-info">
                                         <small>Ultra-fast inference with Mixtral and Llama models</small>
                                     </div>
@@ -523,10 +685,31 @@
                                         <span class="provider-icon">🌐</span>
                                         <span class="provider-name">OpenRouter</span>
                                         <span id="openrouter-status" class="provider-status">❌</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="openrouter-enabled" checked onchange="handleProviderChange()">
+                                            <span class="toggle-text">Enable</span>
+                                        </label>
                                     </div>
-                                    <input type="password" id="openrouter-api-key" placeholder="sk-or-..." class="api-key-input" onchange="saveSettings(); updateProviderStatuses();">
+                                    <input type="password" id="openrouter-api-key" placeholder="sk-or-..." class="api-key-input" onchange="handleProviderChange()">
                                     <div class="provider-info">
                                         <small>Access to multiple models through one API</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="api-provider-card">
+                                    <div class="provider-header">
+                                        <span class="provider-icon">🔍</span>
+                                        <span class="provider-name">Tavily Search</span>
+                                        <span id="tavily-status" class="provider-status">❌</span>
+                                        <label class="provider-toggle">
+                                            <input type="checkbox" id="tavily-enabled" checked onchange="handleProviderChange()">
+                                            <span class="toggle-text">Enable</span>
+                                        </label>
+                                        <button class="btn btn-small" onclick="refreshTavilyStatus()" title="Refresh Status">🔄</button>
+                                    </div>
+                                    <input type="password" id="tavily-api-key" placeholder="tvly-..." class="api-key-input" onchange="handleProviderChange()">
+                                    <div class="provider-info">
+                                        <small>Real-time web search for up-to-date quiz content</small>
                                     </div>
                                 </div>
                             </div>
@@ -555,6 +738,7 @@
                                         <li><strong>Google:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a></li>
                                         <li><strong>Groq:</strong> <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a></li>
                                         <li><strong>OpenRouter:</strong> <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a></li>
+                                        <li><strong>Tavily:</strong> <a href="https://tavily.com" target="_blank">tavily.com</a> (Free tier available)</li>
                                     </ul>
                                 </details>
                             </div>
@@ -576,6 +760,11 @@
                             <div class="setting-item">
                                 <label>Show Correct Answers</label>
                                 <input type="checkbox" id="show-answers" checked onchange="saveSettings();">
+                            </div>
+                            <div class="setting-item">
+                                <label>📚 Save Generated Questions</label>
+                                <input type="checkbox" id="save-questions" checked onchange="saveSettings();">
+                                <small class="setting-help">Automatically save all generated questions to review history for later practice</small>
                             </div>
                         </div>
 

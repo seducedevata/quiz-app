@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX Test</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['noerrors', 'mhchem', 'textmacros']},
+            },
+            startup: {
+                typeset: false,
+                ready() {
+                    console.log('✅ MathJax ready');
+                    MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                    testLatexProcessing();
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <h1>LaTeX Rendering Test</h1>
+    
+    <div id="test-content">
+        <h2>Original Content:</h2>
+        <div id="original">
+            Option A: -1.0023 μ_B<br>
+            Option C: 0.9999 μ_B<br>
+            The Lande g-factor for a hydrogen-like ion (n = 1) is approximately equal to 2.0023<br>
+            The electron's magnetic moment μ as -μ_B.
+        </div>
+        
+        <h2>Processed Content:</h2>
+        <div id="processed"></div>
+    </div>
+
+    <script>
+        function processLatexText(text) {
+            if (!text) return text;
+
+            console.log("🔧 Processing LaTeX for:", text);
+
+            // Handle Greek letters with subscripts first (μ_B pattern)
+            text = text.replace(/μ_B/g, "$\\mu_B$");
+            text = text.replace(/μ_([A-Za-z0-9]+)/g, "$\\mu_{$1}$");
+            
+            // Numbers with Greek letter units (like "-1.0023 μ_B")
+            text = text.replace(/(-?\d+\.?\d*)\s+\$\\mu_B\$/g, "$$$1\\,\\mu_B$$");
+            text = text.replace(/(-?\d+\.?\d*)\s+μ_B/g, "$$$1\\,\\mu_B$$");
+            
+            // Handle standalone Greek letters
+            text = text.replace(/(?<![\\$])μ(?![_{])/g, "$\\mu$");
+            
+            // Handle variable assignments (like "n = 1")
+            text = text.replace(/\b([a-zA-Z])\s*=\s*(\d+\.?\d*)\b/g, "$$$1 = $2$$");
+            
+            // Handle g-factor
+            text = text.replace(/\bg-factor\b/g, "$g$-factor");
+            text = text.replace(/\bLande\s+g-factor\b/g, "Landé $g$-factor");
+
+            // Clean up double dollar signs
+            text = text.replace(/\$\$+/g, '$');
+            text = text.replace(/\$\s*\$/g, '');
+
+            console.log("✅ Processed:", text);
+            return text;
+        }
+
+        function testLatexProcessing() {
+            const originalElement = document.getElementById('original');
+            const processedElement = document.getElementById('processed');
+            
+            const originalText = originalElement.innerHTML;
+            const processedText = processLatexText(originalText);
+            
+            processedElement.innerHTML = processedText;
+            
+            console.log('🧮 Rendering with MathJax...');
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([processedElement]).then(() => {
+                    console.log('✅ MathJax rendering complete');
+                }).catch(err => {
+                    console.error('❌ MathJax error:', err);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

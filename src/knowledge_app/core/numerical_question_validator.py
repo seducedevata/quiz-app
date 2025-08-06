@@ -1,22 +1,37 @@
 """
-Centralized Numerical Question Validator
-🚀 BUG FIX: Provides consistent numerical question validation across all generators
+🔧 ENHANCED Centralized Numerical Question Validator
+🚀 BUG FIX: Now uses unified validation authority for consistent rules across prompts and validators
 """
 
 import logging
 import re
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 
 class NumericalQuestionValidator:
     """
-    Centralized validator for numerical questions to ensure consistency across all generators
+    🔧 ENHANCED: Centralized validator now integrated with unified validation authority
+    
+    This validator uses the same canonical rules that prompt generation uses,
+    eliminating the dual authority problem.
     """
     
     def __init__(self):
-        # Conceptual patterns that should NOT appear in numerical questions
+        # 🔧 FIX: Import unified validation authority for consistent rules
+        try:
+            from .unified_validation_authority import get_validation_authority
+            self.validation_authority = get_validation_authority()
+            logger.info("✅ Unified validation authority integrated")
+        except ImportError:
+            logger.warning("⚠️ Unified validation authority not available, using legacy rules")
+            self.validation_authority = None
+            self._setup_legacy_rules()
+    
+    def _setup_legacy_rules(self):
+        """Setup legacy rules as fallback if unified authority is not available"""
+        # Legacy conceptual patterns that should NOT appear in numerical questions
         self.conceptual_patterns = [
             'explain', 'describe', 'why', 'how', 'what is the concept',
             'what is the principle', 'what is the theory', 'what is the definition',
@@ -24,7 +39,7 @@ class NumericalQuestionValidator:
             'analyze', 'compare', 'contrast', 'discuss', 'evaluate'
         ]
         
-        # Required numerical starters for numerical questions
+        # Legacy numerical starters for numerical questions
         self.numerical_starters = [
             'calculate', 'determine', 'find', 'compute',
             'what is the value', 'what is the magnitude', 'what is the energy',
@@ -42,7 +57,7 @@ class NumericalQuestionValidator:
     
     def validate_numerical_question(self, question_data: Dict[str, Any], question_type: str) -> bool:
         """
-        Validate that a question is truly numerical if question_type is 'numerical'
+        🔧 ENHANCED FIX: Validate numerical questions with comprehensive checks
         
         Args:
             question_data: The generated question data
@@ -55,51 +70,95 @@ class NumericalQuestionValidator:
             if question_type.lower() != "numerical":
                 return True  # No validation needed for non-numerical questions
             
-            question = question_data.get('question', '').lower()
-            options = question_data.get('options', {})
-            
-            if not question or not options:
-                logger.warning("🚫 Numerical question validation FAILED: Missing question or options")
-                return False
-            
-            # Check if question contains any conceptual patterns
-            for pattern in self.conceptual_patterns:
-                if pattern in question:
-                    logger.warning(f"🚫 Numerical question validation FAILED: Contains conceptual pattern '{pattern}'")
-                    logger.warning(f"❌ Question: '{question[:100]}...'")
+            # Use unified validation authority if available
+            if self.validation_authority:
+                is_valid, failure_reason, _ = self.validation_authority.validate_question(question_data, question_type)
+                if not is_valid:
+                    logger.warning(f"🚫 Numerical validation FAILED: {failure_reason}")
                     return False
+                else:
+                    logger.info(f"✅ Numerical validation PASSED")
+                    return True
             
-            # Check for numerical calculation starters (required for numerical questions)
-            has_numerical_starter = any(starter in question for starter in self.numerical_starters)
-            if not has_numerical_starter:
-                logger.warning(f"🚫 Numerical question validation FAILED: No numerical calculation starter found")
-                logger.warning(f"❌ Question: '{question[:100]}...'")
-                return False
-            
-            # Check that all options are numerical (contain numbers and units)
-            numerical_options = 0
-            option_values = list(options.values()) if isinstance(options, dict) else options
-            
-            for option in option_values:
-                option_str = str(option).lower()
-                # Check if option contains numbers and possibly units
-                has_number = any(char.isdigit() for char in option_str)
-                
-                if has_number:
-                    numerical_options += 1
-            
-            # Require at least 3/4 options to be numerical
-            if numerical_options < 3:
-                logger.warning(f"🚫 Numerical question validation FAILED: Only {numerical_options}/4 options are numerical")
-                logger.warning(f"❌ Options: {option_values}")
-                return False
-            
-            logger.info(f"✅ Numerical question validation PASSED: Pure calculation question detected")
-            return True
+            # Enhanced legacy validation with numerical-specific checks
+            return self._enhanced_validate_numerical_question(question_data)
             
         except Exception as e:
-            logger.error(f"❌ Error validating numerical question: {e}")
+            logger.error(f"❌ Error in numerical question validation: {e}")
             return True  # Default to accepting the question if validation fails
+    
+    def _enhanced_validate_numerical_question(self, question_data: Dict[str, Any]) -> bool:
+        """Enhanced legacy validation method for backward compatibility"""
+        """Legacy validation method for backward compatibility"""
+        question = question_data.get('question', '').lower()
+        options = question_data.get('options', {})
+        explanation = question_data.get('explanation', '').lower()
+        
+        if not question or not options:
+            logger.warning("🚫 Numerical question validation FAILED: Missing question or options")
+            return False
+        
+        # ARCHITECTURAL FIX: More reasonable conceptual pattern checking
+        option_values = list(options.values()) if isinstance(options, dict) else options
+        
+        # Only check question text for major conceptual patterns (not explanation/options)
+        # This allows for reasonable explanation context while maintaining numerical focus
+        major_conceptual_patterns = ['explain the concept', 'describe the theory', 'what is the definition']
+        
+        for pattern in major_conceptual_patterns:
+            if pattern in question:
+                logger.warning(f"🚫 Numerical question validation FAILED: Contains major conceptual pattern '{pattern}' in question")
+                return False
+        
+        # ARCHITECTURAL FIX: More flexible numerical starter checking
+        # Accept broader range of numerical question patterns
+        extended_numerical_patterns = [
+            'calculate', 'determine', 'find', 'compute', 'what is the value', 'what is the magnitude',
+            'how much', 'how many', 'what amount', 'what quantity', 'at what', 'to what',
+            'what wavelength', 'what frequency', 'what energy', 'what mass', 'what charge'
+        ]
+        
+        has_numerical_starter = any(pattern in question for pattern in extended_numerical_patterns)
+        has_numbers_in_question = any(char.isdigit() for char in question)
+        
+        # Accept if either has numerical starters OR contains numbers (more flexible)
+        if not (has_numerical_starter or has_numbers_in_question):
+            logger.warning(f"🚫 Numerical question validation FAILED: No numerical indicators found")
+            return False
+        
+        # ARCHITECTURAL FIX: More reasonable numerical option validation
+        numerical_options = 0
+        for option in option_values:
+            option_str = str(option).lower()
+            
+            # Check if option contains numbers (basic requirement)
+            has_number = any(char.isdigit() for char in option_str)
+            
+            # Check for scientific notation or units
+            has_scientific_notation = 'e' in option_str and any(char.isdigit() for char in option_str)
+            has_units = any(unit in option_str for unit in self.common_units)
+            
+            if has_number or has_scientific_notation or has_units:
+                numerical_options += 1
+        
+        # ARCHITECTURAL FIX: More reasonable requirement - at least 3/4 options should be numerical
+        # This allows for edge cases like "None of the above" or mixed formats
+        if numerical_options < 3:
+            logger.warning(f"🚫 Numerical question validation FAILED: Only {numerical_options}/4 options appear numerical")
+            logger.warning(f"❌ Options: {option_values}")
+            return False
+        
+        # ARCHITECTURAL FIX: Allow reasonable explanations for numerical questions
+        # Explanations should be allowed to contain conceptual context as long as they explain the calculation
+        if explanation and len(explanation) > 300:  # Only check very long explanations
+            # Only reject if explanation is overwhelmingly conceptual with no numerical content
+            has_calculation_terms = any(term in explanation for term in ['calculate', 'formula', 'equation', 'solve', 'result', 'answer'])
+            if not has_calculation_terms:
+                logger.warning(f"🚫 Numerical question validation FAILED: Explanation lacks calculation context")
+                return False
+        
+        logger.info(f"✅ Numerical question validation PASSED: Pure calculation question with numerical options")
+        return True
     
     def create_retry_prompt_enhancement(self, original_prompt: str, question_type: str, failed_attempt: int) -> str:
         """

@@ -414,90 +414,54 @@ class EnhancedLMStudioGenerator(MCQGenerator):
             return None
 
     def _create_optimized_prompt(self, topic: str, context: str, question_index: int, difficulty: str = "medium", game_mode: str = "casual", question_type: str = "mixed") -> str:
-        """Create optimized prompt for schema-constrained generation with ANTI-VAGUE enforcement and question type support"""
+        """🚀 REVOLUTIONARY: Use unified trust-based prompt system instead of hardcoded constraints"""
+        try:
+            from .inquisitor_prompt import get_provider_optimized_prompt
+            
+            # Use the unified trust-based prompt system - no hardcoded constraints!
+            prompt = get_provider_optimized_prompt(
+                topic=topic,
+                difficulty=difficulty,
+                question_type=question_type,
+                context=context,
+                provider="lmstudio"
+            )
+            
+            logger.debug(f"🚀 Generated unified LMStudio prompt for {topic} ({difficulty}/{question_type})")
+            return prompt
+            
+        except ImportError as e:
+            logger.error(f"❌ Failed to import unified prompt system: {e}")
+            # Simple fallback without hardcoded constraints
+            return self._create_simple_fallback_prompt(topic, context, difficulty, question_type)
+    
+    def _create_simple_fallback_prompt(self, topic: str, context: str, difficulty: str, question_type: str) -> str:
+        """Simple fallback prompt that trusts the model to generate quality questions"""
+        context_section = f"Context: {context}\n\n" if context and context.strip() else ""
         
-        # Difficulty mapping with specific requirements
-        difficulty_map = {
-            "easy": "basic recall of specific facts, fundamental definitions, simple calculations",
-            "medium": "analytical thinking, concept application, problem-solving with specific scenarios", 
-            "hard": "complex synthesis, multi-step reasoning, expert-level analysis of specific cases, advanced mechanisms"
+        # Trust-based approach - give clear expectations, not restrictions
+        difficulty_expectations = {
+            "easy": "fundamental concepts and basic understanding",
+            "medium": "analytical thinking and concept application", 
+            "hard": "complex synthesis and expert-level analysis",
+            "expert": "cutting-edge research-level reasoning"
         }
         
-        difficulty_desc = difficulty_map.get(difficulty.lower(), difficulty_map["medium"])
+        expectation = difficulty_expectations.get(difficulty.lower(), "appropriate challenge level")
         
-        # Question type specific instructions
-        question_type_instructions = self._get_question_type_instructions(question_type, topic)
-        
-        # AGGRESSIVE anti-vague question enforcement for hard mode
-        if difficulty.lower() == "hard":
-            anti_vague_section = """
-🚨 HARD MODE - ABSOLUTELY NO VAGUE QUESTIONS:
-❌ COMPLETELY BANNED: "What is the primary function of..."
-❌ COMPLETELY BANNED: "What is the main purpose of..."
-❌ COMPLETELY BANNED: "What does X do?"
-❌ COMPLETELY BANNED: Basic definition questions
-❌ COMPLETELY BANNED: General overview questions
-✅ ABSOLUTELY REQUIRED: Specific mechanisms, pathways, processes
-✅ ABSOLUTELY REQUIRED: Multi-step reasoning and analysis
-✅ ABSOLUTELY REQUIRED: Expert-level detail and precision
-✅ ABSOLUTELY REQUIRED: Questions requiring deep understanding
+        prompt = f"""Generate a {difficulty}-level multiple choice question about: {topic}
 
-SPECIAL FOCUS FOR BIOLOGY/REPRODUCTIVE TOPICS:
-If this is about reproduction/reproductive systems, you MUST ask about:
-- Specific hormonal pathways (FSH, LH, testosterone, estrogen regulation)
-- Molecular mechanisms (meiosis stages, fertilization details)
-- Biochemical processes (steroidogenesis, gametogenesis)
-- Regulatory feedback loops and their disruption
-- Specific anatomical structures and their precise functions
-- Pathological conditions and their molecular basis
-"""
-        else:
-            anti_vague_section = ""
-        
-        # Anti-vague question types based on index
-        specific_question_types = [
-            "numerical calculation or specific quantitative analysis",
-            "definition or identification of specific terms/concepts with precise detail",
-            "cause-and-effect relationship with concrete examples and mechanisms",
-            "comparison between specific elements or cases with detailed analysis",
-            "step-by-step process or procedure explanation with molecular detail",
-            "real-world application with specific scenario and problem-solving",
-            "historical facts or specific timeline events with causal relationships",
-            "formula application or mathematical derivation with multi-step reasoning"
-        ]
-        
-        question_focus = specific_question_types[question_index % len(specific_question_types)]
-        
-        # 🔧 FIX: Sanitize inputs to prevent prompt injection
-        from .inquisitor_prompt import _sanitize_user_input
-        sanitized_topic = _sanitize_user_input(topic)
-        sanitized_difficulty = _sanitize_user_input(difficulty)
+{context_section}Quality Expectations:
+- Demonstrate {expectation}
+- Use appropriate technical terminology for the subject
+- Create engaging, meaningful questions that test real understanding
+- Ensure all answer options are plausible and well-crafted
 
-        # Enhanced prompt with anti-vague enforcement and question type support
-        prompt = f"""Generate a {sanitized_difficulty} difficulty multiple choice question about {sanitized_topic}.
+Question Type: {question_type}
 
-{anti_vague_section}
-
-{question_type_instructions}
-
-Requirements:
-- Topic: {topic}
-- Difficulty: {difficulty.upper()} - {difficulty_desc}
-- Question Type: {question_type.upper()}
-- Focus: {question_focus}
-- Context: {context if context else "Use knowledge base"}
-- Game Mode: {game_mode.upper()}
-
-Quality Standards for {difficulty.upper()} level:
-- Questions must require {difficulty_desc}
-- Use specific, technical terminology
-- Avoid vague generalizations
-- Include challenging but fair distractors
-- Focus on understanding mechanisms rather than simple recall
-
-Response format - valid JSON only:
+Return as valid JSON:
 {{
-  "question": "Your specific {difficulty} level {question_type} question here",
+  "question": "Your question here?",
   "options": {{
     "A": "Option A",
     "B": "Option B", 
@@ -505,82 +469,12 @@ Response format - valid JSON only:
     "D": "Option D"
   }},
   "correct": "A",
-  "explanation": "Detailed explanation appropriate for {difficulty} level"
+  "explanation": "Clear explanation of the correct answer"
 }}"""
-
+        
         return prompt
 
-    def _get_question_type_instructions(self, question_type: str, topic: str) -> str:
-        """Get specific instructions based on question type"""
-        
-        if question_type.lower() == "numerical":
-            return f"""
-📊 NUMERICAL QUESTION TYPE REQUIREMENTS:
-✅ MUST include specific numbers, measurements, percentages, or quantities
-✅ MUST require calculation, numerical reasoning, or quantitative analysis
-✅ Use precise units (days, years, %, mg, ml, etc.)
-✅ Include specific timeframes, durations, ages, or quantities
-✅ Focus on statistics, rates, measurements, or numerical facts
-
-🧮 NUMERICAL EXAMPLES FOR SEX EDUCATION:
-✅ "What is the average length of a menstrual cycle (in days)?" → Answer: 28 days
-✅ "How long can sperm live inside the female reproductive tract?" → Answer: Up to 5 days  
-✅ "What percentage effectiveness does the male condom have with perfect use?" → Answer: ~98%
-✅ "At what age does puberty typically start in girls?" → Answer: Around 8-13 years
-✅ "How many chromosomes are there in a human sperm cell?" → Answer: 23
-✅ "What is the typical duration of ovulation?" → Answer: About 24 hours
-✅ "How long does fertilization take after sperm meets egg?" → Answer: 12-24 hours
-
-❌ BANNED FOR NUMERICAL TYPE:
-❌ Pure conceptual questions without numbers
-❌ Vague qualitative descriptions  
-❌ Questions answerable without numerical knowledge
-
-🎯 FOCUS: Always include specific numbers, percentages, timeframes, quantities, or measurements in the question AND answers.
-"""
-        
-        elif question_type.lower() == "conceptual":
-            return f"""
-🧠 CONCEPTUAL QUESTION TYPE REQUIREMENTS:
-✅ MUST focus on understanding concepts, theories, and relationships
-✅ Test comprehension of processes, mechanisms, and principles
-✅ Avoid pure numerical calculations or memorized facts
-✅ Focus on "why" and "how" rather than "how many" or "when"
-✅ Test understanding of cause-and-effect relationships
-✅ Include analysis of systems, functions, and interactions
-
-🧠 CONCEPTUAL EXAMPLES FOR SEX EDUCATION:
-✅ "Which hormonal mechanism triggers ovulation?"
-✅ "How does the negative feedback loop regulate testosterone production?"
-✅ "What biological process prevents multiple sperm from fertilizing one egg?"
-✅ "Which physiological changes occur during the luteal phase?"
-✅ "How do contraceptive pills prevent pregnancy?"
-
-❌ BANNED FOR CONCEPTUAL TYPE:
-❌ Questions requiring specific numerical calculations
-❌ Pure memorization of dates, ages, or quantities
-❌ Statistical or measurement-based questions
-
-🎯 FOCUS: Understanding biological processes, mechanisms, and theoretical relationships.
-"""
-        
-        else:  # mixed
-            return f"""
-🔀 MIXED QUESTION TYPE REQUIREMENTS:
-✅ CAN include either numerical OR conceptual elements
-✅ Vary between quantitative analysis and theoretical understanding
-✅ Mix specific measurements with process comprehension
-✅ Balance factual recall with analytical reasoning
-✅ Include both "how much/many" and "why/how" questions
-
-🔀 MIXED EXAMPLES FOR SEX EDUCATION:
-✅ Either numerical: "How many days typically occur between ovulation and menstruation?"
-✅ Or conceptual: "Which hormone surge indicates that ovulation is about to occur?"
-✅ Either numerical: "What percentage of couples conceive within the first year of trying?"
-✅ Or conceptual: "How does cervical mucus change throughout the menstrual cycle?"
-
-🎯 FOCUS: Balance between quantitative facts and conceptual understanding based on the specific topic and learning objectives.
-"""
+    # Removed _get_question_type_instructions - now handled by unified prompt system
 
     async def generate_quiz_async(self, context: str, topic: str, difficulty: str = "medium", game_mode: str = "casual", question_type: str = "mixed") -> Dict[str, Any]:
         """Async wrapper for compatibility with existing MCQ manager"""

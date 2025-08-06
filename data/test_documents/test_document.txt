@@ -1,0 +1,23 @@
+
+            Chapter 1: Introduction to Machine Learning
+            
+            Machine learning is a method of data analysis that automates analytical model building.
+            It is a branch of artificial intelligence (AI) based on the idea that systems can learn from data,
+            identify patterns and make decisions with minimal human intervention.
+            
+            Example 1: Linear Regression
+            The formula for linear regression is: y = mx + b
+            Where:
+            - y is the dependent variable
+            - x is the independent variable  
+            - m is the slope
+            - b is the y-intercept
+            
+            Problem 1: Calculate the equation
+            Given points (1,2) and (3,6), find the linear equation.
+            
+            Solution:
+            Slope m = (6-2)/(3-1) = 4/2 = 2
+            Using point (1,2): 2 = 2(1) + b, so b = 0
+            Therefore: y = 2x
+            

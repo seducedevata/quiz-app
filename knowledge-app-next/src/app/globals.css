@@ -1,0 +1,464 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles for the application */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme variables (Light Mode - Default) */
+:root {
+    --bg-primary: #f0f2f5; /* Light background */
+    --bg-secondary: #ffffff; /* Card/sidebar background */
+    --text-primary: #333333; /* Dark text */
+    --text-secondary: #666666; /* Lighter text */
+    --border-color: #e0e0e0; /* Light border */
+    --primary-color: #007bff; /* Blue for primary actions/highlights */
+    --primary-hover: #0056b3; /* Darker blue on hover */
+    --success-color: #28a745; /* Green for success */
+    --error-color: #dc3545; /* Red for errors */
+    --warning-color: #ffc107; /* Yellow for warnings */
+    --info-color: #17a2b8; /* Cyan for info */
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+    --shadow-dark: rgba(0, 0, 0, 0.2);
+    --card-border-radius: 8px;
+    --button-border-radius: 6px;
+    --spacing-unit: 8px; /* Base unit for consistent spacing */
+}
+
+/* Dark Mode */
+html[data-theme='dark'] {
+    --bg-primary: #1a1a2e; /* Dark background */
+    --bg-secondary: #16213e; /* Darker card/sidebar background */
+    --text-primary: #e0e0e0; /* Light text */
+    --text-secondary: #aaaaaa; /* Lighter text in dark mode */
+    --border-color: #33334d; /* Dark border */
+    --primary-color: #6495ed; /* Lighter blue for dark mode */
+    --primary-hover: #4169e1; /* Darker blue on hover in dark mode */
+    --success-color: #4CAF50;
+    --error-color: #f44336;
+    --warning-color: #ffeb3b;
+    --info-color: #03A9F4;
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.4);
+    --shadow-dark: rgba(0, 0, 0, 0.5);
+}
+
+/* Apply theme variables to Tailwind's utility classes */
+@layer base {
+    body {
+        @apply bg-bg-primary text-text-primary;
+    }
+}
+
+/* Custom components and utilities */
+@layer components {
+    .app-header {
+        @apply bg-bg-secondary border-b border-border-color py-4 px-8 flex justify-between items-center shadow-md min-h-[80px];
+    }
+
+    .app-title {
+        @apply text-[1.75rem] font-bold bg-gradient-to-br from-primary-color to-primary-hover bg-clip-text text-transparent mb-1 leading-tight;
+    }
+
+    .app-subtitle {
+        @apply text-text-secondary text-sm m-0 font-normal;
+    }
+
+    .theme-toggle {
+        @apply bg-none border-none text-2xl cursor-pointer p-2 rounded-md transition-colors duration-300 hover:bg-border-color;
+    }
+
+    .side-nav {
+        @apply w-[250px] bg-bg-secondary border-r border-border-color p-4 flex flex-col gap-2;
+    }
+
+    .nav-item {
+        @apply flex items-center gap-4 py-3 px-4 bg-none border-none rounded-md text-text-primary text-base cursor-pointer transition-all duration-300 text-left w-full;
+    }
+
+    .nav-item.active {
+        @apply bg-primary-color text-white;
+    }
+
+    .nav-item:hover:not(.active) {
+        @apply bg-border-color translate-x-1;
+    }
+
+    .content-area {
+        @apply flex-1 p-8 overflow-y-auto;
+    }
+
+    .screen {
+        @apply hidden; /* Hidden by default, controlled by JS */
+    }
+
+    .screen.active {
+        @apply block; /* Shown when active */
+    }
+
+    /* Welcome Card (Home Screen) */
+    .welcome-card {
+        @apply bg-bg-secondary p-8 rounded-lg shadow-md text-center;
+    }
+
+    .welcome-card h2 {
+        @apply text-3xl font-bold text-primary-color mb-4;
+    }
+
+    .welcome-card p {
+        @apply text-text-secondary mb-6;
+    }
+
+    .stats-grid {
+        @apply grid grid-cols-1 md:grid-cols-3 gap-4 mt-8;
+    }
+
+    .stat-item {
+        @apply bg-bg-secondary p-6 rounded-lg shadow-sm border border-border-color text-center;
+    }
+
+    .stat-item .value {
+        @apply text-4xl font-bold text-primary-color;
+    }
+
+    .stat-item .label {
+        @apply text-text-secondary text-sm mt-2;
+    }
+
+    /* Quiz Setup Card */
+    .quiz-setup-card {
+        @apply bg-bg-secondary p-8 rounded-lg shadow-md;
+    }
+
+    .quiz-setup-card h2 {
+        @apply text-2xl font-bold text-text-primary mb-6;
+    }
+
+    .form-group {
+        @apply mb-4;
+    }
+
+    .form-group label {
+        @apply block text-text-secondary text-sm font-bold mb-2;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select {
+        @apply shadow appearance-none border border-border-color rounded w-full py-2 px-3 text-text-primary leading-tight focus:outline-none focus:ring-2 focus:ring-primary-color focus:border-transparent bg-bg-primary;
+    }
+
+    .info-text {
+        @apply text-text-secondary text-xs mt-1;
+    }
+
+    .btn-primary {
+        @apply bg-primary-color hover:bg-primary-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-200;
+    }
+
+    .btn-secondary {
+        @apply bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-200;
+    }
+
+    /* Status Display */
+    .status-display {
+        @apply fixed top-5 right-5 z-[10000] max-w-sm;
+    }
+
+    .status-message {
+        @apply flex items-center p-3 rounded-md shadow-lg;
+    }
+
+    .status-message.info { @apply bg-info-color text-white; }
+    .status-message.success { @apply bg-success-color text-white; }
+    .status-message.error { @apply bg-error-color text-white; }
+    .status-message.warning { @apply bg-warning-color text-gray-800; }
+    .status-message.loading { @apply bg-gray-600 text-white; }
+    .status-message.gpu { @apply bg-purple-600 text-white; }
+    .status-message.api { @apply bg-orange-500 text-white; }
+    .status-message.deepseek { @apply bg-blue-800 text-white; }
+
+    .status-icon {
+        @apply text-xl mr-2;
+    }
+
+    .status-text {
+        @apply flex-1;
+    }
+
+    .status-spinner {
+        @apply animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2;
+    }
+
+    /* Error Container */
+    .error-container {
+        @apply fixed top-5 right-5 z-[10000] max-w-sm;
+    }
+
+    .error-message {
+        @apply flex items-center p-3 rounded-md shadow-lg bg-error-color text-white;
+    }
+
+    .error-icon {
+        @apply text-xl mr-2;
+    }
+
+    .error-text {
+        @apply flex-1;
+    }
+
+    .error-close {
+        @apply ml-2 bg-transparent border-none text-white text-xl cursor-pointer;
+    }
+
+    /* Loading Container */
+    .loading-container {
+        @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] bg-bg-secondary p-5 rounded-lg shadow-xl flex flex-col items-center justify-center;
+    }
+
+    .loading-spinner {
+        @apply animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary-color mb-3;
+    }
+
+    .loading-text {
+        @apply text-text-primary text-lg font-semibold;
+    }
+
+    /* Quiz Game */
+    .quiz-game-container {
+        @apply bg-bg-secondary p-8 rounded-lg shadow-md;
+    }
+
+    .question-number {
+        @apply text-text-secondary text-sm mb-4;
+    }
+
+    .question-text {
+        @apply text-text-primary text-xl font-semibold mb-6;
+    }
+
+    .options-container {
+        @apply grid grid-cols-1 gap-3;
+    }
+
+    .option-button {
+        @apply flex items-center p-4 border border-border-color rounded-md text-text-primary text-base cursor-pointer transition-all duration-200 bg-bg-primary;
+    }
+
+    .option-button:hover {
+        @apply bg-primary-color text-white border-primary-color;
+    }
+
+    .option-button.selected {
+        @apply bg-primary-color text-white border-primary-color;
+    }
+
+    .option-button.correct-answer {
+        @apply bg-success-color text-white border-success-color;
+    }
+
+    .option-button.incorrect-answer {
+        @apply bg-error-color text-white border-error-color;
+    }
+
+    .option-letter {
+        @apply font-bold mr-2;
+    }
+
+    .timer-display {
+        @apply text-text-secondary text-lg font-semibold mt-4 text-center;
+    }
+
+    .timer-warning {
+        @apply text-error-color;
+    }
+
+    .quiz-navigation {
+        @apply flex justify-between mt-6;
+    }
+
+    /* Review History */
+    .question-card {
+        @apply bg-bg-secondary border border-border-color rounded-lg p-4 mb-3 cursor-pointer transition-all duration-300 shadow-sm;
+    }
+
+    .question-card:hover {
+        @apply translate-y-[-2px] shadow-md;
+    }
+
+    .question-header {
+        @apply flex justify-between items-center mb-2;
+    }
+
+    .question-topic, .question-difficulty {
+        @apply px-2 py-1 rounded-full text-xs font-bold;
+    }
+
+    .question-topic {
+        @apply bg-gray-200 text-gray-700;
+    }
+
+    .question-difficulty {
+        @apply text-white;
+    }
+
+    .question-difficulty.easy { @apply bg-success-color; }
+    .question-difficulty.medium { @apply bg-warning-color; }
+    .question-difficulty.hard { @apply bg-error-color; }
+    .question-difficulty.expert { @apply bg-purple-600; }
+
+    .question-text-review {
+        @apply font-bold mb-2 text-text-primary;
+    }
+
+    .question-options-review .option-item {
+        @apply py-1 text-text-secondary;
+    }
+
+    .question-options-review .option-item.correct {
+        @apply font-bold text-success-color;
+    }
+
+    .question-meta {
+        @apply text-xs text-text-secondary flex justify-between mt-2;
+    }
+
+    /* Modal */
+    .modal {
+        @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] overflow-auto;
+    }
+
+    .modal-content {
+        @apply bg-bg-secondary p-6 rounded-lg shadow-xl max-w-3xl w-full relative;
+    }
+
+    .modal-close {
+        @apply absolute top-3 right-3 bg-transparent border-none text-text-secondary text-2xl cursor-pointer;
+    }
+
+    /* LaTeX Rendering */
+    .latex-display {
+        @apply block text-center my-4 text-lg font-mono;
+    }
+
+    .latex-inline {
+        @apply font-mono;
+    }
+
+    .fraction {
+        @apply inline-block align-middle text-center;
+    }
+
+    .numerator {
+        @apply block border-b border-text-primary pb-0.5;
+    }
+
+    .denominator {
+        @apply block pt-0.5;
+    }
+
+    .sqrt {
+        @apply inline-flex items-center;
+    }
+
+    .radicand {
+        @apply border-t border-text-primary px-0.5;
+    }
+
+    /* API Key Status Indicators */
+    .status-indicator {
+        @apply inline-block w-3 h-3 rounded-full ml-2;
+    }
+
+    .status-indicator.ready {
+        @apply bg-success-color;
+    }
+
+    .status-indicator.error {
+        @apply bg-error-color;
+    }
+
+    /* Training Screen */
+    .training-section {
+        @apply bg-bg-secondary p-6 rounded-lg shadow-md;
+    }
+
+    .training-status {
+        @apply text-lg font-semibold mb-4;
+    }
+
+    .training-status.running { @apply text-primary-color; }
+    .training-status.completed { @apply text-success-color; }
+    .training-status.error { @apply text-error-color; }
+
+    .progress-bar-container {
+        @apply w-full bg-gray-200 rounded-full h-4 mb-4;
+    }
+
+    .progress-bar {
+        @apply h-4 bg-primary-color rounded-full transition-all duration-300;
+    }
+
+    .metrics-grid {
+        @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+    }
+
+    .metric {
+        @apply bg-bg-primary p-4 rounded-md shadow-sm;
+    }
+
+    .metric label {
+        @apply block text-text-secondary text-sm;
+    }
+
+    .metric span {
+        @apply text-text-primary text-xl font-bold;
+    }
+
+    /* Uploaded Files */
+    .file-item {
+        @apply flex items-center justify-between p-3 border-b border-border-color last:border-b-0;
+    }
+
+    .file-icon {
+        @apply text-xl mr-2;
+    }
+
+    .file-name {
+        @apply flex-1 text-text-primary;
+    }
+
+    .file-size {
+        @apply text-text-secondary text-sm ml-2;
+    }
+
+    .delete-file-btn {
+        @apply bg-error-color hover:bg-red-700 text-white text-xs p-1 rounded;
+    }
+
+    .no-files {
+        @apply text-text-secondary text-center py-4;
+    }
+
+    /* Topic Analysis */
+    .topic-disabled {
+        @apply text-text-secondary italic;
+    }
+
+    .topic-recommended {
+        @apply text-primary-color font-semibold;
+    }
+
+    .topic-optimal {
+        @apply text-success-color font-bold;
+    }
+}

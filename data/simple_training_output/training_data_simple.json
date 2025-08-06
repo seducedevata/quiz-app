@@ -1,0 +1,38 @@
+{
+  "training_examples": [
+    {
+      "input": "Document chunk 1: Published as a workshop paper at ICLR 2024\nLARGE LANGUAGE MODEL EVALUATION VIA MULTI\nAI AGENTS: PREL...",
+      "output": "Training data from chunk 1",
+      "type": "conceptual",
+      "difficulty": "intermediate",
+      "source": "document_processing"
+    },
+    {
+      "input": "Document chunk 2: Additionally, we will share the model\nwith twenty diverse practitioners for real-world testing and f...",
+      "output": "Training data from chunk 2",
+      "type": "conceptual",
+      "difficulty": "intermediate",
+      "source": "document_processing"
+    },
+    {
+      "input": "Document chunk 3: 01. A simple Python program for creating and using flashcards for study, allowing users to\ntest thei...",
+      "output": "Training data from chunk 3",
+      "type": "conceptual",
+      "difficulty": "intermediate",
+      "source": "document_processing"
+    },
+    {
+      "input": "Document chunk 4: Are deep neural networks the best choice for\nmodeling source code? In Proceedings of the 2017 11th J...",
+      "output": "Training data from chunk 4",
+      "type": "conceptual",
+      "difficulty": "intermediate",
+      "source": "document_processing"
+    }
+  ],
+  "metadata": {
+    "source_file": "2404.01023v1.pdf",
+    "total_chunks": 4,
+    "total_characters": 46989,
+    "processing_method": "simple_document_processor"
+  }
+}

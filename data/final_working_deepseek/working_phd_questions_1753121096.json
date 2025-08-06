@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "source_document": "2404.01023v1.pdf",
+    "title": "Large Language Model Evaluation via Multi AI Agents",
+    "chunk_processed": 1,
+    "total_questions": 1,
+    "processing_timestamp": 1753121096,
+    "model_used": "deepseek-r1:14b",
+    "quality_level": "PhD/Expert",
+    "method": "direct_deepseek_api"
+  },
+  "questions": [
+    {
+      "question": "What is the primary goal of LLM evaluation in multi-agent systems?",
+      "options": [
+        "A) To determine computational efficiency",
+        "B) To assess content accuracy and relevance",
+        "C) To measure response speed",
+        "D) To evaluate user interaction patterns"
+      ],
+      "correct_answer": "B",
+      "explanation": "The primary goal of evaluating LLMs in multi-agent systems is to ensure that the generated content is accurate, relevant, and meets the requirements set by the system's objectives. This involves assessing both the quality of the output and how well it aligns with the intended purpose of the multi-agent framework.",
+      "difficulty": "PhD",
+      "topic": "LLM_evaluation_multi_agent"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<training_data><metadata><source_document>2404.01023v1.pdf</source_document><total_chunks>3</total_chunks><total_examples>10</total_examples><processing_timestamp>2025-07-21T22:57:00Z</processing_timestamp><processor_version>complete_pipeline_v1.0</processor_version><document_stats><original_size>327556</original_size><extracted_text_length>46989</extracted_text_length><chunk_count>3</chunk_count></document_stats></metadata><examples><example><input>Based on this research content: 'Published as a workshop paper at ICLR 2024
+LARGE LANGUAGE MODEL EVALUATION VIA MULTI
+AI AGENTS: PRELIMINARY RESULTS
+Zeeshan Rasheed, Muhammad Waseem, Kari Systä &amp; Pekka Abrahamsson
+Faculty of Information Technology and Communication Science, Tampere University
+Faculty of Information Technology, Jyväskylä University
+Tampere &amp; Jyväskylä , Finland
+{zeeshan'</input><output>This discusses Published as a workshop paper at ICLR 2024
+LARGE L... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>0</chunk_id></example><example><input>Based on this research content: 'fi
+ABSTRACT
+The increasing significance of Large Language Models (LLMs) in both the aca-
+demic and industrial sectors can be attributed to their exceptional performance
+across a diverse range of applications'</input><output>This discusses fi
+ABSTRACT
+The increasing significance of Large L... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>0</chunk_id></example><example><input>Based on this research content: 'As LLMs have become integral to both
+research and daily operations, rigorous evaluation is crucial'</input><output>This discusses As LLMs have become integral to both
+research and ... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>0</chunk_id></example><example><input>Based on this research content: 'A simple Python program for creating and using flashcards for study, allowing users to
+test their knowledge on various subjects
+02'</input><output>This discusses A simple Python program for creating and using fla... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>1</chunk_id></example><example><input>Based on this research content: 'An interactive Python game that tests users on various academic subjects and provides
+instant feedback
+03'</input><output>This discusses An interactive Python game that tests users on var... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>1</chunk_id></example><example><input>Based on this research content: 'A short, interactive, text-based adventure game written in Python, where players make
+choices that influence the outcome of the story'</input><output>This discusses A short, interactive, text-based adventure game wr... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>1</chunk_id></example><example><input>Based on this research content: 'Are deep neural networks the best choice for
+modeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software
+engineering, pp'</input><output>This discusses Are deep neural networks the best choice for
+model... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>2</chunk_id></example><example><input>Based on this research content: 'Xinyi Hou, Yanjie Zhao, Yue Liu, Zhou Yang, Kailong Wang, Li Li, Xiapu Luo, David Lo, John
+Grundy, and Haoyu Wang'</input><output>This discusses Xinyi Hou, Yanjie Zhao, Yue Liu, Zhou Yang, Kailon... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>2</chunk_id></example><example><input>Based on this research content: 'Large language models for software engineering: A systematic litera-
+ture review'</input><output>This discusses Large language models for software engineering: A ... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>2</chunk_id></example><example><input>Based on this research content: 'arXiv preprint arXiv:2308'</input><output>This discusses arXiv preprint arXiv:2308... which relates to the main research topic.</output><type>conceptual</type><difficulty>expert</difficulty><source>2404.01023v1.pdf</source><chunk_id>2</chunk_id></example></examples></training_data>

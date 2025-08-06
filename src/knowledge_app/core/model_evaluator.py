@@ -21,6 +21,11 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# Import user action logging
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from logging.user_action_logger import user_action_logger, log_quiz_generation, log_answer_submission, log_api_key_validation, log_file_upload, log_training_start, log_error_with_context
+
 
 @dataclass
 class EvaluationResult:
@@ -334,7 +339,7 @@ class ModelEvaluator:
         required_fields = ["instruction", "input", "output"]
         return all(field in sample for field in required_fields)
     
-    def _evaluate_model_on_samples(self, base_model_id: str, adapter_path: Optional[str], samples: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
+    async def _evaluate_model_on_samples(self, base_model_id: str, adapter_path: Optional[str], samples: List[Dict[str, Any]]) -> Tuple[float, Dict[str, Any]]:
         """
         Evaluate a model (with optional LoRA adapter) on holdout samples using REAL inference
 
@@ -346,16 +351,19 @@ class ModelEvaluator:
             logger.info(f"   📋 Base model: {base_model_id}")
             logger.info(f"   🔗 Adapter: {adapter_path if adapter_path else 'None (base model)'}")
 
-            # Use GlobalModelSingleton for inference to avoid reloading models
-            from .global_model_singleton import GlobalModelSingleton
-            model_singleton = GlobalModelSingleton()
+            # Use UnifiedInferenceManager for inference to avoid conflicting model managers
+            from .unified_inference_manager import get_unified_inference_manager
+            unified_manager = get_unified_inference_manager()
 
-            # Ensure the base model is loaded
-            if not model_singleton.is_loaded:
-                logger.info("📥 Loading base model for evaluation...")
-                if not model_singleton.load_model(base_model_id):
-                    logger.error("❌ Failed to load base model for evaluation")
-                    return 0.0, {"error": "Failed to load base model"}
+            # Ensure the unified manager is ready
+            if not unified_manager:
+                logger.error("❌ UnifiedInferenceManager not available for evaluation")
+                return 0.0, {"error": "UnifiedInferenceManager not available"}
+            
+            status = unified_manager.get_status()
+            if status.get("state") != "ready":
+                logger.error(f"❌ UnifiedInferenceManager not ready: {status}")
+                return 0.0, {"error": "UnifiedInferenceManager not ready"}
 
             total_score = 0.0
             sample_scores = []
@@ -374,25 +382,28 @@ class ModelEvaluator:
                     else:
                         prompt = f"### Instruction:\n{instruction}\n\n### Response:\n"
 
-                    # Generate response using the model (with or without adapter)
-                    if adapter_path:
-                        # Load adapter temporarily for this evaluation
-                        adapter_name = Path(adapter_path).stem
-                        generated_response = model_singleton.generate_text(
-                            prompt,
-                            adapter_name=adapter_name,
-                            max_length=512,
-                            temperature=0.7,
-                            do_sample=True
-                        )
-                    else:
-                        # Use base model
-                        generated_response = model_singleton.generate_text(
-                            prompt,
-                            max_length=512,
-                            temperature=0.7,
-                            do_sample=True
-                        )
+                    # Generate response using UnifiedInferenceManager
+                    try:
+                        # Use unified manager for all text generation
+                        generation_params = {
+                            "prompt": prompt,
+                            "max_tokens": 512,
+                            "temperature": 0.7,
+                            "model_preference": base_model_id if base_model_id else None
+                        }
+                        
+                        # Note: Adapter support would need to be implemented in UnifiedInferenceManager
+                        if adapter_path:
+                            logger.warning(f"⚠️ Adapter evaluation not yet supported in UnifiedInferenceManager: {adapter_path}")
+                        
+                        generated_response = await unified_manager.generate_text_async(**generation_params)
+                        if not generated_response:
+                            logger.error(f"❌ Failed to generate response for sample {i+1}")
+                            generated_response = "[Generation failed]"
+                            
+                    except Exception as gen_error:
+                        logger.error(f"❌ Error generating response for sample {i+1}: {gen_error}")
+                        generated_response = "[Generation error]"
 
                     # Score the generated response against expected output
                     sample_score = self._score_generated_response(

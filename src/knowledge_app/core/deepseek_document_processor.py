@@ -15,6 +15,7 @@ Features:
 import json
 import logging
 import asyncio
+import re
 import xml.etree.ElementTree as ET
 import csv
 import tempfile
@@ -680,7 +681,7 @@ class DeepSeekDocumentProcessor:
             return False
 
     def _validate_decoded_file(self, file_content: bytes, filename: str) -> bool:
-        """Validate decoded file content for security and format"""
+        """Validate decoded file content for security and format - SECURITY FIXED"""
         try:
             # Check file size (max 50MB)
             max_size = 50 * 1024 * 1024  # 50MB
@@ -693,8 +694,10 @@ class DeepSeekDocumentProcessor:
                 logger.warning(f"⚠️ File {filename} too small: {len(file_content)} bytes")
                 return False
 
-            # Check file magic numbers for common document types
+            # SECURITY FIX: Enhanced file validation beyond magic numbers
             file_ext = Path(filename).suffix.lower()
+            
+            # Basic magic number check (but not the only validation)
             magic_numbers = {
                 '.pdf': [b'%PDF'],
                 '.docx': [b'PK\x03\x04'],  # ZIP-based format
@@ -704,6 +707,7 @@ class DeepSeekDocumentProcessor:
                 '.rtf': [b'{\\rtf'],
             }
 
+            # SECURITY FIX: More thorough content validation
             if file_ext in magic_numbers and magic_numbers[file_ext]:
                 magic_found = False
                 for magic in magic_numbers[file_ext]:
@@ -714,8 +718,16 @@ class DeepSeekDocumentProcessor:
                 if not magic_found:
                     logger.warning(f"⚠️ File {filename} doesn't match expected format for {file_ext}")
                     return False
+                    
+                # SECURITY FIX: Additional structural validation for PDF files
+                if file_ext == '.pdf':
+                    # Check for PDF trailer and xref table
+                    content_str = file_content.decode('latin-1', errors='ignore')
+                    if 'startxref' not in content_str or '%%EOF' not in content_str:
+                        logger.warning(f"⚠️ PDF file {filename} missing required structural elements")
+                        return False
 
-            # Additional security check: scan for suspicious patterns
+            # SECURITY FIX: Enhanced suspicious content scanning
             suspicious_patterns = [
                 b'<script',
                 b'javascript:',
@@ -725,9 +737,16 @@ class DeepSeekDocumentProcessor:
                 b'<%',
                 b'#!/bin/',
                 b'#!/usr/bin/',
+                b'\x4d\x5a',  # PE executable header
+                b'\x7f\x45\x4c\x46',  # ELF executable header
+                b'\xca\xfe\xba\xbe',  # Java class file
+                b'\xfe\xed\xfa\xce',  # Mach-O executable (little endian)
+                b'\xce\xfa\xed\xfe',  # Mach-O executable (big endian)
             ]
 
-            content_lower = file_content[:1024].lower()  # Check first 1KB
+            # SECURITY FIX: Check larger portion of file, not just first 1KB
+            content_sample = file_content[:min(10240, len(file_content))]  # Check first 10KB
+            content_lower = content_sample.lower()
             for pattern in suspicious_patterns:
                 if pattern in content_lower:
                     logger.warning(f"⚠️ Suspicious pattern found in {filename}: {pattern}")
@@ -1400,20 +1419,33 @@ class DeepSeekDocumentProcessor:
     async def _process_with_refined_prompt(self, chunk: str, refined_prompt: str, progress_callback: Optional[Callable] = None) -> Optional[Dict[str, Any]]:
         """Process chunk with refined prompt"""
         try:
-            # This would need to be implemented in the DeepSeek integration
-            # For now, we'll use the standard processing but with a note about refinement
+            # CRITICAL FIX: Use proper data extraction instead of MCQ generation
             if progress_callback:
                 progress_callback("🔄 Processing with refined prompt...")
 
-            # Use standard processing (in a real implementation, this would use the refined prompt)
-            result = self.mcq_generator._generate_expert_questions_batch(
-                topic="refined_content",
-                context=refined_prompt,  # Use refined prompt instead of raw chunk
-                num_questions=2,
-                question_type="mixed"
-            )
-
-            return result
+            # FIXED: Call the actual data extraction function with refined prompt
+            # Instead of MCQ generator, we should call the DeepSeek processor directly
+            try:
+                # Import the working enhanced processor
+                from .enhanced_deepseek_processor import EnhancedDeepSeekProcessor, DeepSeekConfig
+                
+                # Create processor instance
+                enhanced_config = DeepSeekConfig(
+                    model_name="deepseek-r1:14b",
+                    max_context_tokens=128000,
+                    use_dynamic_timeout=True
+                )
+                processor = EnhancedDeepSeekProcessor(enhanced_config)
+                
+                # Call the proper data extraction API with refined prompt
+                result = await processor._call_ollama_deepseek(refined_prompt, progress_callback)
+                
+                return result
+                
+            except Exception as e:
+                logger.error(f"❌ Enhanced processor unavailable: {e}")
+                # Fallback to None instead of wrong MCQ call
+                return None
 
         except Exception as e:
             logger.error(f"❌ Refined prompt processing failed: {e}")

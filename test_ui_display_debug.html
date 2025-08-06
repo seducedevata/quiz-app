@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UI Display Debug Test</title>
+    <style>
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .question-card { 
+            border: 1px solid #ccc; 
+            margin: 10px; 
+            padding: 10px; 
+            background: #f9f9f9;
+        }
+        .difficulty-badge { padding: 2px 8px; border-radius: 4px; }
+        .difficulty-easy { background: #d4edda; }
+        .difficulty-medium { background: #fff3cd; }
+        .difficulty-expert { background: #f8d7da; }
+        .topic-badge, .type-badge { 
+            background: #e9ecef; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            margin: 0 2px;
+        }
+        .btn-small { padding: 4px 8px; margin: 2px; }
+        .btn-primary { background: #007bff; color: white; border: none; }
+        .btn-secondary { background: #6c757d; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <h1>UI Display Debug Test</h1>
+    
+    <div id="review-screen" class="screen active">
+        <div id="loading-history" style="display: none;">Loading...</div>
+        <div id="no-questions" style="display: none;">No questions found</div>
+        <div id="questions-list"></div>
+    </div>
+    
+    <button onclick="testDisplayQuestions()">Test Display Questions</button>
+    <button onclick="testWithRealData()">Test With Real Data</button>
+    <div id="debug-output"></div>
+
+    <script>
+        // Copy the helper functions from app.js
+        function getDifficultyIcon(difficulty) {
+            const icons = {
+                'easy': '🟢',
+                'medium': '🟡', 
+                'hard': '🔴',
+                'expert': '🔥💀'
+            };
+            return icons[difficulty] || '⚪';
+        }
+
+        function getTypeIcon(questionType) {
+            const icons = {
+                'numerical': '📊',
+                'conceptual': '🧠',
+                'mixed': '🔀'
+            };
+            return icons[questionType] || '❓';
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        function showQuestionDetail(id) {
+            alert('Show detail for question: ' + id);
+        }
+
+        function practiceQuestion(id) {
+            alert('Practice question: ' + id);
+        }
+
+        // Copy the displayQuestions function from app.js
+        function displayQuestions(questions) {
+            console.log('🔍 DEBUG displayQuestions: Called with:', questions);
+            
+            // Check if review screen is still active to prevent race conditions
+            const reviewScreen = document.getElementById('review-screen');
+            if (!reviewScreen || !reviewScreen.classList.contains('active')) {
+                console.log('🔧 Review screen is no longer active. Aborting question display.');
+                return;
+            }
+            
+            const questionsList = document.getElementById('questions-list');
+            const noQuestions = document.getElementById('no-questions');
+            
+            console.log('🔍 DEBUG displayQuestions: questionsList element:', questionsList);
+            console.log('🔍 DEBUG displayQuestions: noQuestions element:', noQuestions);
+            console.log('🔍 DEBUG displayQuestions: questions array:', questions);
+            console.log('🔍 DEBUG displayQuestions: questions length:', questions ? questions.length : 'null/undefined');
+            
+            if (!questions || questions.length === 0) {
+                console.log('🔍 DEBUG displayQuestions: No questions, calling showNoQuestionsMessage');
+                showNoQuestionsMessage();
+                return;
+            }
+            
+            console.log('🔍 DEBUG displayQuestions: Proceeding to display questions');
+            noQuestions.style.display = 'none';
+            
+            console.log('🔍 DEBUG displayQuestions: About to generate HTML for', questions.length, 'questions');
+            
+            try {
+                questionsList.innerHTML = questions.map(question => `
+                    <div class="question-card" onclick="showQuestionDetail('${question.id}')">
+                        <div class="question-card-header">
+                            <div class="question-meta">
+                                <span class="difficulty-badge difficulty-${question.difficulty}">${getDifficultyIcon(question.difficulty)} ${question.difficulty}</span>
+                                <span class="topic-badge">${question.topic}</span>
+                                <span class="type-badge">${getTypeIcon(question.question_type)} ${question.question_type}</span>
+                            </div>
+                            <div class="question-date">
+                                ${formatDate(question.generated_at)}
+                            </div>
+                        </div>
+                        <div class="question-preview">
+                            <h4>${truncateText(question.question, 150)}</h4>
+                            <div class="question-stats">
+                                ${question.times_answered > 0 ? 
+                                    `<span class="accuracy-stat">📊 ${Math.round(question.accuracy * 100)}% accuracy (${question.times_answered} attempts)</span>` :
+                                    '<span class="never-attempted">💫 Never attempted</span>'
+                                }
+                            </div>
+                        </div>
+                        <div class="question-actions">
+                            <button class="btn-small btn-primary" onclick="event.stopPropagation(); practiceQuestion('${question.id}')">Practice</button>
+                            <button class="btn-small btn-secondary" onclick="event.stopPropagation(); showQuestionDetail('${question.id}')">Details</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                console.log('✅ Successfully set innerHTML for questions list');
+                
+            } catch (error) {
+                console.error('❌ Error generating HTML:', error);
+                document.getElementById('debug-output').innerHTML = '<div style="color: red;">Error: ' + error.message + '</div>';
+            }
+        }
+
+        function showNoQuestionsMessage() {
+            document.getElementById('no-questions').style.display = 'block';
+            document.getElementById('questions-list').innerHTML = '';
+        }
+
+        function testDisplayQuestions() {
+            const testQuestions = [
+                {
+                    id: 'test-1',
+                    question: 'What is 2+2?',
+                    topic: 'Mathematics',
+                    difficulty: 'easy',
+                    question_type: 'numerical',
+                    generated_at: '2025-07-21 22:15:51',
+                    times_answered: 0,
+                    accuracy: 0
+                }
+            ];
+            
+            console.log('Testing displayQuestions with test data...');
+            displayQuestions(testQuestions);
+        }
+
+        function testWithRealData() {
+            // Simulate the real data structure from the backend
+            const realData = {
+                "success": true,
+                "questions": [
+                    {
+                        "id": "82a5e59f-8815-446f-9067-fa1f47b579e2",
+                        "question": "What is 2+2?",
+                        "options": ["3", "4", "5", "6"],
+                        "correct_answer": "4",
+                        "correct_index": 1,
+                        "explanation": "Basic arithmetic",
+                        "topic": "Mathematics",
+                        "difficulty": "easy",
+                        "question_type": "multiple_choice",
+                        "game_mode": "casual",
+                        "generated_at": "2025-07-21 22:15:51",
+                        "last_reviewed": null,
+                        "times_answered": 0,
+                        "times_correct": 0,
+                        "quiz_session_id": "3480d551-0370-46f7-9436-a4160f7c4e4c",
+                        "accuracy": 0,
+                        "metadata": {}
+                    }
+                ],
+                "total_count": 1
+            };
+            
+            console.log('Testing with real backend data structure...');
+            if (realData.success && realData.questions) {
+                displayQuestions(realData.questions);
+            }
+        }
+    </script>
+</body>
+</html>

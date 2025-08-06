@@ -1074,3 +1074,99 @@ class QuestionHistoryStorage:
             result["trained_model_score"] = row.get("trained_model_score")
         
         return result
+
+    def get_quiz_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive quiz statistics for home menu display"""
+        try:
+            cursor = self.db_connection.cursor()
+            
+            # Total quizzes taken (completed sessions)
+            cursor.execute("""
+                SELECT COUNT(*) FROM quiz_sessions 
+                WHERE end_time IS NOT NULL
+            """)
+            quizzes_taken = cursor.fetchone()[0]
+            
+            # Total questions answered across all quizzes
+            cursor.execute("""
+                SELECT COUNT(*) FROM quiz_sessions 
+                WHERE end_time IS NOT NULL
+            """)
+            total_sessions = cursor.fetchone()[0]
+            
+            # Get all quiz sessions with scores
+            cursor.execute("""
+                SELECT score, total_questions FROM quiz_sessions 
+                WHERE end_time IS NOT NULL AND score IS NOT NULL
+            """)
+            sessions_data = cursor.fetchall()
+            
+            total_questions_answered = 0
+            total_correct_answers = 0
+            total_score = 0.0
+            
+            for score, total_questions in sessions_data:
+                if score is not None and total_questions is not None:
+                    total_questions_answered += total_questions
+                    total_correct_answers += int((score / 100.0) * total_questions)
+                    total_score += score
+            
+            # Calculate average score
+            average_score = total_score / len(sessions_data) if sessions_data else 0.0
+            
+            # Get streak information
+            cursor.execute("""
+                SELECT score FROM quiz_sessions 
+                WHERE end_time IS NOT NULL AND score IS NOT NULL
+                ORDER BY end_time DESC
+            """)
+            recent_scores = cursor.fetchall()
+            
+            streak = 0
+            for score_row in recent_scores:
+                if score_row[0] and score_row[0] >= 70:  # Consider 70%+ as success
+                    streak += 1
+                else:
+                    break
+            
+            # Get last quiz date
+            cursor.execute("""
+                SELECT MAX(end_time) FROM quiz_sessions 
+                WHERE end_time IS NOT NULL
+            """)
+            last_quiz_date = cursor.fetchone()[0]
+            
+            stats = {
+                "quizzes_taken": quizzes_taken,
+                "average_score": round(average_score, 1),
+                "questions_answered": total_questions_answered,
+                "total_correct_answers": total_correct_answers,
+                "total_incorrect_answers": total_questions_answered - total_correct_answers,
+                "streak": streak,
+                "last_quiz_date": last_quiz_date
+            }
+            
+            logger.info(f"📊 Quiz statistics: {stats}")
+            return stats
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get quiz statistics: {e}")
+            return {
+                "quizzes_taken": 0,
+                "average_score": 0.0,
+                "questions_answered": 0,
+                "total_correct_answers": 0,
+                "total_incorrect_answers": 0,
+                "streak": 0,
+                "last_quiz_date": None
+            }
+
+# Global instance for singleton pattern
+_question_history_storage_instance = None
+
+def get_question_history_storage() -> QuestionHistoryStorage:
+    """Get the global question history storage instance"""
+    global _question_history_storage_instance
+    if _question_history_storage_instance is None:
+        _question_history_storage_instance = QuestionHistoryStorage()
+    return _question_history_storage_instance

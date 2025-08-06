@@ -1,0 +1,113 @@
+{
+  "training_examples": [
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 1, example 1: Published as a workshop paper at ICLR 2024\nLARGE LANGUAGE MODEL EVALUATION VIA MULTI\nAI AGENTS: PRELIMINARY RESULTS\nZeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson\nFaculty of Informat...",
+      "output": "Processed training data from chunk 1, example 1",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 0,
+        "example_id": 0,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 9302
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 1, example 2: Published as a workshop paper at ICLR 2024\nLARGE LANGUAGE MODEL EVALUATION VIA MULTI\nAI AGENTS: PRELIMINARY RESULTS\nZeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson\nFaculty of Informat...",
+      "output": "Processed training data from chunk 1, example 2",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 0,
+        "example_id": 1,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 9302
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 2, example 1: Additionally, we will share the model\nwith twenty diverse practitioners for real-world testing and feedback, underlining our com-\nmitment to technical excellence and practical application in language ...",
+      "output": "Processed training data from chunk 2, example 1",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 1,
+        "example_id": 0,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 18118
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 2, example 2: Additionally, we will share the model\nwith twenty diverse practitioners for real-world testing and feedback, underlining our com-\nmitment to technical excellence and practical application in language ...",
+      "output": "Processed training data from chunk 2, example 2",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 1,
+        "example_id": 1,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 18118
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 3, example 1: 01. A simple Python program for creating and using flashcards for study, allowing users to\ntest their knowledge on various subjects\n02. An interactive Python game that tests users on various academic ...",
+      "output": "Processed training data from chunk 3, example 1",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 2,
+        "example_id": 0,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 16315
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 3, example 2: 01. A simple Python program for creating and using flashcards for study, allowing users to\ntest their knowledge on various subjects\n02. An interactive Python game that tests users on various academic ...",
+      "output": "Processed training data from chunk 3, example 2",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 2,
+        "example_id": 1,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 16315
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 4, example 1: Are deep neural networks the best choice for\nmodeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software\nengineering, pp. 763–773, 2017. Xinyi Hou, Yanjie Zhao, Yue ...",
+      "output": "Processed training data from chunk 4, example 1",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 3,
+        "example_id": 0,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 3991
+      }
+    },
+    {
+      "input": "Document content from 2404.01023v1.pdf, chunk 4, example 2: Are deep neural networks the best choice for\nmodeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software\nengineering, pp. 763–773, 2017. Xinyi Hou, Yanjie Zhao, Yue ...",
+      "output": "Processed training data from chunk 4, example 2",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "document_processing",
+      "metadata": {
+        "chunk_id": 3,
+        "example_id": 1,
+        "source_file": "2404.01023v1.pdf",
+        "chunk_length": 3991
+      }
+    }
+  ],
+  "metadata": {
+    "total_files": 1,
+    "processing_timestamp": 1753118695.0382874,
+    "processor_version": "fixed_v1.0"
+  }
+}

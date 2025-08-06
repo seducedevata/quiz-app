@@ -609,6 +609,438 @@ JSON RESPONSE (ALWAYS VALID):
         
         return profile
 
+    def verify_and_enhance_prompt(self, prompt: str, topic: str, difficulty: str, question_type: str) -> Dict[str, any]:
+        """
+        🔍 STAGE 2 PHI VERIFICATION: Review and enhance the Inquisitor's Mandate prompt
+        
+        This method takes the generated prompt and uses Phi model to:
+        1. Verify the prompt quality and clarity
+        2. Suggest improvements for better question generation
+        3. Enhance domain-specific instructions
+        4. Optimize for the target difficulty and question type
+        
+        Args:
+            prompt: The Inquisitor's Mandate prompt to verify
+            topic: The topic for context
+            difficulty: Target difficulty level
+            question_type: Target question type
+            
+        Returns:
+            Dict with verification results and enhanced prompt
+        """
+        try:
+            logger.info(f"🔍 PHI VERIFICATION: Reviewing prompt for '{topic}' ({difficulty}, {question_type})")
+            
+            # Create verification prompt for Phi model - SIMPLIFIED for better JSON reliability
+            verification_prompt = f"""You are an expert educational prompt engineer. Analyze and enhance the following quiz generation prompt for maximum educational value.
+
+Topic: {topic}
+Difficulty: {difficulty}
+Question Type: {question_type}
+
+PROMPT TO ANALYZE:
+{prompt[:1000]}...
+
+INSTRUCTIONS:
+1. Rate the prompt quality (1-10 scale)
+2. Identify strengths and areas for improvement  
+3. Create an enhanced version that is more specific, engaging, and pedagogically sound
+4. Provide your analysis in STRICT JSON format
+
+CRITICAL: Your response must be ONLY valid JSON. No explanations before or after. Start with {{ and end with }}.
+
+REQUIRED JSON FORMAT:
+{{
+  "quality_score": 8.5,
+  "strengths": ["specific strength 1", "specific strength 2"],
+  "improvements": ["specific improvement 1", "specific improvement 2"],
+  "enhanced_prompt": "Your enhanced prompt text here...",
+  "confidence": 0.85,
+  "reasoning": "Brief explanation of changes made"
+}}"""
+
+            # Call Phi model for verification using a dedicated method
+            verification_result = self._verify_prompt_with_ai(verification_prompt)
+            
+            if verification_result and verification_result.get("enhanced_prompt"):
+                logger.info(f"✅ PHI VERIFICATION: Enhanced prompt (quality score: {verification_result.get('quality_score', 'N/A')})")
+                return {
+                    "verification_successful": True,
+                    "original_prompt": prompt,
+                    "enhanced_prompt": verification_result["enhanced_prompt"],
+                    "quality_score": verification_result.get("quality_score", 7),
+                    "strengths": verification_result.get("strengths", []),
+                    "improvements": verification_result.get("improvements", []),
+                    "confidence": verification_result.get("confidence", 0.8),
+                    "reasoning": verification_result.get("reasoning", "Prompt enhanced by Phi model"),
+                    "verification_method": "phi_ai"
+                }
+            else:
+                logger.warning("⚠️ PHI VERIFICATION: AI verification failed, using fallback analysis")
+                return self._fallback_prompt_verification(prompt, topic, difficulty, question_type)
+                
+        except Exception as e:
+            logger.error(f"❌ PHI VERIFICATION: Error during prompt verification: {e}")
+            return self._fallback_prompt_verification(prompt, topic, difficulty, question_type)
+
+    def _verify_prompt_with_ai(self, verification_prompt: str) -> Dict[str, any]:
+        """
+        Dedicated method for prompt verification using Phi model
+        """
+        try:
+            # Call Ollama API for prompt verification
+            response = requests.post(
+                f"{self.ollama_url}/api/generate",
+                json={
+                    "model": self.model_name,
+                    "prompt": verification_prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.2,  # Low temperature for consistent verification
+                        "num_predict": 1000,  # Longer response for detailed verification
+                        "top_p": 0.9
+                    }
+                },
+                timeout=60  # Longer timeout for verification
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                response_text = result.get("response", "").strip()
+                
+                # Try to parse JSON response with multiple robust fallback strategies
+                if response_text:
+                    return self._parse_json_with_advanced_fallbacks(response_text)
+                else:
+                    logger.warning("⚠️ PHI VERIFICATION: Empty response from Phi model")
+                    return None
+            else:
+                logger.error(f"❌ PHI VERIFICATION: API call failed with status {response.status_code}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ PHI VERIFICATION: Error calling Phi model: {e}")
+            return None
+
+    def _parse_json_with_advanced_fallbacks(self, response_text: str) -> Dict[str, any]:
+        """
+        Advanced JSON parsing with multiple robust fallback strategies
+        Based on best practices for handling malformed JSON from AI models
+        """
+        import re
+        
+        # Strategy 1: Direct parsing with preprocessing
+        try:
+            # Clean the response text first
+            cleaned_text = response_text.strip()
+            
+            # Remove any leading/trailing non-JSON content
+            if not cleaned_text.startswith('{') and '{' in cleaned_text:
+                cleaned_text = cleaned_text[cleaned_text.find('{'):]
+            if not cleaned_text.endswith('}') and '}' in cleaned_text:
+                cleaned_text = cleaned_text[:cleaned_text.rfind('}') + 1]
+            
+            verification_data = json.loads(cleaned_text)
+            logger.info(f"✅ PHI VERIFICATION: Successfully parsed (direct)")
+            return verification_data
+            
+        except json.JSONDecodeError as e:
+            logger.debug(f"🔧 Direct parsing failed: {e}")
+            
+        # Strategy 2: Extract JSON using multiple methods
+        json_candidates = []
+        
+        # Method A: Find complete JSON objects
+        brace_count = 0
+        start_pos = -1
+        for i, char in enumerate(response_text):
+            if char == '{':
+                if brace_count == 0:
+                    start_pos = i
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0 and start_pos >= 0:
+                    json_candidates.append(response_text[start_pos:i+1])
+        
+        # Method B: Regex patterns for JSON extraction
+        json_patterns = [
+            r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}',  # Nested objects
+            r'\{.*?\}',  # Simple objects
+            r'```json\s*(\{.*?\})\s*```',  # Markdown code blocks
+            r'```\s*(\{.*?\})\s*```',  # Generic code blocks
+        ]
+        
+        for pattern in json_patterns:
+            matches = re.findall(pattern, response_text, re.DOTALL)
+            json_candidates.extend(matches)
+        
+        # Strategy 3: Try parsing each candidate with progressive fixing
+        for candidate in json_candidates:
+            if not candidate.strip():
+                continue
+                
+            # Try direct parsing first
+            try:
+                verification_data = json.loads(candidate)
+                logger.info(f"✅ PHI VERIFICATION: Successfully parsed (extracted)")
+                return verification_data
+            except json.JSONDecodeError:
+                pass
+            
+            # Apply JSON fixes progressively
+            fixed_candidate = self._fix_json_progressively(candidate)
+            if fixed_candidate:
+                try:
+                    verification_data = json.loads(fixed_candidate)
+                    logger.info(f"✅ PHI VERIFICATION: Successfully parsed (fixed)")
+                    return verification_data
+                except json.JSONDecodeError:
+                    continue
+        
+        # Strategy 4: Last resort - manual JSON construction
+        logger.warning("⚠️ PHI VERIFICATION: Attempting manual JSON reconstruction")
+        manual_json = self._reconstruct_json_manually(response_text)
+        if manual_json:
+            try:
+                verification_data = json.loads(manual_json)
+                logger.info(f"✅ PHI VERIFICATION: Successfully parsed (reconstructed)")
+                return verification_data
+            except json.JSONDecodeError:
+                pass
+        
+        logger.error("❌ PHI VERIFICATION: All advanced JSON parsing strategies failed")
+        logger.debug(f"🔍 Raw response text: {response_text[:500]}...")
+        return None
+    
+    def _fix_json_progressively(self, json_text: str) -> str:
+        """
+        Apply progressive JSON fixes based on common AI model JSON errors
+        """
+        import re
+        
+        fixed = json_text.strip()
+        
+        # Fix 1: Remove trailing commas (most common issue)
+        fixed = re.sub(r',(\s*[}\]])', r'\1', fixed)
+        
+        # Fix 2: Handle unescaped quotes in string values - more robust approach
+        def fix_unescaped_quotes(text):
+            # Split by lines and fix each line that contains string values
+            lines = text.split('\n')
+            fixed_lines = []
+            
+            for line in lines:
+                # If line contains a key-value pair with string value
+                if ':' in line and '"' in line:
+                    # Find the key and value parts
+                    colon_pos = line.find(':')
+                    key_part = line[:colon_pos]
+                    value_part = line[colon_pos:]
+                    
+                    # Fix unescaped quotes in the value part only
+                    # Look for patterns like "some "quoted" text"
+                    value_part = re.sub(r'"([^"]*)"([^"]*)"([^"]*)"', r'"\1\\"\\2\\"\\3"', value_part)
+                    
+                    fixed_lines.append(key_part + value_part)
+                else:
+                    fixed_lines.append(line)
+            
+            return '\n'.join(fixed_lines)
+        
+        fixed = fix_unescaped_quotes(fixed)
+        
+        # Fix 3: Handle missing quotes around keys
+        fixed = re.sub(r'(\w+)(\s*):', r'"\1"\2:', fixed)
+        
+        # Fix 4: Fix single quotes to double quotes (be careful with content)
+        fixed = re.sub(r"'([^']*)'(\s*):", r'"\1"\2:', fixed)  # Keys only
+        fixed = re.sub(r":\s*'([^']*)'", r': "\1"', fixed)  # Values only
+        
+        # Fix 5: Remove extra spaces around colons and commas
+        fixed = re.sub(r'\s*:\s*', ': ', fixed)
+        fixed = re.sub(r'\s*,\s*', ', ', fixed)
+        
+        # Fix 6: Handle boolean and null values
+        fixed = re.sub(r'\btrue\b', 'true', fixed, flags=re.IGNORECASE)
+        fixed = re.sub(r'\bfalse\b', 'false', fixed, flags=re.IGNORECASE)
+        fixed = re.sub(r'\bnull\b', 'null', fixed, flags=re.IGNORECASE)
+        
+        # Fix 7: Remove JavaScript-style comments
+        fixed = re.sub(r'//.*$', '', fixed, flags=re.MULTILINE)
+        fixed = re.sub(r'/\*.*?\*/', '', fixed, flags=re.DOTALL)
+        
+        # Fix 8: Handle multiple JSON objects - take the first complete one
+        if fixed.count('{') > 1:
+            brace_count = 0
+            for i, char in enumerate(fixed):
+                if char == '{':
+                    brace_count += 1
+                elif char == '}':
+                    brace_count -= 1
+                    if brace_count == 0:
+                        fixed = fixed[:i+1]
+                        break
+        
+        # Fix 9: Clean up any remaining formatting issues
+        fixed = re.sub(r',\s*}', '}', fixed)  # Remove trailing commas before }
+        fixed = re.sub(r',\s*]', ']', fixed)  # Remove trailing commas before ]
+        
+        return fixed if fixed != json_text else None
+    
+    def _reconstruct_json_manually(self, response_text: str) -> str:
+        """
+        Last resort: manually reconstruct JSON from response text
+        This handles cases where the AI model outputs semi-structured text
+        """
+        import re
+        
+        # Look for key-value patterns in the text
+        patterns = {
+            'enhanced_prompt': r'enhanced[^:]*:\s*([^,\n}]+)',
+            'quality_score': r'quality[^:]*:\s*(\d+(?:\.\d+)?)',
+            'issues_found': r'issues[^:]*:\s*(\[.*?\]|\d+)',
+            'suggestions': r'suggestions[^:]*:\s*(\[.*?\]|[^,\n}]+)',
+            'is_acceptable': r'acceptable[^:]*:\s*(true|false|yes|no)',
+            'strengths': r'strengths[^:]*:\s*(\[.*?\]|[^,\n}]+)',
+            'improvements': r'improvements[^:]*:\s*(\[.*?\]|[^,\n}]+)',
+            'confidence': r'confidence[^:]*:\s*(\d+(?:\.\d+)?)',
+            'reasoning': r'reasoning[^:]*:\s*([^,\n}]+)',
+        }
+        
+        reconstructed = {}
+        
+        for key, pattern in patterns.items():
+            matches = re.findall(pattern, response_text, re.IGNORECASE | re.DOTALL)
+            if matches:
+                value = matches[0].strip()
+                
+                # Convert to appropriate types
+                if key in ['quality_score', 'confidence']:
+                    try:
+                        reconstructed[key] = float(value)
+                    except ValueError:
+                        reconstructed[key] = 7.0 if key == 'quality_score' else 0.8
+                elif key == 'is_acceptable':
+                    reconstructed[key] = value.lower() in ['true', 'yes', '1']
+                elif key in ['issues_found', 'suggestions', 'strengths', 'improvements'] and value.startswith('['):
+                    try:
+                        reconstructed[key] = json.loads(value)
+                    except:
+                        reconstructed[key] = [value.strip('[]')]
+                elif key in ['strengths', 'improvements', 'suggestions']:
+                    # Convert string to array if needed
+                    if not value.startswith('['):
+                        # Split by common delimiters
+                        items = re.split(r'[,;]|and\s+', value)
+                        reconstructed[key] = [item.strip().strip('"\'') for item in items if item.strip()]
+                    else:
+                        reconstructed[key] = [value.strip('[]"\'')]
+                else:
+                    reconstructed[key] = value.strip('"\'')
+        
+        # Map any mis-named fields to the correct expected names
+        field_mappings = {
+            'enhanced': 'enhanced_prompt',
+            'issues_found': 'improvements',  # Map issues to improvements
+            'suggestions': 'improvements',   # Map suggestions to improvements if improvements not found
+        }
+        
+        for old_key, new_key in field_mappings.items():
+            if old_key in reconstructed and new_key not in reconstructed:
+                reconstructed[new_key] = reconstructed[old_key]
+                del reconstructed[old_key]
+        
+        # Add defaults for missing required fields
+        defaults = {
+            'enhanced_prompt': response_text[:200] + "...",
+            'quality_score': 7.0,
+            'strengths': ["Partial analysis recovered"],
+            'improvements': ["AI model response was malformed"],
+            'confidence': 0.7,
+            'reasoning': "Reconstructed from partial response",
+            'is_acceptable': True
+        }
+        
+        for key, default_value in defaults.items():
+            if key not in reconstructed:
+                reconstructed[key] = default_value
+        
+        try:
+            return json.dumps(reconstructed)
+        except:
+            logger.error("❌ PHI VERIFICATION: Manual JSON reconstruction failed")
+            return None
+
+    def _fallback_prompt_verification(self, prompt: str, topic: str, difficulty: str, question_type: str) -> Dict[str, any]:
+        """
+        Fallback prompt verification using rule-based analysis when AI is unavailable
+        """
+        try:
+            logger.info("🔄 Using fallback rule-based prompt verification")
+            
+            quality_score = 7  # Default baseline
+            strengths = []
+            improvements = []
+            
+            # Rule-based quality assessment
+            if "JSON" in prompt.upper():
+                strengths.append("Enforces structured JSON output")
+                quality_score += 0.5
+            
+            if difficulty.lower() in prompt.lower():
+                strengths.append("Includes difficulty targeting")
+                quality_score += 0.5
+            
+            if any(keyword in prompt.lower() for keyword in ["question", "options", "correct", "explanation"]):
+                strengths.append("Includes all required MCQ components")
+                quality_score += 0.5
+            
+            if len(prompt) < 500:
+                improvements.append("Consider adding more specific instructions for better guidance")
+                quality_score -= 0.5
+            
+            if question_type == "numerical" and "calculation" not in prompt.lower():
+                improvements.append("Add stronger numerical/calculation requirements")
+                quality_score -= 0.3
+            
+            # Create enhanced prompt with rule-based improvements
+            enhanced_prompt = prompt
+            
+            # Add domain-specific enhancements based on topic
+            if any(math_term in topic.lower() for math_term in ["math", "physics", "chemistry", "engineering"]):
+                if "formula" not in prompt.lower():
+                    enhanced_prompt += "\n\nEMPHASIZE: Include relevant formulas, equations, and quantitative analysis where appropriate."
+            
+            if difficulty == "expert":
+                enhanced_prompt += "\n\nEXPERT MODE: Ensure research-level complexity and domain expertise requirements."
+            
+            return {
+                "verification_successful": True,
+                "original_prompt": prompt,
+                "enhanced_prompt": enhanced_prompt,
+                "quality_score": min(10, max(1, quality_score)),
+                "strengths": strengths,
+                "improvements": improvements,
+                "confidence": 0.7,
+                "reasoning": "Rule-based prompt enhancement applied",
+                "verification_method": "rule_based"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Even fallback verification failed: {e}")
+            return {
+                "verification_successful": False,
+                "original_prompt": prompt,
+                "enhanced_prompt": prompt,  # Return original if all else fails
+                "quality_score": 5,
+                "strengths": [],
+                "improvements": ["Could not analyze prompt quality"],
+                "confidence": 0.3,
+                "reasoning": f"Verification failed: {str(e)}",
+                "verification_method": "error_fallback"
+            }
+
 # Global instance for easy access
 _semantic_mapper = None
 

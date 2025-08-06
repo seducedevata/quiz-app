@@ -166,6 +166,11 @@ class SettingsService:
         try:
             settings = self.load_settings()
             
+            # Type safety: ensure key is a string
+            if not isinstance(key, str):
+                logger.warning(f"⚠️ Settings key expected string, got {type(key)}: {key}")
+                key = str(key)
+            
             # Handle nested keys (e.g., "api_keys.openai")
             if '.' in key:
                 keys = key.split('.')
@@ -197,6 +202,11 @@ class SettingsService:
         """
         try:
             settings = self.load_settings()
+            
+            # Type safety: ensure key is a string
+            if not isinstance(key, str):
+                logger.warning(f"⚠️ Settings key expected string, got {type(key)}: {key}")
+                key = str(key)
             
             # Handle nested keys (e.g., "api_keys.openai")
             if '.' in key:

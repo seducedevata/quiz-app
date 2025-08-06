@@ -1,0 +1,286 @@
+{
+  "deepseek-r1:14b": {
+    "name": "deepseek-r1:14b",
+    "is_thinking_model": true,
+    "reasoning_capability": "expert",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "logical thinking",
+      "mathematical reasoning",
+      "problem solving"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.1,
+      "max_tokens": 1000,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "deepseek-r1:7b": {
+    "name": "deepseek-r1:7b",
+    "is_thinking_model": true,
+    "reasoning_capability": "expert",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "logical thinking",
+      "mathematical reasoning",
+      "problem solving"
+    ],
+    "compatibility_score": 0.9,
+    "recommended_settings": {
+      "temperature": 0.1,
+      "max_tokens": 1000,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": [
+      "Thinking model may require significant computational resources"
+    ]
+  },
+  "llama3.1:8b": {
+    "name": "llama3.1:8b",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "instruction following",
+      "conversational"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "mistral:7b": {
+    "name": "mistral:7b",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "instruction following",
+      "problem solving"
+    ],
+    "compatibility_score": 0.9,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "qwen2.5:7b": {
+    "name": "qwen2.5:7b",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "instruction following",
+      "mathematical reasoning"
+    ],
+    "compatibility_score": 0.9,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "phi:latest": {
+    "name": "phi:latest",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": null,
+    "specializations": [
+      "instruction following",
+      "conversational"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "mathstral:latest": {
+    "name": "mathstral:latest",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": null,
+    "specializations": [
+      "mathematics",
+      "mathematical reasoning",
+      "problem solving"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "llama3.1:latest": {
+    "name": "llama3.1:latest",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": null,
+    "specializations": [
+      "instruction following",
+      "conversational"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "wizardcoder:latest": {
+    "name": "wizardcoder:latest",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": null,
+    "specializations": [
+      "code generation",
+      "coding",
+      "problem solving"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "llava:13b": {
+    "name": "llava:13b",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "deepseek-r1:32b": {
+    "name": "deepseek-r1:32b",
+    "is_thinking_model": true,
+    "reasoning_capability": "expert",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "logical thinking",
+      "mathematical reasoning",
+      "problem solving"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.1,
+      "max_tokens": 1000,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "llava:latest": {
+    "name": "llava:latest",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": null,
+    "specializations": [],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "codellama:13b-instruct": {
+    "name": "codellama:13b-instruct",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "instruction_following",
+      "coding",
+      "conversational",
+      "instruction following"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  },
+  "deepseek-coder:33b": {
+    "name": "deepseek-coder:33b",
+    "is_thinking_model": false,
+    "reasoning_capability": "basic",
+    "context_length": 4096,
+    "parameter_count": "Large (>1B parameters)",
+    "specializations": [
+      "code generation",
+      "coding",
+      "problem solving"
+    ],
+    "compatibility_score": 1.0,
+    "recommended_settings": {
+      "temperature": 0.3,
+      "max_tokens": 600,
+      "top_p": 0.9,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "warnings": []
+  }
+}

@@ -26,61 +26,30 @@ class LoadingWorker(QThread):
         self.start_time = time.time()  # Track initialization time
     
     def run(self):
-        """Initialize the app in background"""
+        """ULTRA-FAST startup - defer ALL heavy components until needed"""
         try:
-            # Ensure src directory is in path for imports
-            import sys
-            from pathlib import Path
-            src_dir = Path(__file__).parent.parent.parent / "src"
-            if str(src_dir) not in sys.path:
-                sys.path.insert(0, str(src_dir))
-
-            # Step 1: Initialize core directories and logging
-            self.progress_updated.emit(5, "🔧 Setting up core infrastructure...")
+            # Step 1: INSTANT - Only create essential directories 
+            self.progress_updated.emit(20, "⚡ Lightning-fast startup mode...")
             Path("user_data").mkdir(exist_ok=True)
-            Path("data/cache").mkdir(parents=True, exist_ok=True)
-            print("✅ LoadingWorker: Core directories created")
-
-            # Step 2: Initialize Unified Inference Manager (LIGHTWEIGHT)
-            self.progress_updated.emit(15, "🧠 Initializing AI inference engine...")
-            try:
-                from knowledge_app.core.unified_inference_manager import initialize_unified_inference
-                print("🔧 LoadingWorker: Initializing unified inference manager...")
-
-                # FIXED: Only initialize cloud APIs during startup, defer local models until needed
-                inference_ready = initialize_unified_inference({
-                    'timeout': 30.0,  # Longer timeout for proper initialization
-                    'mode': 'online',  # Start with online mode to avoid loading local models
-                    'prefer_local': False  # Don't load local models during startup
-                })
-
-                if inference_ready:
-                    print("✅ LoadingWorker: Unified inference manager ready")
-                else:
-                    print("⚠️ LoadingWorker: Unified inference manager failed, using fallback")
-            except Exception as e:
-                print(f"❌ LoadingWorker: Unified inference manager error: {e}")
-
-            # Step 3: FAST STARTUP - Only initialize essential components during splash
-            self.progress_updated.emit(35, "🚀 Preparing core components...")
+            print("✅ LoadingWorker: Core directories created (instant)")
             
-            # Only initialize lightweight components during splash screen
-            # Heavy components will be initialized on-demand when needed
-            print("🔧 LoadingWorker: Using fast startup mode - deferring heavy components")
+            # Step 2: SKIP ALL HEAVY INITIALIZATION - Mark everything as deferred
+            self.progress_updated.emit(60, "🚀 Deferring components for instant startup...")
             
-            # Mark components as deferred (will be initialized when needed)
-            self.initialized_components['mcq_manager'] = 'deferred'
-            self.initialized_components['training_manager'] = 'deferred'
-            self.initialized_components['resource_manager'] = 'deferred'
-            self.initialized_components['topic_analyzer'] = 'deferred'
+            # CRITICAL OPTIMIZATION: Don't initialize ANY heavy components during startup
+            # Everything will be loaded lazily when first accessed
+            self.initialized_components = {
+                'mcq_manager': 'deferred',  # Load when first quiz is generated
+                'training_manager': 'deferred',  # Load when training is started
+                'unified_inference': 'deferred',  # Load when first question is generated
+                'resource_manager': 'deferred',
+                'topic_analyzer': 'deferred',
+                'startup_time': time.time() - self.start_time  # Track how fast we were
+            }
             
-            print("✅ LoadingWorker: Fast startup mode - heavy components deferred")
+            print(f"✅ LoadingWorker: Ultra-fast startup complete in {self.initialized_components['startup_time']:.2f}s")
             
-            # Simulate progress for smooth user experience
-            self.progress_updated.emit(50, "⚡ Optimizing for fast startup...")
-            time.sleep(0.1)  # Small delay for smooth progress animation
-            
-            self.progress_updated.emit(70, "🎯 Finalizing lightweight setup...")
+            self.progress_updated.emit(100, "🎯 Ready - components load on demand!")
             time.sleep(0.1)  # Small delay for smooth progress animation
 
             # Step 7: Prepare for main window creation
@@ -358,12 +327,17 @@ class AnimatedLoadingScreen(QWidget):
             """Create the main window but keep it hidden until splash closes"""
             if initialized_components:
                 try:
-                    print("🔧 AnimatedLoadingScreen: Creating main window with pre-initialized components...")
+                    print("🔧 AnimatedLoadingScreen: Creating main window with deferred initialization...")
                     from knowledge_app.webengine_app import KnowledgeAppWebEngine
                     print("✅ AnimatedLoadingScreen: Imported KnowledgeAppWebEngine")
 
                     self.main_window = KnowledgeAppWebEngine()
                     print("✅ AnimatedLoadingScreen: Created main window")
+
+                    # Pass deferred initialization signal - components load on first use
+                    self.main_window._deferred_components = initialized_components
+                    
+                    print("✅ AnimatedLoadingScreen: Main window ready with lazy loading")
 
                     # Inject the pre-initialized components into the bridge
                     if hasattr(self.main_window, 'bridge'):
@@ -374,7 +348,12 @@ class AnimatedLoadingScreen(QWidget):
                             bridge.mcq_manager = initialized_components['mcq_manager']
                             bridge.mcq_manager_ready = True
                             bridge.mcq_manager_initializing = False
-                            print("✅ AnimatedLoadingScreen: Injected pre-initialized MCQ Manager")
+                            print("✅ AnimatedLoadingScreen: Injected pre-initialized MCQ Manager into bridge")
+
+                        # Inject Training Manager
+                        if 'training_manager' in initialized_components and initialized_components['training_manager']:
+                            bridge.training_manager = initialized_components['training_manager']
+                            print("✅ AnimatedLoadingScreen: Injected pre-initialized Training Manager into bridge")
 
                         # Inject Resource Manager
                         if 'resource_manager' in initialized_components and initialized_components['resource_manager']:
@@ -418,49 +397,47 @@ class AnimatedLoadingScreen(QWidget):
             create_and_show_main_window()
     
     def wait_for_app_stability(self):
-        """Wait for the app to be completely stable before hiding splash"""
-        print("🎯 AnimatedLoadingScreen: Starting stability monitoring...")
-        
-        # Monitor for 5 seconds of quiet activity
+        """Wait for the app to be completely stable before hiding splash (checks backend readiness)"""
+        print("🎯 AnimatedLoadingScreen: Starting stability monitoring (backend readiness)...")
         self.stability_start_time = time.time()
-        self.stability_duration = 5.0  # Wait for 5 seconds of stability
-        self.last_activity_time = time.time()
-        
-        # Create a timer that checks every 500ms
+        self.stability_duration = 5.0  # Still require a minimum time for smoothness
+        self.activity_check_count = 0
         self.stability_timer = QTimer()
         self.stability_timer.timeout.connect(self.check_stability)
-        self.stability_timer.start(500)  # Check every 500ms
-        
-        # Create a simple activity detector (monitor console output indirectly)
-        self.activity_check_count = 0
+        self.stability_timer.start(500)
+
+    def is_backend_ready(self):
+        """Check if backend (MCQ manager and other core components) are ready"""
+        try:
+            if hasattr(self, 'main_window') and hasattr(self.main_window, 'bridge'):
+                bridge = self.main_window.bridge
+                # Check MCQ manager readiness (expand as needed)
+                if hasattr(bridge, 'mcq_manager_ready') and bridge.mcq_manager_ready:
+                    return True
+        except Exception as e:
+            print(f"[Splash] Backend readiness check error: {e}")
+        return False
         
     def check_stability(self):
-        """Check if the app has been stable for the required duration"""
+        """Check if the app has been stable for the required duration AND backend is ready"""
         self.activity_check_count += 1
         current_time = time.time()
-        
-        # Simple heuristic: If we've been checking for a while, assume it's stable
-        # More sophisticated: We could monitor actual log output or system activity
         time_since_start = current_time - self.stability_start_time
-        
-        # Update status to show we're monitoring
         remaining = max(0, self.stability_duration - time_since_start)
         self.status_label.setText(f"🎯 App stabilizing... {remaining:.1f}s")
-        
-        # 🚀 FIX: Update progress bar to show TRUE completion including stability
-        # Progress should be 100% + stability progress (up to 100% total)
         stability_progress = min(100, (time_since_start / self.stability_duration) * 100)
-        # Combine initial loading (which was at 100%) with stability progress
-        # Make it go from 100% back to showing stability progress smoothly
-        true_progress = min(100, 85 + (stability_progress * 0.15))  # 85% to 100% during stability
+        true_progress = min(100, 85 + (stability_progress * 0.15))
         self.progress_bar.setValue(int(true_progress))
-        
-        # If we've waited long enough, consider it stable
-        if time_since_start >= self.stability_duration:
-            print("✅ AnimatedLoadingScreen: App appears stable - hiding splash")
-            self.progress_bar.setValue(100)  # Ensure it's truly 100% when done
+
+        # Only hide splash if both minimum time has passed AND backend is ready
+        if time_since_start >= self.stability_duration and self.is_backend_ready():
+            print("✅ AnimatedLoadingScreen: App appears stable and backend ready - hiding splash")
+            self.progress_bar.setValue(100)
             self.stability_timer.stop()
             self.hide_splash_smoothly()
+        elif time_since_start >= self.stability_duration:
+            # Still waiting for backend, update status
+            self.status_label.setText("⏳ Waiting for backend to finish loading...")
     
     def hide_splash_smoothly(self):
         """Hide splash screen and show main window with perfect seamless transition"""
@@ -473,9 +450,8 @@ class AnimatedLoadingScreen(QWidget):
         # Small delay to ensure splash is completely gone, then show main window
         def show_main_window():
             if hasattr(self, 'main_window') and self.main_window:
+                # Use the show() method which handles all the window operations
                 self.main_window.show()
-                self.main_window.raise_()
-                self.main_window.activateWindow()
                 print("✅ AnimatedLoadingScreen: Main window shown with seamless transition")
             
             # Close splash completely after main window is shown

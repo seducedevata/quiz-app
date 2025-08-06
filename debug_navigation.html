@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .debug-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        #output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Navigation Debug Tool</h1>
+    <p>This tool helps debug the navigation issues in your Knowledge App.</p>
+    
+    <div class="debug-panel">
+        <h3>🧪 Quick Tests</h3>
+        <button onclick="testNavButtons()">Test Navigation Buttons</button>
+        <button onclick="testScreens()">Test Screen Elements</button>
+        <button onclick="testShowScreen()">Test showScreen Function</button>
+        <button onclick="forceNavigation()">Force Navigate to Quiz</button>
+        <button onclick="clearOutput()">Clear Output</button>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>🎯 Manual Navigation</h3>
+        <button onclick="navigateTo('home')">Go to Home</button>
+        <button onclick="navigateTo('quiz')">Go to Quiz</button>
+        <button onclick="navigateTo('review')">Go to Review</button>
+        <button onclick="navigateTo('train')">Go to Train</button>
+        <button onclick="navigateTo('settings')">Go to Settings</button>
+    </div>
+    
+    <div class="debug-panel">
+        <h3>📊 Output</h3>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        function testNavButtons() {
+            log('🔍 Testing navigation buttons...');
+            
+            // Check if we're in the Knowledge App context
+            if (typeof debugApp !== 'undefined') {
+                log('✅ debugApp is available');
+                debugApp.testButtons();
+            } else {
+                log('❌ debugApp not available - not in Knowledge App context');
+            }
+            
+            // Check for navigation buttons
+            const navButtons = document.querySelectorAll('.nav-item');
+            log(`Found ${navButtons.length} navigation buttons`);
+            
+            navButtons.forEach((btn, index) => {
+                const text = btn.textContent.trim();
+                const hasOnclick = btn.onclick !== null;
+                log(`  Button ${index + 1}: "${text}" - onclick: ${hasOnclick}`);
+            });
+        }
+        
+        function testScreens() {
+            log('🔍 Testing screen elements...');
+            
+            const screens = ['home', 'quiz', 'review', 'train', 'settings'];
+            screens.forEach(screenName => {
+                const screen = document.getElementById(`${screenName}-screen`);
+                if (screen) {
+                    const isActive = screen.classList.contains('active');
+                    const display = window.getComputedStyle(screen).display;
+                    log(`  ✅ ${screenName}-screen: active=${isActive}, display=${display}`);
+                } else {
+                    log(`  ❌ ${screenName}-screen: NOT FOUND`);
+                }
+            });
+        }
+        
+        function testShowScreen() {
+            log('🔍 Testing showScreen function...');
+            
+            if (typeof showScreen === 'function') {
+                log('✅ showScreen function is available');
+                try {
+                    log('🧪 Testing showScreen("quiz", null)...');
+                    showScreen('quiz', null);
+                    log('✅ showScreen call completed without error');
+                } catch (error) {
+                    log(`❌ showScreen failed: ${error.message}`);
+                }
+            } else {
+                log('❌ showScreen function not available');
+            }
+        }
+        
+        function forceNavigation() {
+            log('🚀 Force navigating to quiz screen...');
+            
+            // Method 1: Try clicking the quiz button
+            const quizButton = Array.from(document.querySelectorAll('.nav-item'))
+                .find(btn => btn.textContent.toLowerCase().includes('quiz'));
+            
+            if (quizButton) {
+                log('🖱️ Found quiz button, clicking...');
+                quizButton.click();
+                
+                setTimeout(() => {
+                    const quizScreen = document.getElementById('quiz-screen');
+                    if (quizScreen && quizScreen.classList.contains('active')) {
+                        log('✅ Navigation successful - quiz screen is active');
+                    } else {
+                        log('❌ Navigation failed - quiz screen not active');
+                    }
+                }, 100);
+            } else {
+                log('❌ Quiz button not found');
+            }
+        }
+        
+        function navigateTo(screenName) {
+            log(`🎯 Manually navigating to ${screenName}...`);
+            
+            if (typeof showScreen === 'function') {
+                try {
+                    showScreen(screenName, null);
+                    log(`✅ Navigation to ${screenName} completed`);
+                } catch (error) {
+                    log(`❌ Navigation to ${screenName} failed: ${error.message}`);
+                }
+            } else {
+                log('❌ showScreen function not available');
+            }
+        }
+        
+        // Auto-run basic tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 Auto-running basic tests...');
+                testNavButtons();
+                testScreens();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

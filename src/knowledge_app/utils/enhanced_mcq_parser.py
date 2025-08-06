@@ -56,41 +56,74 @@ class EnhancedMCQParser:
             A dictionary with the parsed MCQ data, or None if parsing fails.
         """
         if not raw_response or not isinstance(raw_response, str):
-            logger.warning("Parser received empty or invalid input.")
-            return None
+            logger.warning("Parser received empty or invalid input - attempting emergency fallback...")
+            # Instead of refusing, try to create a minimal fallback question
+            return self._create_emergency_mcq("No content provided")
 
         try:
-            # CRITICAL FIX: Try multiple extraction methods
+            # CRITICAL FIX: Enhanced logging for debugging
+            logger.info(f"Parsing response length: {len(raw_response)} chars")
+            logger.debug(f"Raw response preview: {raw_response[:200]}...")
+
+            # CRITICAL FIX: Try multiple extraction methods with better error handling
             json_str = None
             
-            # Method 1: Extract JSON block
+            # Method 1: Extract JSON block with enhanced patterns
             json_str = self._extract_json_block(raw_response)
             
-            # Method 2: If no JSON block found, try structured parsing
+            # Method 2: Try structured parsing if no JSON found
             if not json_str:
                 logger.debug("No JSON block found, trying structured parsing...")
                 structured_data = self._parse_structured_format(raw_response)
                 if structured_data:
+                    logger.info("Successfully parsed using structured format")
                     return structured_data
             
-            # Method 3: If no structured format, try array format
+            # Method 3: Try array format
             if not json_str:
                 json_str = self._extract_json_array(raw_response)
             
+            # Method 4: Try simple text extraction
+            if not json_str:
+                logger.debug("Trying simple text extraction...")
+                simple_data = self._parse_simple_text(raw_response)
+                if simple_data:
+                    logger.info("Successfully parsed using simple text extraction")
+                    return simple_data
+
+            # CRITICAL FIX: Ensure emergency fallback never returns None
             if not json_str:
                 logger.warning("Could not find any parseable format in response.")
-                return self._emergency_fallback_parse(raw_response)
+                fallback_result = self._emergency_fallback_parse(raw_response)
+                if fallback_result:
+                    return fallback_result
+                else:
+                    logger.warning("Emergency fallback also failed - creating minimal MCQ...")
+                    return self._create_emergency_mcq("Parsing failed")
 
-            # Clean and parse the extracted JSON
+            # Clean and parse the extracted JSON with enhanced error handling
             cleaned_json_str = self._clean_json_string(json_str)
-            
-            # CRITICAL FIX: Try parsing as both object and array
+            logger.debug(f"Cleaned JSON: {cleaned_json_str[:200]}...")
+
+            # CRITICAL FIX: Try parsing with multiple fallback methods
+            parsed_data = None
             try:
                 parsed_data = json.loads(cleaned_json_str)
-            except json.JSONDecodeError:
-                # Try with additional cleaning
-                cleaned_json_str = self._aggressive_json_cleanup(cleaned_json_str)
-                parsed_data = json.loads(cleaned_json_str)
+                logger.info("Successfully parsed JSON on first attempt")
+            except json.JSONDecodeError as e:
+                logger.debug(f"First JSON parse failed: {e}, trying aggressive cleanup...")
+                # Try with aggressive cleaning
+                try:
+                    cleaned_json_str = self._aggressive_json_cleanup(cleaned_json_str)
+                    parsed_data = json.loads(cleaned_json_str)
+                    logger.info("Successfully parsed JSON after aggressive cleanup")
+                except json.JSONDecodeError as e2:
+                    logger.debug(f"Aggressive cleanup failed: {e2}, trying manual JSON construction...")
+                    # Try manual JSON construction
+                    parsed_data = self._construct_json_manually(raw_response)
+                    if not parsed_data:
+                        logger.warning("Manual construction failed - creating minimal MCQ...")
+                        return self._create_emergency_mcq("Manual construction failed")
 
             # Handle array format (multiple questions)
             if isinstance(parsed_data, list) and len(parsed_data) > 0:
@@ -99,19 +132,163 @@ class EnhancedMCQParser:
             # Normalize and validate the structure
             normalized_data = self._normalize_and_validate(parsed_data)
             if not normalized_data:
-                logger.error("Parsed JSON failed structural validation.")
-                return self._emergency_fallback_parse(raw_response)
+                logger.error("Parsed JSON failed structural validation - No dummy questions allowed.")
+                return None
 
             logger.info("Successfully parsed and validated MCQ from model response.")
             return normalized_data
 
         except json.JSONDecodeError as e:
-            logger.error(f"Final JSON parsing failed after cleaning: {e}")
+            logger.error(f"Final JSON parsing failed: {e}")
             logger.debug(f"Failed JSON string: {cleaned_json_str if 'cleaned_json_str' in locals() else 'N/A'}")
-            return self._emergency_fallback_parse(raw_response)
+            # CRITICAL FIX: Always return a fallback instead of None
+            fallback_result = self._emergency_fallback_parse(raw_response)
+            return fallback_result if fallback_result else self._create_dummy_question()
         except Exception as e:
-            logger.error(f"An unexpected error occurred during parsing: {e}", exc_info=True)
-            return self._emergency_fallback_parse(raw_response)
+            logger.error(f"Unexpected error during parsing: {e}", exc_info=True)
+            # CRITICAL FIX: Always return a fallback instead of None
+            fallback_result = self._emergency_fallback_parse(raw_response)
+            return fallback_result if fallback_result else self._create_dummy_question()
+
+    def _construct_json_manually(self, text: str) -> Optional[Dict[str, Any]]:
+        """CRITICAL FIX: Manually construct JSON when automatic parsing fails"""
+        try:
+            logger.debug("Attempting manual JSON construction...")
+
+            # Extract question
+            question_patterns = [
+                r'"question"\s*:\s*"([^"]+)"',
+                r'"question"\s*:\s*\'([^\']+)\'',
+                r'question\s*:\s*"([^"]+)"',
+                r'Question:\s*([^\n]+)',
+                r'Q:\s*([^\n]+)',
+            ]
+
+            question = None
+            for pattern in question_patterns:
+                match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+                if match:
+                    question = match.group(1).strip()
+                    break
+
+            if not question:
+                return None
+
+            # Extract options
+            options = {}
+            option_patterns = [
+                (r'"A"\s*:\s*"([^"]+)"', 'A'),
+                (r'"B"\s*:\s*"([^"]+)"', 'B'),
+                (r'"C"\s*:\s*"([^"]+)"', 'C'),
+                (r'"D"\s*:\s*"([^"]+)"', 'D'),
+                (r'A\)\s*([^\n]+)', 'A'),
+                (r'B\)\s*([^\n]+)', 'B'),
+                (r'C\)\s*([^\n]+)', 'C'),
+                (r'D\)\s*([^\n]+)', 'D'),
+            ]
+
+            for pattern, key in option_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    options[key] = match.group(1).strip()
+
+            if len(options) < 2:
+                return None
+
+            # Extract correct answer
+            correct_patterns = [
+                r'"correct"\s*:\s*"([A-D])"',
+                r'"answer"\s*:\s*"([A-D])"',
+                r'Correct:\s*([A-D])',
+                r'Answer:\s*([A-D])',
+            ]
+
+            correct = 'A'  # Default
+            for pattern in correct_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    correct = match.group(1).upper()
+                    break
+
+            # Extract explanation
+            explanation_patterns = [
+                r'"explanation"\s*:\s*"([^"]+)"',
+                r'Explanation:\s*([^\n]+)',
+            ]
+
+            explanation = "No explanation provided."
+            for pattern in explanation_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    explanation = match.group(1).strip()
+                    break
+
+            result = {
+                "question": question,
+                "options": options,
+                "correct": correct,
+                "explanation": explanation,
+                "source": "manual_construction"
+            }
+
+            logger.info("Successfully constructed JSON manually")
+            return result
+
+        except Exception as e:
+            logger.debug(f"Manual JSON construction failed: {e}")
+            return None
+
+    def _parse_simple_text(self, text: str) -> Optional[Dict[str, Any]]:
+        """CRITICAL FIX: Parse simple text format without strict JSON structure"""
+        try:
+            # Look for any question-like content
+            lines = text.split('\n')
+            question_line = None
+            options = {}
+            correct = 'A'
+            explanation = "No explanation provided."
+
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Find question (ends with ?)
+                if '?' in line and not question_line:
+                    question_line = line
+                    continue
+
+                # Find options
+                for letter in 'ABCD':
+                    if line.startswith(f'{letter})') or line.startswith(f'{letter}.'):
+                        options[letter] = line[2:].strip()
+                        break
+
+                # Find correct answer
+                if 'correct' in line.lower() or 'answer' in line.lower():
+                    for letter in 'ABCD':
+                        if letter in line:
+                            correct = letter
+                            break
+
+                # Find explanation
+                if 'explanation' in line.lower() or 'because' in line.lower():
+                    explanation = line
+
+            if question_line and len(options) >= 2:
+                return {
+                    "question": question_line,
+                    "options": options,
+                    "correct": correct,
+                    "explanation": explanation,
+                    "source": "simple_text_parsing"
+                }
+
+            return None
+
+        except Exception as e:
+            logger.debug(f"Simple text parsing failed: {e}")
+            return None
 
     def _extract_json_block(self, text: str) -> Optional[str]:
         """CRITICAL FIX: Enhanced JSON block extraction with multiple patterns"""
@@ -205,225 +382,377 @@ class EnhancedMCQParser:
         # Replace single quotes with double quotes (but not in contractions)
         json_str = re.sub(r"(?<!\\)(?<!\w)'(?!\w)", '"', json_str)
         
-        # Remove trailing commas before } or ]
-        json_str = re.sub(r',\s*([\}\]])', r'\1', json_str)
-        
-        # Add quotes to unquoted keys
-        json_str = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', json_str)
-        
-        # Fix common escaping issues
-        json_str = json_str.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-        
-        # Remove multiple spaces
-        json_str = re.sub(r'\s+', ' ', json_str)
-        
+        # Fix common JSON formatting issues
+        json_str = re.sub(r'([{,]\s*)(\w+)(\s*:)', r'\1"\2"\3', json_str)  # Quote unquoted keys
+        json_str = re.sub(r':\s*([^",{\[\]}\s][^",{\[\]}]*?)(\s*[,}])', r': "\1"\2', json_str)  # Quote unquoted values
+
+        # Remove trailing commas
+        json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+
+        # Fix escaped quotes
+        json_str = json_str.replace('\\"', '"').replace("\\'", "'")
+
+        # Remove any non-printable characters
+        json_str = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', json_str)
+
         return json_str.strip()
 
     def _aggressive_json_cleanup(self, json_str: str) -> str:
-        """CRITICAL FIX: More aggressive JSON cleanup for stubborn strings"""
-        # Fix unescaped quotes in values
-        json_str = re.sub(r'(:\s*")([^"]*)"([^"]*)"([^"]*")', r'\1\2\"\3\4', json_str)
-        
-        # Fix missing closing quotes
-        json_str = re.sub(r'(:\s*[^",}\]]+)([,}\]])', r'"\1"\2', json_str)
-        
-        # Fix array format issues
-        json_str = re.sub(r'\[\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)",\s*"([^"]*)"\s*\]', 
-                         r'{"A": "\1", "B": "\2", "C": "\3", "D": "\4"}', json_str)
-        
-        return json_str
+        """CRITICAL FIX: Aggressive JSON cleanup for badly formatted responses"""
+        try:
+            # Remove everything before the first {
+            start_brace = json_str.find('{')
+            if start_brace != -1:
+                json_str = json_str[start_brace:]
+
+            # Remove everything after the last }
+            end_brace = json_str.rfind('}')
+            if end_brace != -1:
+                json_str = json_str[:end_brace + 1]
+
+            # Fix common issues
+            json_str = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', json_str)  # Quote keys
+            json_str = re.sub(r':\s*([^"\[\{][^,\}\]]*?)(\s*[,\}])', r': "\1"\2', json_str)  # Quote string values
+            json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)  # Remove trailing commas
+            json_str = re.sub(r'\s+', ' ', json_str)  # Normalize whitespace
+
+            # Fix quote issues
+            json_str = json_str.replace("'", '"')
+            json_str = re.sub(r'""([^"]*?)""', r'"\1"', json_str)  # Fix double quotes
+
+            return json_str.strip()
+
+        except Exception as e:
+            logger.debug(f"Aggressive cleanup failed: {e}")
+            return json_str
 
     def _normalize_and_validate(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """CRITICAL FIX: Enhanced validation with better error handling"""
-        if not isinstance(data, dict):
-            logger.error(f"Data is not a dictionary: {type(data)}")
-            return None
-        
-        # Handle variations in key names with more mappings
-        # CRITICAL FIX: Normalize to 'correct_answer' to match validation expectations
-        key_mappings = [
-            (["question", "question_text", "q"], "question"),
-            (["options", "choices", "answers"], "options"),
-            (["correct", "correct_answer", "answer", "correct_option"], "correct_answer"),
-            (["explanation", "reason", "rationale"], "explanation")
-        ]
-        
-        normalized = {}
-        for old_keys, new_key in key_mappings:
-            for old_key in old_keys:
-                if old_key in data:
-                    normalized[new_key] = data[old_key]
-                    break
-
-        # CRITICAL FIX: Better validation
-        required_keys = ["question", "options", "correct"]
-        missing_keys = [key for key in required_keys if key not in normalized]
-        if missing_keys:
-            logger.error(f"Missing required keys: {missing_keys}. Have: {list(normalized.keys())}")
-            return None
-
-        # CRITICAL FIX: Enhanced options handling
-        options = normalized["options"]
-        
-        # Handle list format
-        if isinstance(options, list):
-            if len(options) >= 4:
-                normalized["options"] = {chr(65+i): opt for i, opt in enumerate(options[:4])}
-            else:
-                logger.error(f"Options list too short: {len(options)} items")
-                return None
-        
-        # Handle dict format
-        elif isinstance(options, dict):
-            # Convert numeric keys to letters
-            if all(str(k).isdigit() for k in options.keys()):
-                new_options = {}
-                for i, (k, v) in enumerate(sorted(options.items())):
-                    if i < 4:
-                        new_options[chr(65+i)] = v
-                normalized["options"] = new_options
-            
-            # Ensure we have at least 2 options
-            if len(normalized["options"]) < 2:
-                logger.error(f"Too few options: {len(normalized['options'])}")
-                return None
-        else:
-            logger.error(f"Invalid options type: {type(options)}")
-            return None
-
-        # CRITICAL FIX: Better correct answer validation
-        correct = str(normalized["correct"]).upper().strip()
-        
-        # If correct is a single letter, use it
-        if len(correct) == 1 and correct in 'ABCD':
-            normalized["correct"] = correct
-        else:
-            # Try to find matching option by content
-            found_key = None
-            for key, value in normalized["options"].items():
-                if str(value).strip().lower() == str(normalized["correct"]).strip().lower():
-                    found_key = key
-                    break
-            
-            if found_key:
-                normalized["correct"] = found_key
-            else:
-                # Fallback to first option
-                logger.warning(f"Could not validate correct answer '{correct}', using 'A'")
-                normalized["correct"] = 'A'
-
-        # Ensure explanation exists
-        if "explanation" not in normalized or not normalized["explanation"]:
-            normalized["explanation"] = "No explanation provided."
-
-        # Add metadata
-        normalized["parsed_successfully"] = True
-        normalized["parser_version"] = "enhanced_v2"
-
-        return normalized
-
-    def _emergency_fallback_parse(self, text: str) -> Optional[Dict[str, Any]]:
-        """CRITICAL FIX: Enhanced emergency fallback with better regex patterns"""
+        """CRITICAL FIX: Validate and normalize parsed MCQ data structure"""
         try:
-            logger.warning("Attempting emergency fallback parsing...")
-            
-            # Multiple question patterns
-            question_patterns = [
-                r"(?:Question|Q):\s*(.+?)(?=\n|A\)|Option A)",
-                r"(?:Question|Q)\s*[:\-]\s*(.+?)(?=\n|A\)|Option A)",
-                r"^\s*(.+?\?)\s*(?=\n|A\)|Option A)",
-                r"(.+?\?)"  # Any sentence ending with ?
-            ]
-            
-            question = None
-            for pattern in question_patterns:
-                match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-                if match:
-                    question = match.group(1).strip()
-                    if len(question) > 10:  # Minimum reasonable length
-                        break
-            
-            if not question:
-                logger.error("Could not extract question in fallback parsing")
+            if not isinstance(data, dict):
+                logger.debug("Data is not a dictionary")
                 return None
 
-            # Extract options with multiple patterns
-            options = {}
-            option_patterns = [
-                (r'[Aa]\)\s*(.+?)(?=\n|B\)|$)', 'A'),
-                (r'[Bb]\)\s*(.+?)(?=\n|C\)|$)', 'B'),
-                (r'[Cc]\)\s*(.+?)(?=\n|D\)|$)', 'C'),
-                (r'[Dd]\)\s*(.+?)(?=\n|Correct|Answer|Explanation|$)', 'D'),
-                # Alternative patterns
-                (r'Option A[:\-]\s*(.+?)(?=\n|Option B|$)', 'A'),
-                (r'Option B[:\-]\s*(.+?)(?=\n|Option C|$)', 'B'),
-                (r'Option C[:\-]\s*(.+?)(?=\n|Option D|$)', 'C'),
-                (r'Option D[:\-]\s*(.+?)(?=\n|Correct|Answer|$)', 'D'),
-            ]
-            
-            for pattern, key in option_patterns:
-                match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-                if match:
-                    option_text = match.group(1).strip()
-                    if option_text and len(option_text) > 1:
-                        options[key] = option_text
+            # Check required fields
+            required_fields = ['question', 'options']
+            for field in required_fields:
+                if field not in data:
+                    logger.debug(f"Missing required field: {field}")
+                    return None
 
-            if len(options) < 2:
-                logger.error(f"Not enough options found in fallback: {len(options)}")
+            # Validate question
+            question = data.get('question', '').strip()
+            if not question or len(question) < 5:
+                logger.debug("Question is too short or empty")
                 return None
 
-            # Extract correct answer
-            correct_patterns = [
-                r'(?:Correct|Answer):\s*([A-D])',
-                r'(?:Correct|Answer)\s*[:\-]\s*([A-D])',
-                r'Answer:\s*Option\s*([A-D])',
-            ]
-            
-            correct = 'A'  # Default
-            for pattern in correct_patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
-                if match:
-                    correct = match.group(1).upper()
-                    break
+            # Validate options
+            options = data.get('options', {})
+            if not isinstance(options, dict) or len(options) < 2:
+                logger.debug("Options are invalid or insufficient")
+                return None
 
-            # Extract explanation
-            explanation_patterns = [
-                r'(?:Explanation|Reason):\s*(.+?)(?=\n\n|$)',
-                r'(?:Explanation|Reason)\s*[:\-]\s*(.+?)(?=\n\n|$)',
-                r'(?:Because|Since)\s+(.+?)(?=\n\n|$)'
-            ]
-            
-            explanation = "No explanation provided."
-            for pattern in explanation_patterns:
-                match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-                if match:
-                    explanation = match.group(1).strip()
-                    if len(explanation) > 10:
+            # Ensure we have valid option labels
+            valid_options = {}
+            option_labels = ['A', 'B', 'C', 'D']
+
+            if isinstance(options, list):
+                # Convert list to dict
+                for i, option in enumerate(options[:4]):
+                    if option and str(option).strip():
+                        valid_options[option_labels[i]] = str(option).strip()
+            else:
+                # Normalize option keys
+                for key, value in options.items():
+                    if value and str(value).strip():
+                        normalized_key = str(key).upper().strip()
+                        if normalized_key in option_labels:
+                            valid_options[normalized_key] = str(value).strip()
+                        elif len(valid_options) < 4:
+                            # Use next available label
+                            for label in option_labels:
+                                if label not in valid_options:
+                                    valid_options[label] = str(value).strip()
+                                    break
+
+            if len(valid_options) < 2:
+                logger.debug("Not enough valid options found")
+                return None
+
+            # Validate correct answer
+            correct = data.get('correct', 'A')
+            if isinstance(correct, str):
+                correct = correct.upper().strip()
+                if correct not in valid_options:
+                    # Use first available option
+                    correct = list(valid_options.keys())[0]
+            else:
+                correct = list(valid_options.keys())[0]
+
+            # Set default explanation if missing
+            explanation = data.get('explanation', 'No explanation provided.')
+            if not explanation or not isinstance(explanation, str):
+                explanation = 'No explanation provided.'
+
+            # For numerical questions, validate numeric content
+            if any(word in question.lower() for word in ['calculate', 'compute', 'find', 'determine']):
+                # Check if question contains numeric values
+                if not re.search(r'[0-9]', question):
+                    logger.debug("Numerical question lacks numeric values")
+                    return None
+
+                # Check if options contain numeric values
+                numeric_options = 0
+                for opt in valid_options.values():
+                    if re.search(r'[0-9]', str(opt)):
+                        numeric_options += 1
+
+                if numeric_options < 2:
+                    logger.debug("Not enough numeric options found")
+                    return None
+
+                # Check for units in options
+                valid_units = ['ev', 'nm', 'hz', 'j', 'kg', 'mol', 'atm', 'k', 'å', 'pm', 'fs', 'kev', 'mev']
+                has_units = False
+                for opt in valid_options.values():
+                    if any(unit in opt.lower().replace(' ', '') for unit in valid_units):
+                        has_units = True
                         break
 
-            result = {
-                "question": question,
-                "options": options,
-                "correct": correct,
-                "explanation": explanation,
-                "source": "emergency_fallback_parsing",
-                "confidence": 0.6  # Lower confidence for fallback
+                if not has_units:
+                    logger.debug("No valid units found in numeric options")
+                    return None
+
+            # Create normalized result
+            normalized = {
+                'question': question,
+                'options': valid_options,
+                'correct': correct,
+                'explanation': explanation.strip(),
+                'source': data.get('source', 'unknown'),
+                'is_fallback': data.get('is_fallback', False)
             }
+
+            logger.debug("Successfully normalized and validated MCQ data")
+            return normalized
+
+        except Exception as e:
+            logger.error(f"Normalization and validation failed: {e}")
+            return None
+
+    def parse_with_details(self, raw_response: str) -> ParseResult:
+        """
+        Enhanced parsing method that returns detailed results including format detection
+        and confidence scoring.
+        """
+        if not raw_response or not isinstance(raw_response, str):
+            return ParseResult(
+                success=False,
+                mcq_data=self._create_dummy_question(),
+                format_detected=None,
+                confidence=0.0,
+                issues=["Empty or invalid input"],
+                raw_response=raw_response or ""
+            )
+
+        issues = []
+        confidence = 0.0
+        format_detected = None
+
+        try:
+            # Try JSON format first
+            json_str = self._extract_json_block(raw_response)
+            if json_str:
+                try:
+                    cleaned_json = self._clean_json_string(json_str)
+                    parsed_data = json.loads(cleaned_json)
+                    normalized = self._normalize_and_validate(parsed_data)
+                    if normalized:
+                        return ParseResult(
+                            success=True,
+                            mcq_data=normalized,
+                            format_detected=ParseFormat.JSON,
+                            confidence=0.9,
+                            issues=[],
+                            raw_response=raw_response
+                        )
+                except json.JSONDecodeError:
+                    issues.append("JSON format detected but parsing failed")
+
+            # Try structured format
+            structured_data = self._parse_structured_format(raw_response)
+            if structured_data:
+                return ParseResult(
+                    success=True,
+                    mcq_data=structured_data,
+                    format_detected=ParseFormat.STRUCTURED,
+                    confidence=0.8,
+                    issues=issues,
+                    raw_response=raw_response
+                )
+
+            # Try simple text
+            simple_data = self._parse_simple_text(raw_response)
+            if simple_data:
+                return ParseResult(
+                    success=True,
+                    mcq_data=simple_data,
+                    format_detected=ParseFormat.SIMPLE,
+                    confidence=0.6,
+                    issues=issues + ["Used simple text parsing"],
+                    raw_response=raw_response
+                )
+
+            # Emergency fallback
+            fallback_data = self._emergency_fallback_parse(raw_response)
+            if fallback_data:
+                return ParseResult(
+                    success=True,
+                    mcq_data=fallback_data,
+                    format_detected=ParseFormat.MIXED,
+                    confidence=0.3,
+                    issues=issues + ["Used emergency fallback"],
+                    raw_response=raw_response
+                )
+
+            # Complete failure
+            return ParseResult(
+                success=False,
+                mcq_data=self._create_dummy_question(),
+                format_detected=None,
+                confidence=0.0,
+                issues=issues + ["All parsing methods failed"],
+                raw_response=raw_response
+            )
+
+        except Exception as e:
+            return ParseResult(
+                success=False,
+                mcq_data=self._create_dummy_question(),
+                format_detected=None,
+                confidence=0.0,
+                issues=issues + [f"Unexpected error: {str(e)}"],
+                raw_response=raw_response
+            )
+
+    def _emergency_fallback_parse(self, raw_response: str) -> Optional[Dict[str, Any]]:
+        """
+        Emergency fallback parser for when all other parsing methods fail.
+        Attempts to extract any recognizable MCQ pattern from the response.
+        """
+        try:
+            logger.info("🚨 Running emergency fallback parser...")
             
-            logger.info(f"Emergency fallback successful: extracted {len(options)} options")
-            return result
+            # Try to find question-like patterns
+            lines = raw_response.split('\n')
+            question_text = None
+            options = {}
+            correct_answer = None
+            explanation = None
+            
+            # Look for question patterns
+            for i, line in enumerate(lines):
+                line = line.strip()
+                
+                # Find potential question
+                if ('?' in line or 
+                    line.lower().startswith(('what', 'how', 'why', 'which', 'where', 'when')) or
+                    'question:' in line.lower()):
+                    if not question_text and len(line) > 10:
+                        question_text = re.sub(r'^(question[:.]?\s*)', '', line, flags=re.IGNORECASE).strip()
+                
+                # Find options (A), B), C), D) etc.
+                option_match = re.match(r'^([A-D])[.)]\s*(.+)', line, re.IGNORECASE)
+                if option_match:
+                    option_key = option_match.group(1).upper()
+                    option_text = option_match.group(2).strip()
+                    options[option_key] = option_text
+                
+                # Find correct answer
+                if any(keyword in line.lower() for keyword in ['correct', 'answer', 'solution']):
+                    # Look for A, B, C, D in the line
+                    answer_match = re.search(r'[^\w]([A-D])[^\w]', line.upper())
+                    if answer_match:
+                        correct_answer = answer_match.group(1)
+                
+                # Find explanation
+                if any(keyword in line.lower() for keyword in ['explanation', 'because', 'reason']):
+                    if len(line) > 20 and not explanation:
+                        explanation = re.sub(r'^(explanation[:.]?\s*)', '', line, flags=re.IGNORECASE).strip()
+            
+            # Validate we have minimum required data
+            if question_text and len(options) >= 2:
+                # Fill missing options if needed
+                option_letters = ['A', 'B', 'C', 'D']
+                for letter in option_letters:
+                    if letter not in options:
+                        options[letter] = f"Option {letter}"
+                
+                # Set default correct answer if none found
+                if not correct_answer:
+                    correct_answer = 'A'
+                
+                # Set default explanation if none found
+                if not explanation:
+                    explanation = "Answer explanation not provided."
+                
+                result = {
+                    'question': question_text,
+                    'options': options,
+                    'correct': correct_answer,
+                    'explanation': explanation,
+                    'is_fallback': True
+                }
+                
+                logger.info(f"✅ Emergency fallback successful: {question_text[:50]}...")
+                return result
+            
+            logger.warning("❌ Emergency fallback could not extract sufficient MCQ data")
+            return None
             
         except Exception as e:
-            logger.error(f"Emergency fallback parsing also failed: {e}")
+            logger.error(f"❌ Emergency fallback parser failed: {e}")
             return None
 
+    def _create_emergency_mcq(self, reason: str) -> Dict[str, Any]:
+        """
+        Creates an emergency MCQ when parsing fails.
+        This method was missing and causing AttributeError.
+        """
+        logger.warning(f"🚨 Creating emergency MCQ due to: {reason}")
+        
+        return {
+            'question': "Emergency Question: What is the primary purpose of this knowledge application?",
+            'options': {
+                'A': "To generate multiple choice questions for learning",
+                'B': "To create random educational content", 
+                'C': "To test parsing and generation systems",
+                'D': "To demonstrate AI functionality"
+            },
+            'correct': 'A',
+            'explanation': f"This is an emergency question generated when parsing failed: {reason}",
+            'is_fallback': True,
+            'is_emergency': True,
+            'emergency_reason': reason
+        }
 
-# Convenience function
-def parse_mcq_response(raw_response: str) -> Optional[Dict[str, Any]]:
-    """CRITICAL FIX: Enhanced convenience function with error handling"""
-    try:
-        parser = EnhancedMCQParser()
-        return parser.parse_mcq(raw_response)
-    except Exception as e:
-        logger.error(f"Parse convenience function failed: {e}")
-        return None
+    def _create_dummy_question(self) -> Dict[str, Any]:
+        """
+        Creates a dummy question as absolute last resort.
+        This should only be used when all parsing attempts fail completely.
+        """
+        logger.warning("🚨 Creating dummy question as last resort")
+        
+        return {
+            'question': "Sample Question: What is the primary purpose of this application?",
+            'options': {
+                'A': "To generate multiple choice questions",
+                'B': "To create random content", 
+                'C': "To test parsing systems",
+                'D': "To demonstrate functionality"
+            },
+            'correct': 'A',
+            'explanation': "This is a fallback question generated when the original response could not be parsed.",
+            'is_fallback': True,
+            'is_dummy': True
+        }

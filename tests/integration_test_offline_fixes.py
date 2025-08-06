@@ -224,32 +224,44 @@ def test_ui_integration():
     
     try:
         # Test GPU stats functionality
-        from knowledge_app.webengine_app import WebEngineApp
+        from knowledge_app.webengine_app import KnowledgeAppWebEngine
+        from PyQt5.QtWidgets import QApplication
+        import sys
         
+        # Create QApplication instance first
         with patch('knowledge_app.webengine_app.QWebEngineView'), \
-             patch('knowledge_app.webengine_app.QApplication'):
+             patch('knowledge_app.webengine_app.QMainWindow'), \
+             patch('knowledge_app.webengine_app.QVBoxLayout'), \
+             patch('knowledge_app.webengine_app.QWidget'), \
+             patch('knowledge_app.webengine_app.QWebChannel'):
             
-            app = WebEngineApp()
-            app.page = Mock()
-            app.page.return_value.runJavaScript = Mock()
-            
-            # Test GPU stats with mocked torch
-            with patch('torch.cuda.is_available', return_value=True), \
-                 patch('torch.cuda.get_device_properties') as mock_props, \
-                 patch('torch.cuda.memory_allocated', return_value=1024*1024*1000):
-                
-                mock_device = Mock()
-                mock_device.total_memory = 1024*1024*8000
-                mock_device.name = "Test GPU"
-                mock_props.return_value = mock_device
-                
-                app.getGPUStats()
-                
-                # Verify JavaScript was called
-                app.page().runJavaScript.assert_called_once()
-                call_args = app.page().runJavaScript.call_args[0][0]
-                assert "updateGPUStatsDisplay" in call_args
-                print("   ✅ GPU stats UI integration working")
+            # Mock the QApplication
+            app_mock = Mock()
+            with patch.object(QApplication, '__new__', return_value=app_mock):
+                with patch.object(KnowledgeAppWebEngine, '_initialize_app'):
+                    # Create the app instance with mocked initialization
+                    app = KnowledgeAppWebEngine()
+                    app.web_view = Mock()
+                    app.web_view.page = Mock()
+                    app.web_view.page().runJavaScript = Mock()
+                    
+                    # Test GPU stats with mocked torch
+                    with patch('torch.cuda.is_available', return_value=True), \
+                         patch('torch.cuda.get_device_properties') as mock_props, \
+                         patch('torch.cuda.memory_allocated', return_value=1024*1024*1000):
+                        
+                        mock_device = Mock()
+                        mock_device.total_memory = 1024*1024*8000
+                        mock_device.name = "Test GPU"
+                        mock_props.return_value = mock_device
+                        
+                        app.getGPUStats()
+                        
+                        # Verify JavaScript was called
+                        app.web_view.page().runJavaScript.assert_called_once()
+                        call_args = app.web_view.page().runJavaScript.call_args[0][0]
+                        assert "updateGPUStatsDisplay" in call_args
+                        print("   ✅ GPU stats UI integration working")
         
         print("✅ UI Integration: PASSED")
         return True

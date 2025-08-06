@@ -118,26 +118,32 @@ class OnlineMCQGenerator(MCQGenerator):
                 'api_key': user_api_keys.get('openrouter'),  # Only user keys, no env fallback
                 'base_url': 'https://openrouter.ai/api/v1/chat/completions',
                 'free_models': [
-                    # [START] Large-Scale Free Models (30B+) - Prioritized for superior quality
-                    'qwen/qwen3-235b-a22b:free',  # 235B parameters - The absolute beast
-                    'qwen/qwen3-30b-a3b:free',    # 30.5B parameters - Most balanced
-                    'meta-llama/llama-3.3-70b-instruct:free',  # 70B parameters - Proven performer
-                    'meta-llama/llama-4-maverick:free',        # Latest Llama 4 variant (70B+)
-                    
-                    # 32B Parameter Models (Reasoning specialists)
-                    'qwen/qwq-32b:free',          # 32B parameters - Reasoning focused
-                    'thudm/glm-4-32b:free',       # 32B parameters - Multilingual support
-                    'thudm/glm-z1-32b:free',      # 32B parameters - Advanced GLM variant
-                    
-                    # Fallback Large Models (Backup options if above fail)
-                    'meta-llama/llama-2-70b-chat:free',  # 70B parameters - Reliable fallback
-                    'cognitivecomputations/dolphin-mixtral-8x7b:free',  # 8x7B MoE - Good fallback
-                    
-                    # Legacy smaller models (final fallback only)
-                    'meta-llama/llama-3.1-8b-instruct:free',
-                    'mistralai/mistral-7b-instruct:free'
+                    # [START] OpenRouter Free Models - Correct model IDs from official list
+                    'qwen/qwq-32b-preview',       # 32B reasoning specialist with thinking tokens
+                    'meta-llama/llama-3.1-8b-instruct',
+                    'meta-llama/llama-3.1-70b-instruct',
+                    'meta-llama/llama-3.2-1b-instruct',
+                    'meta-llama/llama-3.2-3b-instruct',
+                    'meta-llama/llama-3.2-11b-vision-instruct',
+                    'meta-llama/llama-3.2-90b-vision-instruct',
+                    'microsoft/phi-3-mini-128k-instruct',
+                    'microsoft/phi-3-medium-128k-instruct',
+                    'mistralai/mistral-7b-instruct',
+                    'huggingface/zephyr-7b-beta',
+                    'openchat/openchat-7b',
+                    'undi95/toppy-m-7b',
+                    'gryphe/mythomist-7b',
+                    'nousresearch/nous-capybara-7b',
+                    'teknium/openhermes-2-mistral-7b',
+                    'togethercomputer/redpajama-incite-7b-chat',
+                    'psyfighter2/psyfighter-13b-2',
+                    'koboldai/psyfighter-13b-2',
+                    'intel/neural-chat-7b-v3-1',
+                    'pygmalionai/mythalion-13b',
+                    'jondurbin/airoboros-l2-70b-gpt4-1.4.1',
+                    'austism/chronos-hermes-13b'
                 ],
-                'model': 'qwen/qwen3-235b-a22b:free',  # Default to the 235B beast for maximum quality
+                'model': 'qwen/qwq-32b-preview',  # Default to QwQ for reasoning capabilities
                 'headers': {'Authorization': 'Bearer {api_key}', 'Content-Type': 'application/json'}
             }
         }
@@ -153,6 +159,8 @@ class OnlineMCQGenerator(MCQGenerator):
         
         # Check each provider strictly for API key availability and enabled state  
         for provider_name in ['groq', 'openrouter', 'anthropic', 'gemini', 'openai']:  # Groq first for cloud APIs
+            logger.info(f"[SEARCH] CHECKING PROVIDER: {provider_name.upper()}")
+            
             if provider_name in self.providers:
                 config = self.providers[provider_name]
                 api_key_value = config.get('api_key')
@@ -172,6 +180,8 @@ class OnlineMCQGenerator(MCQGenerator):
                     logger.warning(f"[ERROR] {provider_name.upper()} SKIPPED - no valid API key")
                 elif not is_enabled:
                     logger.warning(f"⏸️ {provider_name.upper()} SKIPPED - disabled by user")
+            else:
+                logger.warning(f"[ERROR] {provider_name.upper()} NOT FOUND in providers config!")
         
         # [EMERGENCY] CRITICAL: Show final provider selection clearly
         if self.available_providers:
@@ -194,75 +204,43 @@ class OnlineMCQGenerator(MCQGenerator):
 
 
     def _load_user_api_keys(self) -> Dict[str, str]:
-        """Load API keys and provider enabled states from user settings file with comprehensive logging"""
-        logger.info("[SEARCH] LOADING USER API KEYS from settings file...")
+        """🔧 BUG FIX #25: Use unified config manager to eliminate redundant file I/O"""
+        logger.info("[SEARCH] LOADING USER API KEYS via unified config manager...")
         
         try:
-            from pathlib import Path
-            import json
+            # 🔧 FIX: Use unified config manager instead of direct file access
+            from .unified_config_manager import get_unified_config_manager
             
-            settings_path = Path("user_data/user_settings.json")
-            logger.info(f"[SEARCH] SETTINGS PATH: {settings_path.absolute()}")
-            logger.info(f"[SEARCH] SETTINGS FILE EXISTS: {settings_path.exists()}")
+            config_manager = get_unified_config_manager()
+            logger.info("[SEARCH] Using unified config manager - no redundant file I/O")
             
-            if settings_path.exists():
-                logger.info("[SEARCH] READING settings file...")
-                with open(settings_path, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    
-                logger.info(f"[SEARCH] SETTINGS STRUCTURE: {list(settings.keys())}")
-                
-                api_keys = settings.get('api_keys', {})
-                logger.info(f"[SEARCH] API_KEYS SECTION FOUND: {bool(api_keys)}")
-                logger.info(f"[SEARCH] API_KEYS PROVIDERS: {list(api_keys.keys())}")
-                
-                # Load provider enabled states
-                self.providers_enabled = settings.get('api_providers_enabled', {})
-                logger.info(f"[SEARCH] PROVIDERS_ENABLED SECTION: {self.providers_enabled}")
-                
-                # Default all providers to enabled if not specified
-                for provider in ['openai', 'anthropic', 'gemini', 'groq', 'openrouter']:
-                    if provider not in self.providers_enabled:
-                        self.providers_enabled[provider] = True
-                        logger.info(f"[SEARCH] DEFAULTING {provider} to ENABLED")
-                
-                # Filter out empty keys and log found keys
-                valid_keys = {}
-                for k, v in api_keys.items():
-                    if v and v.strip():
-                        valid_keys[k] = v
-                        logger.info(f"[SEARCH] VALID API KEY FOUND: {k} (length: {len(v)})")
-                    else:
-                        logger.warning(f"[SEARCH] EMPTY/INVALID API KEY: {k}")
-                
-                if valid_keys:
-                    logger.info(f"🔑 FOUND {len(valid_keys)} VALID API KEYS: {list(valid_keys.keys())}")
-                else:
-                    logger.warning("[WARNING] NO VALID API KEYS FOUND IN SETTINGS")
-                
-                # Log enabled/disabled states
-                enabled_count = sum(1 for enabled in self.providers_enabled.values() if enabled)
-                logger.info(f"[CONFIG] PROVIDER STATES: {enabled_count}/{len(self.providers_enabled)} enabled")
-                for provider, enabled in self.providers_enabled.items():
-                    status = "ENABLED" if enabled else "DISABLED"
-                    logger.info(f"   • {provider}: {status}")
-                
-                return valid_keys
+            # Get API keys from unified config
+            api_keys = config_manager.get_api_keys()
+            logger.info(f"[SEARCH] Retrieved {len(api_keys)} API keys from unified config")
             
-            # Initialize default enabled states if no settings file
-            logger.warning("[WARNING] NO SETTINGS FILE FOUND - using defaults")
-            self.providers_enabled = {
-                'openai': True,
-                'anthropic': True, 
-                'gemini': True,
-                'groq': True,
-                'openrouter': True
-            }
-            return {}
+            # Get provider enabled states from unified config
+            self.providers_enabled = config_manager.get_provider_states()
+            logger.info(f"[SEARCH] Retrieved provider states from unified config")
+            
+            # Log enabled/disabled states
+            enabled_count = sum(1 for enabled in self.providers_enabled.values() if enabled)
+            logger.info(f"[CONFIG] PROVIDER STATES: {enabled_count}/{len(self.providers_enabled)} enabled")
+            for provider, enabled in self.providers_enabled.items():
+                status = "ENABLED" if enabled else "DISABLED"
+                logger.info(f"   • {provider}: {status}")
+            
+            if api_keys:
+                logger.info(f"🔑 FOUND {len(api_keys)} VALID API KEYS: {list(api_keys.keys())}")
+            else:
+                logger.warning("[WARNING] NO VALID API KEYS FOUND IN UNIFIED CONFIG")
+            
+            return api_keys
             
         except Exception as e:
-            logger.error(f"[ERROR] FAILED TO LOAD USER API KEYS: {e}")
+            logger.error(f"[ERROR] FAILED TO LOAD USER API KEYS via unified config: {e}")
+            import traceback
             logger.error(f"[ERROR] TRACEBACK: {traceback.format_exc()}")
+            
             # Initialize default enabled states on error
             self.providers_enabled = {
                 'openai': True,
@@ -487,7 +465,7 @@ class OnlineMCQGenerator(MCQGenerator):
             logger.error(f"[ERROR] FULL TRACEBACK: {traceback.format_exc()}")
             performance_logger.error(f"[ERROR] GENERATION FAILED after {total_time:.3f}s: {e}")
             performance_logger.error("="*80)
-            # [EMERGENCY] CRITICAL: Propagate error to UI instead of returning empty list
+            # [INFO] Important: Propagate error to UI for user awareness
             raise Exception(f"Online generation failed: {str(e)}")
 
     async def generate_mcq_async(self, topic: str, context: str = "", num_questions: int = 1, 
@@ -551,7 +529,7 @@ class OnlineMCQGenerator(MCQGenerator):
 
         except Exception as e:
             logger.error(f"[ERROR] Online MCQ generation failed: {e}")
-            # [EMERGENCY] CRITICAL: Propagate error to UI instead of returning empty list
+            # [INFO] Important: Propagate error to UI for user awareness
             raise Exception(f"Online MCQ generation failed: {str(e)}")
         finally:
             # Close session if we created it
@@ -1021,13 +999,29 @@ CRITICAL: You MUST include exactly 4 options (A, B, C, D) with numerical values 
             return None
 
     async def _call_openrouter(self, config: Dict, prompt: str) -> Optional[Dict[str, Any]]:
-        """Call OpenRouter API with free model selection and intelligent rate limiting"""
+        """Call OpenRouter API with dynamic model configuration and intelligent rate limiting"""
         headers = {k: v.format(api_key=config['api_key']) for k, v in config['headers'].items()}
         headers['HTTP-Referer'] = 'https://knowledge-app.local'
         headers['X-Title'] = 'Knowledge App'
         
-        # Get free models list with intelligent selection
-        free_models = config.get('free_models', [config['model']])
+        # 🔧 DYNAMIC MODEL LOADING: Use configurable model list instead of hardcoded
+        try:
+            from .openrouter_config import get_openrouter_models, get_preferred_openrouter_model
+            
+            # Get models from dynamic configuration
+            free_models = get_openrouter_models(use_free_only=True)
+            
+            # If no models configured, fallback to config or default
+            if not free_models:
+                free_models = config.get('free_models', [config.get('model', 'qwen/qwq-32b-preview')])
+                logger.warning("⚠️ No OpenRouter models in config, using fallback list")
+            else:
+                logger.info(f"✅ Using {len(free_models)} OpenRouter models from configuration")
+                
+        except ImportError:
+            # Fallback to hardcoded list if config module not available
+            free_models = config.get('free_models', [config['model']])
+            logger.info("ℹ️ Using hardcoded OpenRouter model list (config module not available)")
         
         # Enhanced rate limit handling
         rate_limit_wait_times = [2, 5, 10, 15, 20]  # Progressive wait times for rate limits
@@ -1263,559 +1257,62 @@ Generate ONLY the JSON object, no additional text."""
         except:
             return None
 
-    # [START] ENHANCED: Chain-of-Thought prompt engineering
+    # [START] UNIFIED PROMPT SYSTEM: Use centralized prompt generation
     def _create_optimized_prompt(self, topic: str, context: str, question_index: int, 
                                  difficulty: str = "medium", question_type: str = "mixed") -> str:
         """
-        [BRAIN] ENHANCED: Chain-of-Thought prompt engineering for higher quality questions
-        Eliminates meta-level questions and encourages deep understanding
+        � REVOLUTIONARY PROMPT SYSTEM: Use unified trust-based prompt generation
+        
+        This now delegates to the unified prompt system to eliminate code duplication
+        and leverage the trust-based AI collaboration approach instead of constraints.
         """
-        
-        # Context preparation
-        context_instruction = ""
-        if context and context.strip():
-            context_instruction = f"""
-**Context for Question Generation:**
-{context.strip()}
-
-Use this context to inform your question, but do NOT simply copy sentences from it.
-"""
-        
-        # [HOT] ENHANCED: Detailed difficulty requirements (matching offline models)
-        difficulty_requirements = {
-            "easy": {
-                "level": "basic",
-                "description": "fundamental concepts, simple recall, basic definitions",
-                "examples": "simple definitions, basic facts, elementary concepts",
-                "instruction": "introductory level that tests basic understanding"
-            },
-            "medium": {
-                "level": "intermediate", 
-                "description": "understanding relationships, applying concepts, moderate analysis",
-                "examples": "connecting ideas, practical applications, cause-and-effect",
-                "instruction": "intermediate level that requires application of concepts"
-            },
-            "hard": {
-                "level": "advanced",
-                "description": "complex analysis, synthesis, evaluation, expert-level reasoning, specific mechanisms and pathways",
-                "examples": "multi-step problem solving, critical evaluation, advanced synthesis, edge cases, molecular processes",
-                "instruction": "advanced level that requires synthesis and critical thinking"
-            },
-            "expert": {
-                "level": "expert",
-                "description": "deep domain knowledge, complex reasoning, advanced synthesis, cutting-edge understanding",
-                "examples": "expert-level analysis, state-of-the-art knowledge, complex theoretical frameworks, advanced applications",
-                "instruction": "expert level that requires deep domain knowledge and complex reasoning"
-            }
-        }
-        
-        diff_config = difficulty_requirements.get(difficulty.lower(), difficulty_requirements["medium"])
-        difficulty_instruction = diff_config["instruction"]
-        
-        # [EMERGENCY] ENHANCED: Anti-vague question enforcement (matching offline models)
-        anti_vague_section = ""
-        if difficulty.lower() in ["hard", "expert"]:
-            phd_level_demand = ""
-            if difficulty.lower() == "expert":
-                phd_level_demand = f"""
-[EXPERT] PHD-LEVEL RESEARCH DEMAND FOR {topic.upper()}:
-[FORBIDDEN] COMPLETELY BANNED: Basic wavelength calculations (λ = hc/E)
-[FORBIDDEN] COMPLETELY BANNED: Simple transitions between energy levels
-[FORBIDDEN] COMPLETELY BANNED: Undergraduate textbook formulas (E=hf, λ=hc/E, Rydberg)
-[FORBIDDEN] COMPLETELY BANNED: Graduate coursework level (simple binding energy, basic quantum)
-[FORBIDDEN] COMPLETELY BANNED: Any question found in standard textbooks
-[FORBIDDEN] COMPLETELY BANNED: Questions solvable with basic formulas
-
-[OK] MANDATORY: Advanced quantum field theory applications  
-[OK] MANDATORY: Many-body interactions and correlations
-[OK] MANDATORY: QED corrections and radiative effects
-[OK] MANDATORY: Experimental precision at research frontiers
-[OK] MANDATORY: Questions requiring specialized computational methods
-[OK] MANDATORY: Corrections beyond Born-Oppenheimer approximation
-[OK] MANDATORY: Questions requiring knowledge of recent research papers (2020+)
-
-RESEARCH TOPICS REQUIRED:
-- Hyperfine structure with relativistic corrections
-- Many-body perturbation theory calculations  
-- Quantum electrodynamics beyond lowest order
-- Casimir-Polder interactions in complex geometries
-- Rydberg atom physics in external fields
-- Uehling potential and vacuum polarization effects
-- Scattering theory (R-matrix, close-coupling)
-- Exotic atomic systems (antihydrogen, muonium)
-
-EXAMPLES OF REQUIRED PHD-LEVEL {topic.upper()} QUESTIONS:
-[OK] "Calculate the energy shift of the 1s state in hydrogen due to the Uehling potential, including relativistic corrections and many-body interactions"
-[OK] "Determine the second-order relativistic correction to hyperfine splitting including vacuum polarization effects"
-[OK] "Calculate the Casimir-Polder coefficient including retardation effects for Rydberg atom interactions"
-[OK] "Find scattering phase shifts using multichannel quantum defect theory for exotic atom collisions"
-[OK] "Determine the photoionization cross-section near Cooper minima using RPAE theory with correlation effects"
-[OK] "Calculate the dynamic polarizability including core-valence correlation effects using coupled-cluster theory"
-"""
-            elif difficulty.lower() == "hard":
-                phd_level_demand = f"""
-[HOT] HARD MODE - GRADUATE-LEVEL DEMAND FOR {topic.upper()}:
-[FORBIDDEN] COMPLETELY BANNED: Basic single-formula calculations (F=ma, E=mc², KE=½mv², etc.)
-[FORBIDDEN] COMPLETELY BANNED: Direct textbook formula applications
-[FORBIDDEN] COMPLETELY BANNED: Simple unit conversions or substitutions
-[FORBIDDEN] COMPLETELY BANNED: Single-step problems solvable in under 2 minutes
-[FORBIDDEN] COMPLETELY BANNED: Undergraduate homework-level questions
-[FORBIDDEN] COMPLETELY BANNED: Basic conceptual definitions or explanations
-
-[OK] MANDATORY: Multi-step problem solving requiring 3+ concepts
-[OK] MANDATORY: Advanced analytical techniques and methods
-[OK] MANDATORY: Complex systems with multiple interacting components
-[OK] MANDATORY: Non-trivial mathematical derivations or proofs
-[OK] MANDATORY: Advanced applications requiring deep domain knowledge
-[OK] MANDATORY: Problems requiring synthesis of multiple principles
-[OK] MANDATORY: Graduate-level complexity (master's degree level)
-
-REQUIRED HARD MODE COMPLEXITY AREAS:
-- Advanced mathematical techniques (differential equations, complex analysis)
-- Multi-body systems and interactions
-- Non-linear phenomena and chaos theory
-- Advanced thermodynamics and statistical mechanics
-- Quantum mechanical systems beyond hydrogen
-- Electromagnetic field theory applications
-- Modern physics beyond introductory level
-- Computational physics and numerical methods
-
-EXAMPLES OF REQUIRED HARD-LEVEL {topic.upper()} QUESTIONS:
-[OK] "Analyze the coupled oscillator system with damping and derive the normal mode frequencies"
-[OK] "Calculate the scattering cross-section for electron-atom collisions using Born approximation"
-[OK] "Determine the phase transition temperature using mean field theory and critical exponents"
-[OK] "Solve the time-dependent Schrödinger equation for a particle in a time-varying potential"
-[OK] "Find the dispersion relation for electromagnetic waves in a plasma using kinetic theory"
-[OK] "Calculate the correlation function for a many-body quantum system using Green's functions"
-"""
+        try:
+            from .unified_prompt_builder import UnifiedPromptBuilder
             
-            anti_vague_section = f"""
-[EMERGENCY] {difficulty.upper()} MODE - ZERO TOLERANCE FOR VAGUE QUESTIONS:
-[ERROR] ABSOLUTELY FORBIDDEN: "What is the primary function of..."
-[ERROR] ABSOLUTELY FORBIDDEN: "What is the main purpose of..."  
-[ERROR] ABSOLUTELY FORBIDDEN: "What does X do?"
-[ERROR] ABSOLUTELY FORBIDDEN: Basic definition questions
-[ERROR] ABSOLUTELY FORBIDDEN: General overview questions
-[ERROR] ABSOLUTELY FORBIDDEN: "What distinguishes..." generic questions
-{f'[ERROR] ABSOLUTELY FORBIDDEN: Single-formula calculations (F=ma, E=mc², KE=½mv², etc.)' if difficulty.lower() == "hard" else ''}
-{f'[ERROR] ABSOLUTELY FORBIDDEN: Direct textbook applications without analysis' if difficulty.lower() == "hard" else ''}
-[OK] MANDATORY: Specific mechanisms, pathways, processes
-[OK] MANDATORY: Multi-step reasoning and analysis
-[OK] MANDATORY: {difficulty}-level detail and precision
-[OK] MANDATORY: Questions requiring deep understanding
-
-{phd_level_demand}
-
-EXAMPLES OF BANNED vs REQUIRED QUESTIONS:
-[ERROR] BANNED: "What distinguishes expert-level knowledge in {topic}?"
-[ERROR] BANNED: "What is the main characteristic of {topic}?"
-{f'[ERROR] BANNED: "Calculate the kinetic energy of an electron..." (basic formula)' if difficulty.lower() == "hard" else ''}
-{f'[ERROR] BANNED: "Find the force when F=ma and m=5kg, a=2m/s²" (direct substitution)' if difficulty.lower() == "hard" else ''}
-[OK] REQUIRED: "Which specific mechanism in {topic} explains [complex scenario]?"
-[OK] REQUIRED: "During which phase/process does [specific event] occur in {topic}?"
-{f'[OK] REQUIRED: "Analyze the coupled system behavior when [multiple conditions]..."' if difficulty.lower() == "hard" else ''}
-{f'[OK] REQUIRED: "Derive the relationship between [complex variables] considering [multiple effects]..."' if difficulty.lower() == "hard" else ''}
-"""
-
-        # [TARGET] Topic-specific guidance (matching offline models)
-        topic_guidance = self._get_topic_specific_guidance(topic, difficulty)
+            # Use the balanced prompt system
+            builder = UnifiedPromptBuilder()
+            prompt = builder.build_unified_prompt(
+                topic=topic,
+                difficulty=difficulty,
+                question_type=question_type,
+                context=context
+            )
+            
+            logger.debug(f"Generated balanced online prompt for {topic} ({difficulty}, {question_type})")
+            return prompt
+            
+        except ImportError as e:
+            logger.error(f"Failed to import prompt system: {e}")
+            # Fallback to a simple prompt if unified system not available
+            return self._create_gentle_fallback_prompt(topic, context, difficulty, question_type)
+    
+    def _create_gentle_fallback_prompt(self, topic: str, context: str, difficulty: str, question_type: str) -> str:
+        """Simple fallback prompt that avoids harsh constraints"""
+        context_section = f"Context: {context}\n\n" if context and context.strip() else ""
         
-        # Question type instructions - ULTRA-AGGRESSIVE TYPE ENFORCEMENT (100% adherence proven)
-        type_instruction = ""
-        if question_type.lower() == "numerical":
-            phd_numerical_examples = ""
-            if difficulty.lower() == "expert":
-                # PhD-level examples that actually work (based on successful test)
-                example_sets = {
-                    0: [  # QED/Vacuum Effects (SUCCESSFUL PATTERN)
-                        "Calculate the energy shift of the 1s state in hydrogen due to the Uehling potential, including relativistic corrections and many-body interactions, to an accuracy of 1 part in 10^9",
-                        "Determine the second-order vacuum polarization correction to the Lamb shift including finite nuclear size effects",
-                        "Find the anomalous magnetic moment contribution from fourth-order QED vertex corrections with hadronic vacuum polarization"
-                    ],
-                    1: [  # Many-Body/Correlation Effects  
-                        "Calculate the ground-state correlation energy of Be using full CI with relativistic corrections, including Breit interaction terms",
-                        "Determine the dynamic polarizability of Cs at 852 nm including core-valence correlation effects using CCSD(T) theory",
-                        "Find the van der Waals C6 coefficient for Rydberg atom interactions including retardation effects and many-body dispersion"
-                    ],
-                    2: [  # Scattering/Collision Theory
-                        "Calculate the photoionization cross-section near Cooper minima using RPAE theory with interchannel coupling effects",
-                        "Determine the electron impact excitation cross-section using 19-state close-coupling calculations with pseudostates", 
-                        "Find the Feshbach resonance position for ultracold Li-Cs collisions including magnetic dipole-dipole interactions"
-                    ],
-                    3: [  # Relativistic/Field Effects
-                        "Calculate the second-order relativistic correction to hyperfine splitting in muonium including finite nuclear size", 
-                        "Determine the gravitational redshift correction to optical clock transitions at height differences of 1 cm",
-                        "Find the AC Stark shift for Sr clock transitions in optical lattices including higher-order multipole contributions"
-                    ],
-                    4: [  # Advanced Spectroscopy/Precision
-                        "Calculate the blackbody radiation shift for Yb+ clock transitions at 300K including dynamic corrections",
-                        "Determine the autoionization linewidth using multichannel quantum defect theory with frame transformation",
-                        "Find the quantum Fisher information bound for atomic interferometry with N=10^6 atoms including decoherence effects"
-                    ]
-                }
-                
-                examples_for_this_question = example_sets.get(question_index % 5, example_sets[0])
-                example_text = "\n".join([f"[OK] \"{ex}\"" for ex in examples_for_this_question])
-                
-                phd_numerical_examples = f"""
+        prompt = f"""You are an expert educator creating a quality multiple choice question.
 
-[EXPERT] PHD-LEVEL NUMERICAL EXAMPLES FOR THIS QUESTION TYPE:
-{example_text}
+Create exactly 1 multiple choice question about: {topic}
 
-[EMERGENCY] DEMAND: RESEARCH-LEVEL COMPLEXITY - NO TEXTBOOK CALCULATIONS!
-[RELOAD] GENERATE A QUESTION SIMILAR TO ABOVE EXAMPLES - NOT QED GROUND STATE ENERGY!
-"""
+{context_section}Difficulty: {difficulty}
+Question Type: {question_type}
 
-            type_instruction = f"""
-🔢[EMERGENCY]🔢 NUMERICAL QUESTION - ZERO TOLERANCE ENFORCEMENT 🔢[EMERGENCY]🔢
-
-**ABSOLUTE NUMERICAL PURITY REQUIREMENTS:**
-[TARGET] MANDATORY STARTER: MUST begin with "Calculate", "Compute", "Solve", "Determine", "Find", "Evaluate"
-[TARGET] NUMBERS REQUIRED: Include specific values (5.2 kg, 298 K, 3.14 rad/s, 1.5 × 10⁻⁹ m)
-[TARGET] MATH REQUIRED: Equations, formulas, mathematical expressions that need computation
-[TARGET] PURE NUMERICAL OPTIONS: ALL 4 options = numbers with units (25.4 J, 8.3 × 10⁻³ mol/L)
-[TARGET] SOLUTION = MATH: Answered through calculation, NOT conceptual reasoning
-[TARGET] UNITS REQUIRED: SI units or domain-specific units
-
-[FORBIDDEN] CONCEPTUAL CONTAMINATION - AUTOMATIC FAILURE:
-[ERROR] "explain" [ERROR] "why" [ERROR] "how" [ERROR] "describe" [ERROR] "analyze" [ERROR] "mechanism" [ERROR] "principle"
-[ERROR] "compare" [ERROR] "relationship" [ERROR] "effect" [ERROR] "theory" [ERROR] "concept" [ERROR] "understanding"
-[ERROR] "assuming" [ERROR] "considering" [ERROR] "utilizing" [ERROR] "given that" [ERROR] "taking into account"
-[ERROR] NO conceptual discussion, NO theoretical explanations, NO "what does this mean"
-[ERROR] NO conditional phrases that imply conceptual understanding needed
-
-**ZERO TOLERANCE VERIFICATION:**
-[SEARCH] CALCULATION VERB? → Must be "Calculate/Compute/Solve/Determine/Find/Evaluate"
-[SEARCH] SPECIFIC NUMBERS? → Must include measurable quantities with units
-[SEARCH] PURE NUMERICAL OPTIONS? → ALL options must be numbers, NO text descriptions
-[SEARCH] MATH COMPUTATION? → Must require mathematical operations to solve
-[SEARCH] NO CONCEPTUAL WORDS? → Zero conceptual verbs or theoretical discussion
-
-**PERFECT NUMERICAL PATTERNS THAT WORK:**
-[OK] "Calculate the [specific quantity] when [parameter] = [value] and [parameter] = [value]."
-[OK] "Determine the [specific measurement] for [system] with [parameter] = [number][unit]."
-[OK] "Find the [numerical result] using [given values] and [specified conditions]."
-[OK] "Compute the [exact quantity] from the relationship [equation] with [specified inputs]."
-
-**AVOID THESE PATTERNS (CONTAMINATED):**
-[ERROR] "Calculate X considering the effects of Y" (adds conceptual element)
-[ERROR] "Determine X assuming that the mechanism involves Y" (theoretical reasoning)
-[ERROR] "Find X given the relationship between Y and Z" (conceptual understanding needed)
-
-{phd_numerical_examples}
-
-💀 FAILURE MODES TO AVOID: Any question asking "why", any options with explanations, any theoretical discussion
-
-[EMERGENCY] WARNING: Any question that is not purely numerical will be AUTOMATICALLY REJECTED!
-[EMERGENCY] DEMAND: Generate ONLY calculation questions with numerical answers!
-"""
-        elif question_type.lower() == "conceptual":
-            type_instruction = f"""
-[BRAIN][EMERGENCY][BRAIN] CONCEPTUAL QUESTION - ZERO TOLERANCE ENFORCEMENT [BRAIN][EMERGENCY][BRAIN]
-
-**ABSOLUTE CONCEPTUAL PURITY REQUIREMENTS:**
-[TARGET] MANDATORY STARTER: MUST begin with "Explain", "Why", "How", "What happens", "Describe", "Analyze"  
-[TARGET] PRINCIPLES FOCUS: Theories, mechanisms, cause-effect relationships, underlying principles
-[TARGET] ZERO MATH: NO calculations, NO specific numerical values, NO mathematical operations
-[TARGET] PURE CONCEPTUAL OPTIONS: ALL 4 options = concept descriptions, mechanism explanations
-[TARGET] SOLUTION = UNDERSTANDING: Answered through theoretical knowledge, NOT computation
-[TARGET] QUALITATIVE LANGUAGE: Relationships, trends, phenomena without numerical specifics
-
-[FORBIDDEN] NUMERICAL CONTAMINATION - AUTOMATIC FAILURE:
-[ERROR] "calculate" [ERROR] "compute" [ERROR] "solve" [ERROR] "determine" [ERROR] "find" [ERROR] "evaluate"
-[ERROR] Numbers with units [ERROR] Mathematical expressions [ERROR] Formulas [ERROR] Equations [ERROR] Calculations
-[ERROR] NO numerical operations, NO specific values, NO computational elements
-
-**ZERO TOLERANCE VERIFICATION:**
-[SEARCH] UNDERSTANDING VERB? → Must be "Explain/Why/How/What happens/Describe/Analyze"
-[SEARCH] NO NUMBERS? → Zero specific numerical values or calculations required
-[SEARCH] PURE CONCEPTUAL OPTIONS? → ALL options describe concepts/mechanisms, NO numbers
-[SEARCH] UNDERSTANDING REQUIRED? → Must test theoretical knowledge, NOT math skills
-[SEARCH] NO NUMERICAL WORDS? → Zero calculation verbs or mathematical operations
-
-EXAMPLES OF CORRECT PURE CONCEPTUAL QUESTIONS:
-[OK] "Why does increasing temperature generally increase the rate of chemical reactions?"
-[OK] "How does the electron configuration affect the magnetic properties of transition metals?"
-[OK] "What happens to entropy when a crystalline solid dissolves in water?"
-[OK] "Explain the mechanism by which catalysts lower activation energy."
-
-EXAMPLES OF BANNED QUESTIONS (DO NOT GENERATE):
-[ERROR] "Explain the result of calculating X..."
-[ERROR] "Why does the formula Y = Z apply..."
-[ERROR] "Describe how to solve for X..."
-[ERROR] Any question mixing conceptual understanding with calculations
-
-💀 FAILURE MODES TO AVOID: Any question asking to "calculate", any numerical options, any mathematical operations
-
-[EMERGENCY] WARNING: Any question that includes calculations will be AUTOMATICALLY REJECTED!
-[EMERGENCY] DEMAND: Generate ONLY understanding/explanation questions!
-"""
-        elif question_type.lower() == "application":
-            type_instruction = """
-[CONFIG] APPLICATION QUESTION REQUIREMENTS:
-- Present a realistic scenario or problem to solve
-- Require applying knowledge to novel situations
-- Test practical implementation of concepts
-- Focus on "how" and "why" rather than "what"
-"""
-        
-        # [BRAIN] ENHANCED CHAIN-OF-THOUGHT PROMPT with sophisticated difficulty handling
-        question_type_emphasis = ""
-        if question_type.lower() == "numerical":
-            question_type_emphasis = "🔢 [EMERGENCY] CRITICAL: GENERATE A NUMERICAL CALCULATION QUESTION - NOT A CONCEPTUAL QUESTION! [EMERGENCY] 🔢"
-        
-        # Add diversity enforcement based on question index - ENHANCED VARIATION
-        diversity_requirements = {
-            0: {
-                "focus": "EXPERIMENTAL TECHNIQUES and precision measurements",
-                "subtopic": "high-precision spectroscopy, interferometry, or advanced measurement methods",
-                "forbidden": "theoretical calculations, basic QED corrections",
-                "example_area": "atomic clocks, precision spectroscopy, or quantum sensing"
-            },
-            1: {
-                "focus": "COLLISION PROCESSES and scattering phenomena", 
-                "subtopic": "electron-atom collisions, photoionization, or collision cross-sections",
-                "forbidden": "energy level calculations, bound state problems",
-                "example_area": "electron impact excitation, photodetachment, or collision dynamics"
-            },
-            2: {
-                "focus": "EXOTIC MATTER and unusual atomic systems",
-                "subtopic": "antihydrogen, muonium, Rydberg atoms, or highly charged ions",
-                "forbidden": "hydrogen-like systems, standard elements",
-                "example_area": "antimatter physics, exotic atoms, or artificial atomic systems"
-            },
-            3: {
-                "focus": "EXTERNAL FIELD EFFECTS and atom-field interactions",
-                "subtopic": "strong laser fields, magnetic fields, or AC Stark effects",
-                "forbidden": "weak field perturbations, simple Zeeman effect",
-                "example_area": "strong-field ionization, optical lattices, or field-dressed states"
-            },
-            4: {
-                "focus": "MANY-BODY SYSTEMS and collective phenomena",
-                "subtopic": "ultracold gases, quantum degenerate systems, or collective excitations",
-                "forbidden": "single-atom properties, isolated systems",
-                "example_area": "Bose-Einstein condensates, Fermi gases, or quantum phase transitions"
-            },
-            5: {
-                "focus": "QUANTUM INFORMATION and atomic platforms",
-                "subtopic": "quantum gates, entanglement, or quantum error correction",
-                "forbidden": "classical information, simple quantum states",
-                "example_area": "trapped ion qubits, neutral atom arrays, or quantum algorithms"
-            },
-            6: {
-                "focus": "NUCLEAR EFFECTS and hyperfine interactions",
-                "subtopic": "nuclear spin coupling, isotope effects, or nuclear structure",
-                "forbidden": "electronic structure only, spinless nuclei",
-                "example_area": "hyperfine spectroscopy, nuclear moments, or isotope shifts"
-            },
-            7: {
-                "focus": "RELATIVISTIC EFFECTS and fundamental physics",
-                "subtopic": "Dirac equation solutions, relativistic corrections, or fundamental constants",
-                "forbidden": "non-relativistic approximations, classical mechanics",
-                "example_area": "fine structure, QED tests, or fundamental symmetries"
-            }
-        }
-        
-        diversity_info = diversity_requirements.get(question_index % len(diversity_requirements), diversity_requirements[0])
-        diversity_focus = diversity_info["focus"]
-        diversity_subtopic = diversity_info["subtopic"] 
-        diversity_forbidden = diversity_info["forbidden"]
-        diversity_example = diversity_info["example_area"]
-        
-        phd_mode_header = ""
-        if difficulty.lower() == "expert":
-            phd_mode_header = f"""
-[EXPERT]🔬 PHD-LEVEL RESEARCH MODE ACTIVATED 🔬[EXPERT]
-
-You are now a leading researcher in {topic} with access to cutting-edge literature.
-This question MUST be at the level of:
-- Current research frontiers in {topic}
-- Advanced theoretical methods and experimental techniques  
-- Questions that would challenge postdoctoral researchers
-- Calculations requiring specialized software/methods
-- Knowledge from recent Nature, Science, PRL papers (2020-2024)
-
-[TARGET] MANDATORY FOCUS FOR THIS QUESTION (Question #{question_index + 1}):
-{diversity_focus}
-
-[LIST] REQUIRED SUBTOPIC AREA:
-{diversity_subtopic}
-
-[FORBIDDEN] ABSOLUTELY FORBIDDEN FOR THIS QUESTION:
-{diversity_forbidden}
-
-[INFO] SUGGESTED EXAMPLE AREA:
-{diversity_example}
-
-[RELOAD] CRITICAL DIVERSITY REQUIREMENT:
-This question MUST be COMPLETELY DIFFERENT from:
-- Basic QED ground state energy corrections
-- Simple relativistic calculations  
-- Standard textbook problems
-- Questions about {diversity_forbidden}
-
-Each question in this quiz must explore DIFFERENT aspects of {topic} physics.
-Focus specifically on {diversity_subtopic} to ensure uniqueness.
-
-[EMERGENCY] UNIQUENESS ENFORCEMENT:
-- Question #{question_index + 1} must be about {diversity_focus}
-- Must involve {diversity_subtopic}
-- Cannot be about {diversity_forbidden}
-- Must be in the area of {diversity_example}
-
-[OK] REQUIRED: State-of-the-art knowledge in {diversity_subtopic}
-[OK] REQUIRED: Advanced calculations specific to {diversity_focus}
-[OK] REQUIRED: UNIQUE approach focusing on {diversity_example}
-[OK] REQUIRED: Research-level complexity in {diversity_subtopic}
-"""
-        
-        prompt = f"""You are an expert educational content creator. Generate a {diff_config['level']} difficulty multiple choice question about "{topic}".
-
-{phd_mode_header}
-
-{question_type_emphasis}
-
-{anti_vague_section}
-
-**REQUIREMENTS:**
-- Topic: {topic}
-- Difficulty: {difficulty.upper()} ({diff_config['description']})
-- Context: {context if context else "Use educational knowledge"}
-
-{topic_guidance}
-
-{context_instruction}
-
-**QUALITY STANDARDS:**
-[OK] Questions must require {diff_config['description']}
-[OK] Use specific, technical terminology appropriate for {difficulty} level
-[OK] Avoid vague generalizations - be precise and specific
-[OK] Include challenging but fair distractors
-[OK] Focus on understanding mechanisms rather than simple recall
-[OK] Examples: {diff_config['examples']}
-
-{type_instruction}
-
-**ULTRA-AGGRESSIVE CHAIN-OF-THOUGHT - ZERO TOLERANCE MODE:**
-
-[EMERGENCY] **Step 1: TYPE PURITY ENFORCEMENT** [EMERGENCY]
-{f'''- Is this 100% PURE {question_type.upper()} with ZERO contamination?
-- Which MANDATORY {question_type} starter verb: {"Calculate/Compute/Solve/Determine/Find/Evaluate" if question_type == 'numerical' else "Explain/Why/How/What happens/Describe/Analyze"}?
-- How will I GUARANTEE zero mixing with {"conceptual elements" if question_type == 'numerical' else "numerical elements"}?
-- What forbidden words must I COMPLETELY AVOID: {'"explain", "why", "how", "describe", "analyze", "mechanism", "principle"' if question_type == 'numerical' else '"calculate", "compute", "solve", "determine", "find", "evaluate"'}?''' if question_type.lower() in ['numerical', 'conceptual'] else '- What type of question best fits the requirements?'}
-
-[HOT] **Step 2: CONTAMINATION PREVENTION** [HOT]
-{f'''- How will I ensure ZERO {"conceptual contamination" if question_type == 'numerical' else "numerical contamination"}?
-- What {f"specific numbers, units, and calculations" if question_type == 'numerical' else "pure principles and mechanisms"} will I include?
-- How will I make ALL options {f"purely numerical values with units" if question_type == 'numerical' else "purely conceptual descriptions"}?''' if question_type.lower() in ['numerical', 'conceptual'] else '- How will I maintain appropriate quality and focus?'}
-
-[TARGET] **Step 3: TYPE-SPECIFIC REQUIREMENTS** [TARGET]
-{'''- NUMERICAL ONLY: What specific values (kg, K, rad/s), equations, formulas needed?
-- MATHEMATICAL COMPUTATION: What calculations, units, scientific notation required?
-- NUMERICAL OPTIONS: All 4 must be numbers with units (J, mol/L, Hz, etc.)''' if question_type.lower() == 'numerical' else '''- CONCEPTUAL ONLY: What principles, mechanisms, theories without numbers?
-- THEORETICAL UNDERSTANDING: What qualitative relationships, cause-effects?
-- CONCEPTUAL OPTIONS: All 4 must describe mechanisms, effects, principles''' if question_type.lower() == 'conceptual' else '- What level of technical detail is appropriate?'}
-
-[EXPERT] **Step 4: DIFFICULTY-LEVEL VERIFICATION** [EXPERT]
-- Will this challenge someone at the {difficulty} level appropriately?
-- Does it meet the {difficulty} complexity requirements?
-- Are all verification checklist items satisfied?
-
-💀 **Step 5: FAILURE MODE ELIMINATION** 💀
-{'''- NO "explain", "why", "how" in numerical questions = AUTOMATIC FAILURE
-- NO conceptual options (must be pure numbers with units)''' if question_type.lower() == 'numerical' else '''- NO "calculate", "solve", "find" in conceptual questions = AUTOMATIC FAILURE
-- NO numerical values or calculations (must be pure concepts)''' if question_type.lower() == 'conceptual' else '- What are plausible misconceptions for this level?'}
-- NO mixing, NO contamination, NO violations
-
-**ZERO TOLERANCE FINAL VERIFICATION:**
-{f'''[SEARCH] TYPE PURITY: 100% pure {question_type.upper()}, zero mixing?
-[SEARCH] STARTER VERB: Correct {"calculation" if question_type == 'numerical' else "understanding"} verb used?
-[SEARCH] OPTIONS: All {"numerical values" if question_type == 'numerical' else "conceptual descriptions"}?
-[SEARCH] CONTAMINATION: Zero {"conceptual" if question_type == 'numerical' else "numerical"} elements?''' if question_type.lower() in ['numerical', 'conceptual'] else '[SEARCH] Quality: Does this meet all requirements?'}
-[SEARCH] COMPLEXITY: Does it meet all {difficulty}-level requirements?
-[SEARCH] DOMAIN: Advanced {topic} expertise required?
-
-{f'💥 FAILURE = ANY TYPE MIXING, ANY FORBIDDEN WORDS, ANY CONTAMINATION 💥' if question_type.lower() in ['numerical', 'conceptual'] else ''}
-
-**CRITICAL REQUIREMENTS:**
-- NO meta-level questions like "What is a key concept..." or "What is the main..."
-- NO generic questions that could apply to any topic
-- NO overly simple recall questions unless specifically requested
-- Focus on "{topic}" specifically, not general science principles
-
-[EMERGENCY][EMERGENCY][EMERGENCY] FINAL ULTIMATUM - ZERO TOLERANCE ENFORCEMENT [EMERGENCY][EMERGENCY][EMERGENCY]
-
-### TYPE PURITY - AUTOMATIC FAILURE FOR ANY VIOLATIONS:
-{f'''🔢 NUMERICAL = PURE CALCULATION ONLY: Starter verbs (Calculate/Compute/Solve/Determine/Find/Evaluate), specific numbers, mathematical operations, numerical options ONLY
-💀 ANY TYPE MIXING = IMMEDIATE AUTOMATIC FAILURE
-💀 ANY FORBIDDEN WORDS = IMMEDIATE AUTOMATIC FAILURE
-💀 ANY CONTAMINATION = IMMEDIATE AUTOMATIC FAILURE''' if question_type.lower() == 'numerical' else f'''[BRAIN] CONCEPTUAL = PURE UNDERSTANDING ONLY: Starter verbs (Explain/Why/How/What happens/Describe/Analyze), principles/mechanisms, conceptual options ONLY
-💀 ANY TYPE MIXING = IMMEDIATE AUTOMATIC FAILURE  
-💀 ANY FORBIDDEN WORDS = IMMEDIATE AUTOMATIC FAILURE
-💀 ANY CONTAMINATION = IMMEDIATE AUTOMATIC FAILURE''' if question_type.lower() == 'conceptual' else '💀 MAINTAIN APPROPRIATE TYPE AND FORMAT - ZERO TOLERANCE FOR VIOLATIONS'}
-
-### ZERO TOLERANCE FAILURE CONDITIONS:
-{'''[ERROR] NUMERICAL questions with "explain", "why", "how", "describe", "analyze" = FAIL
-[ERROR] NUMERICAL questions with conceptual options (text descriptions) = FAIL
-[ERROR] Missing specific numerical values or units = FAIL
-[ERROR] Options that aren't numerical values = FAIL''' if question_type.lower() == 'numerical' else '''[ERROR] CONCEPTUAL questions with "calculate", "compute", "solve", "determine", "find" = FAIL
-[ERROR] CONCEPTUAL questions with numerical options (numbers/units) = FAIL  
-[ERROR] Including specific numerical calculations = FAIL
-[ERROR] Options that aren't conceptual descriptions = FAIL''' if question_type.lower() == 'conceptual' else '[ERROR] Violating format or quality requirements'}
-[ERROR] Questions under required character length = FAIL
-[ERROR] Missing advanced terminology = FAIL
-[ERROR] Undergraduate-level simplicity = FAIL
-
-### ULTRA-STRICT VALIDATION:
-[SEARCH] Every single word will be examined for type violations
-[SEARCH] Every option will be validated for purity
-[SEARCH] Every verb will be checked against allowed lists
-[SEARCH] Every element will be scrutinized for contamination
-[SEARCH] Zero tolerance for any deviation from requirements
-
-[EMERGENCY] WARNING: These questions will be subjected to automated validation tools that will detect ANY type mixing, ANY forbidden words, ANY violations. There is NO mercy for partial compliance.
-
-**[EMERGENCY] CRITICAL OUTPUT FORMAT - NO EXCEPTIONS:**
-You MUST respond with ONLY a valid JSON object. NO additional text before or after.
-
-EXACT FORMAT REQUIRED:
+Return ONLY a JSON object with this structure:
 {{
-  "question": "{f'Your specific numerical calculation question with formulas and numbers' if question_type.lower() == 'numerical' else f'Your specific conceptual understanding question about principles' if question_type.lower() == 'conceptual' else 'Your well-crafted question'}",
-  "options": {{
-    "A": "{f'First numerical answer with units (e.g., 5.2 MHz)' if question_type.lower() == 'numerical' else f'First conceptual option describing mechanism/principle' if question_type.lower() == 'conceptual' else 'First option'}",
-    "B": "{f'Second numerical answer with units (e.g., 10.4 MHz)' if question_type.lower() == 'numerical' else f'Second conceptual option describing different mechanism' if question_type.lower() == 'conceptual' else 'Second option'}", 
-    "C": "{f'Third numerical answer with units (e.g., 15.6 MHz)' if question_type.lower() == 'numerical' else f'Third conceptual option describing alternative principle' if question_type.lower() == 'conceptual' else 'Third option'}",
-    "D": "{f'Fourth numerical answer with units (e.g., 20.8 MHz)' if question_type.lower() == 'numerical' else f'Fourth conceptual option describing different theory' if question_type.lower() == 'conceptual' else 'Fourth option'}"
-  }},
-  "correct": "A",
-  "explanation": "{f'Step-by-step calculation: [show work] Therefore, the answer is A.' if question_type.lower() == 'numerical' else f'Explanation of the underlying principle: [reasoning] Therefore, the answer is A.' if question_type.lower() == 'conceptual' else 'Clear explanation of why the answer is correct.'}"
+    "question": "Your question here?",
+    "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
+    "correct_answer": "A",
+    "explanation": "Detailed explanation"
 }}
 
-[EMERGENCY] VALIDATION CHECKLIST:
-[OK] Exactly 4 options (A, B, C, D)
-{f'[OK] All options are numbers with units' if question_type.lower() == 'numerical' else f'[OK] All options describe concepts/mechanisms' if question_type.lower() == 'conceptual' else '[OK] All options follow appropriate format'}
-{f'[OK] Question requires calculation' if question_type.lower() == 'numerical' else f'[OK] Question requires understanding' if question_type.lower() == 'conceptual' else '[OK] Question meets requirements'}
-[OK] One correct answer
-[OK] Valid JSON syntax
+Requirements:
+- Question must end with "?"
+- All options must be substantial (20+ characters)
+- Use technical terminology appropriately
+- Ensure one clearly correct answer
 
-[SEARCH] DOMAIN-SPECIFIC REQUIREMENTS:
-- Physics topics MUST include terms like: force, energy, momentum, wave, particle, field, quantum
-- Chemistry topics MUST include terms like: molecule, atom, bond, reaction, compound, solution, acid
-- Mathematics topics MUST include terms like: equation, function, derivative, integral, matrix, variable, theorem
-- Question MUST end with a question mark (?)
-- All options must be substantive and non-empty (minimum 10 characters each)
-- Expert questions must be minimum 120 characters, others minimum 80 characters
-
-🔢 NUMERIC CONTENT REQUIREMENTS:
-- For numerical questions: Include specific numbers, calculations, units, formulas
-- For physics: Include values like "9.8 m/s²", "3.0 × 10⁸ m/s", specific measurements
-- For chemistry: Include molarity values, pH numbers, atomic masses, concentrations
-- For mathematics: Include specific numerical examples, coefficients, precise values
-- All numerical options must include units where appropriate
-
-{f'🔢 [EMERGENCY] FINAL REMINDER: This MUST be a NUMERICAL question with calculations and numbers - NOT a conceptual "which mechanism" question! [EMERGENCY] 🔢' if question_type.lower() == "numerical" else f'[BRAIN] [EMERGENCY] FINAL REMINDER: This MUST be a CONCEPTUAL question about understanding principles - NOT a "calculate" question! [EMERGENCY] [BRAIN]' if question_type.lower() == "conceptual" else ''}
-{f'[EXPERT] [EMERGENCY] FINAL PHD-LEVEL DEMAND: This question must be at the cutting edge of research in {topic} - challenge a postdoc, not a student! [EMERGENCY] [EXPERT]' if difficulty.lower() == "expert" else ''}
-"""
+Generate the question now:"""
+        
         return prompt
 
     def _get_topic_specific_guidance(self, topic: str, difficulty: str = "medium") -> str:
@@ -1932,192 +1429,279 @@ Focus on: specific mechanisms, molecular processes, regulatory pathways, precise
 - Use appropriate terminology for the {difficulty} level
 """
 
-    def _parse_json_response(self, content: str) -> Optional[Dict[str, Any]]:
-        """Parse JSON response from API with enhanced error handling and robust extraction"""
-        try:
-            # [START] ENHANCED: Use our robust JSON extraction first
-            robust_result = self._parse_json_response_robust(content)
-            if robust_result:
-                # Convert to the format expected by the existing system
-                options = robust_result.get('options', [])
-                
-                # Handle both dict and list options formats
-                if isinstance(options, dict):
-                    # Convert {"A": "...", "B": "...", ...} to ["...", "...", ...]
-                    option_keys = ['A', 'B', 'C', 'D']
-                    options_list = [options.get(key, '') for key in option_keys]
-                    robust_result['options'] = options_list
-                
-                # Map 'correct' to 'correct_answer' if needed
-                if 'correct' in robust_result and 'correct_answer' not in robust_result:
-                    correct = robust_result['correct']
-                    if isinstance(options, list) and correct in ['A', 'B', 'C', 'D']:
-                        # Convert letter to actual option text
-                        letter_map = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-                        if correct in letter_map and letter_map[correct] < len(options):
-                            robust_result['correct_answer'] = options[letter_map[correct]]
-                        else:
-                            robust_result['correct_answer'] = options[0] if options else ''
-                    else:
-                        robust_result['correct_answer'] = correct
-                
-                return robust_result
-            
-            # Fallback to original parsing logic if robust method fails
-            # Clean and extract JSON content
-            cleaned_content = content.strip()
-            
-            # Handle various JSON wrapping formats
-            if '```json' in cleaned_content:
-                # Extract JSON from markdown code blocks
-                start = cleaned_content.find('```json') + 7
-                end = cleaned_content.find('```', start)
-                if end != -1:
-                    cleaned_content = cleaned_content[start:end].strip()
-            elif '```' in cleaned_content:
-                # Extract from generic code blocks
-                start = cleaned_content.find('```') + 3
-                end = cleaned_content.find('```', start)
-                if end != -1:
-                    cleaned_content = cleaned_content[start:end].strip()
-            
-            # Find the first complete JSON object
-            brace_count = 0
-            json_start = -1
-            json_end = -1
-            
-            for i, char in enumerate(cleaned_content):
-                if char == '{':
-                    if brace_count == 0:
-                        json_start = i
-                    brace_count += 1
-                elif char == '}':
-                    brace_count -= 1
-                    if brace_count == 0 and json_start != -1:
-                        json_end = i + 1
-                        break
-            
-            if json_start != -1 and json_end != -1:
-                json_text = cleaned_content[json_start:json_end]
-                parsed = json.loads(json_text)
-                
-                # Enhanced validation and field mapping for different provider formats
-                if isinstance(parsed, dict):
-                    # Normalize the response format
-                    normalized = {}
-                    
-                    # Extract question - handle various field names
-                    question = (parsed.get('question') or 
-                              parsed.get('Question') or 
-                              parsed.get('prompt') or 
-                              parsed.get('text') or '')
-                    
-                    if not question:
-                        logger.error("[ERROR] No question field found in response")
-                        return None
-                    
-                    # Extract options - handle various formats
-                    options = []
-                    
-                    # [HOT] CRITICAL FIX: Handle options as object with A, B, C, D keys (Groq format)
-                    if 'options' in parsed and isinstance(parsed['options'], dict):
-                        # Groq returns: {"options": {"A": "...", "B": "...", "C": "...", "D": "..."}}
-                        options_dict = parsed['options']
-                        option_keys = ['A', 'B', 'C', 'D']
-                        for key in option_keys:
-                            if key in options_dict:
-                                options.append(options_dict[key])
-                        logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from object format")
-                        
-                    elif 'options' in parsed and isinstance(parsed['options'], list):
-                        # Array format: ["option1", "option2", "option3", "option4"]
-                        options = parsed['options']
-                        logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from array format")
-                        
-                    elif 'choices' in parsed and isinstance(parsed['choices'], list):
-                        options = parsed['choices']
-                        logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from choices array")
-                        
-                    elif 'answers' in parsed and isinstance(parsed['answers'], list):
-                        options = parsed['answers']
-                        logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from answers array")
-                        
-                    else:
-                        # Fallback: Try to extract from top-level A, B, C, D keys
-                        option_keys = ['A', 'B', 'C', 'D']
-                        for key in option_keys:
-                            if key in parsed:
-                                options.append(parsed[key])
-                        
-                        # Alternative format: option_a, option_b, etc.
-                        if not options:
-                            for i, letter in enumerate(['a', 'b', 'c', 'd']):
-                                option_key = f'option_{letter}'
-                                if option_key in parsed:
-                                    options.append(parsed[option_key])
-                        
-                        if options:
-                            logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from fallback method")
-                    
-                    if len(options) < 2:
-                        logger.error(f"[ERROR] Insufficient options found: {len(options)}")
-                        return None
-                    
-                    # Extract correct answer
-                    correct_answer = (parsed.get('correct_answer') or 
-                                    parsed.get('correct') or 
-                                    parsed.get('answer') or 
-                                    parsed.get('solution'))
-                    
-                    # If correct_answer is an index or letter, convert to actual text
-                    if isinstance(correct_answer, int) and 0 <= correct_answer < len(options):
-                        correct_answer = options[correct_answer]
-                    elif isinstance(correct_answer, str) and len(correct_answer) == 1:
-                        # Handle A, B, C, D format
-                        letter_map = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3}
-                        if correct_answer in letter_map:
-                            idx = letter_map[correct_answer]
-                            if idx < len(options):
-                                correct_answer = options[idx]
-                    
-                    # Validate correct answer exists in options
-                    if not correct_answer or correct_answer not in options:
-                        # Try to find a reasonable match
-                        if options:
-                            correct_answer = options[0]  # Default to first option
-                            logger.warning(f"[WARNING] Correct answer not found, defaulting to first option")
-                    
-                    # Extract explanation
-                    explanation = (parsed.get('explanation') or 
-                                 parsed.get('rationale') or 
-                                 parsed.get('reasoning') or 
-                                 'No explanation provided.')
-                    
-                    # Build normalized response
-                    normalized = {
-                        'question': question,
-                        'options': options,
-                        'correct_answer': correct_answer,
-                        'explanation': explanation,
-                        'correct_index': options.index(correct_answer) if correct_answer in options else 0
-                    }
-                    
-                    logger.info(f"[OK] Successfully parsed JSON response with {len(options)} options")
-                    return normalized
-                else:
-                    logger.error(f"[ERROR] Parsed JSON is not a dictionary: {type(parsed)}")
-                    return None
+    def _get_topic_specific_guidance(self, topic: str, difficulty: str = "medium") -> str:
+        """Get specific guidance based on the topic to improve question quality and prevent vague questions"""
+        
+        # Convert topic to lowercase for matching
+        topic_lower = topic.lower()
+        
+        # Biology/Health topics - ENHANCED for reproductive system questions
+        if any(word in topic_lower for word in ['biology', 'cell', 'dna', 'protein', 'anatomy', 'physiology', 'health', 'medical', 'reproduction', 'reproductive', 'sex', 'sexual', 'hormone', 'sperm', 'egg', 'ovary', 'testes', 'atom', 'atomic', 'molecule', 'molecular']):
+            if difficulty.lower() in ["hard", "expert"]:
+                return f"""
+🧬 {topic.upper()} - {difficulty.upper()} MODE GUIDANCE:
+[EMERGENCY] ABSOLUTELY BANNED QUESTIONS:
+- "What is the primary function of..."
+- "What is the main purpose of..."
+- "What does [structure/process] do?"
+- "What distinguishes [topic] knowledge?"
+- Any basic definition or overview questions
+
+[OK] {difficulty.upper()} MODE REQUIREMENTS:
+- Ask about SPECIFIC mechanisms, pathways, or processes
+- Focus on MOLECULAR/CELLULAR level details
+- Include BIOCHEMICAL processes and reactions
+- Test understanding of REGULATORY systems
+- Ask about SPECIFIC structures and their precise functions
+- Include QUANTITATIVE relationships and precise timing
+- Focus on CAUSE-AND-EFFECT mechanisms
+
+EXAMPLE {difficulty.upper()} QUESTIONS:
+[OK] "Which phase of [specific process] is characterized by [specific event] and what triggers this?"
+[OK] "During [process], at which stage do [specific cells] undergo [specific change]?"
+[OK] "What role does [specific molecule] play in the regulation of [specific pathway]?"
+[OK] "Which cellular mechanism prevents [specific problem] during [specific process]?"
+
+Focus on: specific mechanisms, molecular processes, regulatory pathways, precise timing, quantitative relationships
+"""
             else:
-                logger.error("[ERROR] Could not find valid JSON object in response")
-                return None
-                
-        except json.JSONDecodeError as e:
-            logger.error(f"[ERROR] JSON parsing failed: {e}")
-            logger.error(f"Raw content (first 200 chars): {content[:200]}...")
-            return None
+                return f"""
+{topic.upper()} TOPIC GUIDANCE:
+- Focus on biological/chemical processes, mechanisms, and structures
+- Include questions about specific pathways, reactions, or relationships
+- Ask about HOW and WHY processes work, not just WHAT they are
+- Use proper scientific terminology
+- Test understanding of cause-and-effect relationships
+- Example: Instead of "What do [structures] do?" ask "Which process in [system] is primarily responsible for [specific function]?"
+"""
+        
+        # Science topics (Physics, Chemistry, etc.)
+        elif any(word in topic_lower for word in ['physics', 'chemistry', 'science', 'scientific', 'formula', 'equation', 'element', 'force', 'energy', 'wave', 'particle']):
+            if difficulty.lower() in ["hard", "expert"]:
+                return f"""
+🔬 {topic.upper()} - {difficulty.upper()} MODE GUIDANCE:
+- Focus on COMPLEX scientific principles and advanced applications
+- Include multi-step calculations and problem-solving scenarios
+- Ask about THEORETICAL frameworks and their limitations
+- Test understanding of ADVANCED relationships between variables
+- Include questions about EXPERIMENTAL design and analysis
+- Focus on QUANTITATIVE analysis and precise measurements
+- Example: "Given [specific conditions], what [quantitative relationship] determines [outcome]?"
+"""
+            else:
+                return f"""
+{topic.upper()} TOPIC GUIDANCE:
+- Focus on scientific principles, laws, and applications
+- Include calculation-based or problem-solving questions when appropriate
+- Ask about relationships between variables and concepts
+- Use specific scientific units and measurements
+- Test understanding of cause-and-effect relationships
+- Example: Instead of "What is [concept]?" ask "If [variable] changes by [amount], how does [other variable] respond?"
+"""
+        
+        # Mathematics topics
+        elif any(word in topic_lower for word in ['math', 'mathematics', 'algebra', 'geometry', 'calculus', 'statistics', 'probability']):
+            if difficulty.lower() in ["hard", "expert"]:
+                return f"""
+🔢 {topic.upper()} - {difficulty.upper()} MODE GUIDANCE:
+- Focus on COMPLEX problem-solving and multi-step procedures
+- Include PROOF techniques and theoretical understanding
+- Ask about ADVANCED applications and edge cases
+- Test understanding of ABSTRACT concepts and relationships
+- Include questions requiring SYNTHESIS of multiple concepts
+- Example: "Which theorem/method is most efficient for solving [complex scenario]?"
+"""
+            else:
+                return f"""
+{topic.upper()} TOPIC GUIDANCE:
+- Focus on problem-solving techniques and applications
+- Include computational questions with specific numbers
+- Ask about mathematical relationships and patterns
+- Test understanding of procedures and when to apply them
+- Example: "What is the result when [specific operation] is applied to [specific values]?"
+"""
+        
+        # Default guidance for other topics
+        elif difficulty.lower() in ["hard", "expert"]:
+            return f"""
+[TARGET] {topic.upper()} - {difficulty.upper()} MODE GUIDANCE:
+- Avoid simple "What is..." questions
+- Focus on complex analysis and synthesis
+- Include multi-step reasoning requirements
+- Ask about specific mechanisms and processes
+- Test advanced understanding and application
+- Use precise, technical terminology
+- Example: Instead of "What is {topic}?" ask "What specific mechanism in {topic} explains [complex scenario]?"
+"""
+        
+        return f"""
+{topic.upper()} TOPIC GUIDANCE:
+- Focus on specific concepts and applications within {topic}
+- Avoid overly general questions
+- Include practical examples and scenarios
+- Use appropriate terminology for the {difficulty} level
+"""
+
+    def _parse_json_response(self, content: str) -> Optional[Dict[str, Any]]:
+        """Parse JSON response from API using unified parser"""
+        try:
+            # ARCHITECTURAL FIX: Use unified JSON parser instead of scattered implementations
+            from .json_parser_unified import parse_mcq_response
+            return parse_mcq_response(content)
         except Exception as e:
-            logger.error(f"[ERROR] Unexpected error parsing JSON: {e}")
-            return None
+            logger.error(f"[ERROR] Unified JSON parsing failed: {e}")
+            
+            # Fallback to original parsing logic if unified method fails
+            try:
+                # Clean and extract JSON content
+                cleaned_content = content.strip()
+                
+                # Handle various JSON wrapping formats
+                if '```json' in cleaned_content:
+                    # Extract JSON from markdown code blocks
+                    start = cleaned_content.find('```json') + 7
+                    end = cleaned_content.find('```', start)
+                    if end != -1:
+                        cleaned_content = cleaned_content[start:end].strip()
+                elif '```' in cleaned_content:
+                    # Extract from generic code blocks
+                    start = cleaned_content.find('```') + 3
+                    end = cleaned_content.find('```', start)
+                    if end != -1:
+                        cleaned_content = cleaned_content[start:end].strip()
+                
+                # Find the first complete JSON object
+                brace_count = 0
+                json_start = -1
+                json_end = -1
+                
+                for i, char in enumerate(cleaned_content):
+                    if char == '{':
+                        if brace_count == 0:
+                            json_start = i
+                        brace_count += 1
+                    elif char == '}':
+                        brace_count -= 1
+                        if brace_count == 0 and json_start != -1:
+                            json_end = i + 1
+                            break
+                
+                if json_start != -1 and json_end != -1:
+                    json_text = cleaned_content[json_start:json_end]
+                    parsed = json.loads(json_text)
+                    
+                    # Enhanced validation and field mapping for different provider formats
+                    if isinstance(parsed, dict):
+                        # Extract question - handle various field names
+                        question = (parsed.get('question') or 
+                                  parsed.get('Question') or 
+                                  parsed.get('prompt') or 
+                                  parsed.get('text') or '')
+                        
+                        if not question:
+                            logger.error("[ERROR] No question field found in response")
+                            return None
+                        
+                        # Extract options - handle various formats
+                        options = []
+                        
+                        # Handle options as object with A, B, C, D keys (Groq format)
+                        if 'options' in parsed and isinstance(parsed['options'], dict):
+                            options_dict = parsed['options']
+                            option_keys = ['A', 'B', 'C', 'D']
+                            for key in option_keys:
+                                if key in options_dict:
+                                    options.append(options_dict[key])
+                            logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from object format")
+                            
+                        elif 'options' in parsed and isinstance(parsed['options'], list):
+                            options = parsed['options']
+                            logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from array format")
+                            
+                        elif 'choices' in parsed and isinstance(parsed['choices'], list):
+                            options = parsed['choices']
+                            logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from choices array")
+                            
+                        elif 'answers' in parsed and isinstance(parsed['answers'], list):
+                            options = parsed['answers']
+                            logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from answers array")
+                            
+                        else:
+                            # Fallback: Try to extract from top-level A, B, C, D keys
+                            option_keys = ['A', 'B', 'C', 'D']
+                            for key in option_keys:
+                                if key in parsed:
+                                    options.append(parsed[key])
+                            
+                            # Alternative format: option_a, option_b, etc.
+                            if not options:
+                                for i, letter in enumerate(['a', 'b', 'c', 'd']):
+                                    option_key = f'option_{letter}'
+                                    if option_key in parsed:
+                                        options.append(parsed[option_key])
+                            
+                            if options:
+                                logger.info(f"[SEARCH] DEBUG: Extracted {len(options)} options from fallback method")
+                        
+                        if len(options) < 2:
+                            logger.error(f"[ERROR] Insufficient options found: {len(options)}")
+                            return None
+                        
+                        # Extract correct answer
+                        correct_answer = (parsed.get('correct_answer') or 
+                                        parsed.get('correct') or 
+                                        parsed.get('answer') or 
+                                        parsed.get('solution'))
+                        
+                        # If correct_answer is an index or letter, convert to actual text
+                        if isinstance(correct_answer, int) and 0 <= correct_answer < len(options):
+                            correct_answer = options[correct_answer]
+                        elif isinstance(correct_answer, str) and len(correct_answer) == 1:
+                            # Handle A, B, C, D format
+                            letter_map = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3}
+                            if correct_answer in letter_map:
+                                idx = letter_map[correct_answer]
+                                if idx < len(options):
+                                    correct_answer = options[idx]
+                        
+                        # Validate correct answer exists in options
+                        if not correct_answer or correct_answer not in options:
+                            # Try to find a reasonable match
+                            if options:
+                                correct_answer = options[0]  # Default to first option
+                                logger.warning(f"[WARNING] Correct answer not found, defaulting to first option")
+                        
+                        # Extract explanation
+                        explanation = (parsed.get('explanation') or 
+                                     parsed.get('rationale') or 
+                                     parsed.get('reasoning') or 
+                                     'No explanation provided.')
+                        
+                        # Build normalized response
+                        normalized = {
+                            'question': question,
+                            'options': options,
+                            'correct_answer': correct_answer,
+                            'explanation': explanation,
+                            'correct_index': options.index(correct_answer) if correct_answer in options else 0
+                        }
+                        
+                        logger.info(f"[OK] Successfully parsed JSON response with {len(options)} options")
+                        return normalized
+                    else:
+                        logger.error(f"[ERROR] Parsed JSON is not a dictionary: {type(parsed)}")
+                        return None
+                else:
+                    logger.error("[ERROR] Could not find valid JSON object in response")
+                    return None
+                    
+            except json.JSONDecodeError as e:
+                logger.error(f"[ERROR] JSON parsing failed: {e}")
+                logger.error(f"Raw content (first 200 chars): {content[:200]}...")
+                return None
+            except Exception as e:
+                logger.error(f"[ERROR] Unexpected error parsing JSON: {e}")
+                return None
 
     def _validate_numerical_question(self, question_data: Dict[str, Any], question_type: str) -> bool:
         """Validate that a question is truly numerical if question_type is 'numerical'"""
@@ -2153,11 +1737,11 @@ Focus on: specific mechanisms, molecular processes, regulatory pathways, precise
                 'we can conclude',
             ]
             
-            # Check if question contains any conceptual patterns
+            # Check if question contains conceptual patterns (for quality guidance)
             for pattern in conceptual_patterns:
                 if pattern in question:
-                    logger.warning(f"[FORBIDDEN] Numerical question validation FAILED: Contains conceptual pattern '{pattern}'")
-                    logger.warning(f"[ERROR] Question: '{question[:100]}...'")
+                    logger.info(f"[QUALITY] Numerical question enhancement: Question contains conceptual pattern '{pattern}'")
+                    logger.info(f"[GUIDANCE] Question: '{question[:100]}...' could benefit from more quantitative focus")
                     return False
             
             # Check for numerical calculation starters (required for numerical questions)

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Rendering Test - MathJax vs KaTeX</title>
+    
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css">
+    
+    <!-- KaTeX JS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['noerrors', 'textmacros', 'ams', 'newcommand', 'mathtools']},
+                tags: 'none',
+                macros: {
+                    degree: '^{\\circ}',
+                    angstrom: '\\text{Å}',
+                    celsius: '^{\\circ}\\text{C}',
+                    kelvin: '\\text{K}',
+                    joule: '\\text{J}',
+                    kilojoule: '\\text{kJ}',
+                    mol: '\\text{mol}',
+                    electronvolt: '\\text{eV}',
+                    meter: '\\text{m}',
+                    nanometer: '\\text{nm}',
+                    picometer: '\\text{pm}',
+                    bohr: 'a_0'
+                },
+                formatError: function (jax, error) {
+                    console.warn('MathJax error:', error.message);
+                    return ['span', {style: 'font-family: monospace; color: #333;'}, jax.math];
+                }
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                typeset: false,
+                ready() {
+                    console.log('✅ MathJax loaded');
+                    MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                }
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .test-section h3 {
+            color: #2563eb;
+            margin-top: 0;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 8px;
+        }
+        
+        .expression {
+            margin: 10px 0;
+            padding: 15px;
+            background: white;
+            border-left: 4px solid #10b981;
+            border-radius: 4px;
+            font-size: 1.1em;
+        }
+        
+        .buttons {
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #1d4ed8;
+        }
+        
+        .error {
+            color: #dc2626;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            color: #059669;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧮 Math Rendering Test: MathJax vs KaTeX</h1>
+    <p>Testing mathematical expression rendering with both MathJax and KaTeX libraries.</p>
+    
+    <div class="buttons">
+        <button onclick="testMathJax()">🔬 Test MathJax</button>
+        <button onclick="testKaTeX()">⚡ Test KaTeX</button>
+        <button onclick="testBoth()">🚀 Test Both</button>
+        <button onclick="clearAll()">🧹 Clear All</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📐 Complex Physics Expression (from screenshot)</h3>
+        <div class="expression" id="physics-expr">
+            Consider a hydrogen atom in its ground state, with principal quantum number n = 1 and orbital angular momentum quantum number l = 0. Calculate the expectation value of the radial probability density for an electron in this atom using the formula: ⟨r⟩ = $$\\frac{2}{a_0} \\int_0^{\\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximately $$5.29 \\times 10^{-11}$$ m).
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🌊 Wave Function</h3>
+        <div class="expression" id="wave-func">
+            $$\\psi(r) = \\frac{1}{\\sqrt{\\pi}} \\left(\\frac{a_0}{r}\\right)^{3/2} e^{-r/a_0}$$
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔢 Complex Integral</h3>
+        <div class="expression" id="integral-expr">
+            $$\\int r |\\psi(r)|^2 d^3r = \\int_0^{\\infty} r \\cdot r^2 \\left|\\frac{1}{\\sqrt{\\pi}} \\left(\\frac{a_0}{r}\\right)^{3/2} e^{-r/a_0}\\right|^2 dr$$
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>⚗️ Chemistry Expression</h3>
+        <div class="expression" id="chemistry-expr">
+            The reaction $$\\text{H}_2 + \\text{O}_2 \\rightarrow \\text{H}_2\\text{O}$$ releases $$463 \\text{ kJ/mol}$$ at $$T = 298 \\text{ K}$$. The enthalpy change is $$\\Delta H = -463 \\text{ kJ/mol}$$.
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔬 Mixed Mathematical Expressions</h3>
+        <div class="expression" id="mixed-expr">
+            $$\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$$, 
+            $$e^{i\\pi} + 1 = 0$$,
+            $$\\nabla^2 \\psi + \\frac{2m}{\\hbar^2}(E - V)\\psi = 0$$
+        </div>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<div class="${type}">${message}</div>`;
+            console.log(message);
+        }
+
+        function testMathJax() {
+            showStatus('🔬 Testing MathJax rendering...', 'info');
+            
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise()
+                    .then(() => {
+                        showStatus('✅ MathJax rendering completed successfully!', 'success');
+                        
+                        // Check for rendered elements
+                        const mathElements = document.querySelectorAll('.MathJax, .mjx-container');
+                        showStatus(`✅ Found ${mathElements.length} MathJax rendered elements`, 'success');
+                    })
+                    .catch(err => {
+                        showStatus(`❌ MathJax rendering failed: ${err.message}`, 'error');
+                        console.error('MathJax error:', err);
+                    });
+            } else {
+                showStatus('❌ MathJax not loaded or typesetPromise not available', 'error');
+            }
+        }
+
+        function testKaTeX() {
+            showStatus('⚡ Testing KaTeX rendering...', 'info');
+            
+            if (window.katex && window.renderMathInElement) {
+                try {
+                    renderMathInElement(document.body, {
+                        delimiters: [
+                            {left: "$$", right: "$$", display: true},
+                            {left: "$", right: "$", display: false},
+                            {left: "\\[", right: "\\]", display: true},
+                            {left: "\\(", right: "\\)", display: false}
+                        ],
+                        throwOnError: false,
+                        errorColor: '#cc0000',
+                        strict: false,
+                        trust: true,
+                        macros: {
+                            "\\degree": "^{\\circ}",
+                            "\\celsius": "^{\\circ}\\text{C}",
+                            "\\kelvin": "\\text{K}",
+                            "\\joule": "\\text{J}",
+                            "\\kilojoule": "\\text{kJ}",
+                            "\\mol": "\\text{mol}",
+                            "\\electronvolt": "\\text{eV}",
+                            "\\meter": "\\text{m}",
+                            "\\nanometer": "\\text{nm}",
+                            "\\picometer": "\\text{pm}"
+                        }
+                    });
+                    
+                    showStatus('✅ KaTeX rendering completed successfully!', 'success');
+                    
+                    // Check for rendered elements
+                    setTimeout(() => {
+                        const katexElements = document.querySelectorAll('.katex');
+                        showStatus(`✅ Found ${katexElements.length} KaTeX rendered elements`, 'success');
+                    }, 100);
+                    
+                } catch (err) {
+                    showStatus(`❌ KaTeX rendering failed: ${err.message}`, 'error');
+                    console.error('KaTeX error:', err);
+                }
+            } else {
+                showStatus('❌ KaTeX not loaded or renderMathInElement not available', 'error');
+            }
+        }
+
+        function testBoth() {
+            showStatus('🚀 Testing both MathJax and KaTeX...', 'info');
+            testMathJax();
+            setTimeout(() => testKaTeX(), 1000);
+        }
+
+        function clearAll() {
+            // Reload the page to clear all rendering
+            location.reload();
+        }
+
+        // Auto-test when page loads
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                showStatus('🔍 Page loaded, checking math libraries...', 'info');
+                
+                const checks = [];
+                if (window.MathJax) checks.push('✅ MathJax loaded');
+                else checks.push('❌ MathJax not loaded');
+                
+                if (window.katex) checks.push('✅ KaTeX loaded');
+                else checks.push('❌ KaTeX not loaded');
+                
+                showStatus(checks.join('<br>'), 'info');
+                
+                // Auto-render with the available library
+                if (window.katex && window.renderMathInElement) {
+                    testKaTeX();
+                } else if (window.MathJax && window.MathJax.typesetPromise) {
+                    testMathJax();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

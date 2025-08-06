@@ -250,22 +250,17 @@ Generate a JSON response with this exact format:
             return {
                 "name": "numerical_calculation",
                 "description": "Generate calculation-based questions requiring mathematical problem-solving",
-                "prompt_template": """🔢 CRITICAL: Generate a CALCULATION-BASED question that REQUIRES mathematical problem-solving.
+                "prompt_template": """🔢 Generate a CALCULATION-BASED question that requires mathematical problem-solving.
 
-MANDATORY REQUIREMENTS:
-- Question MUST involve specific numbers, calculations, formulas, or quantitative analysis
-- Include numerical values (masses, energies, wavelengths, frequencies, etc.)
-- All answer options MUST be numerical values with appropriate units
+Quality Expectations:
+- Question should involve specific numbers, calculations, formulas, or quantitative analysis
+- Include numerical values with appropriate units (masses, energies, wavelengths, frequencies, etc.)
+- All answer options should be numerical values with appropriate units
 - Question should require step-by-step mathematical solution
-- Focus on calculations like: energy levels, electron transitions, atomic masses, binding energies, wavelengths
-- Use formulas like E=hf, E=-13.6/n², λ=hc/E, etc.
+- Focus on practical calculations and real-world applications
+- Use relevant formulas and mathematical relationships
 
-FORBIDDEN: Conceptual questions, theory explanations, qualitative comparisons, electron configuration patterns
-
-EXAMPLES OF GOOD NUMERICAL QUESTIONS:
-- "Calculate the energy of an electron in the n=3 shell of hydrogen (ground state = -13.6 eV)"
-- "What is the wavelength of light emitted when an electron transitions from n=4 to n=2 in hydrogen?"
-- "Calculate the binding energy of the outermost electron in sodium (ionization energy = 5.14 eV)"
+Create engaging numerical questions that test mathematical understanding and problem-solving skills.
 
 Generate a numerical calculation question about {topic} at {difficulty} level."""
             }

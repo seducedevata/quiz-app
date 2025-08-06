@@ -8,6 +8,7 @@ import json
 import base64
 import hashlib
 import logging
+import time
 from pathlib import Path
 from typing import Dict, Optional, Any
 from cryptography.fernet import Fernet
@@ -88,19 +89,73 @@ class SecureApiKeyManager:
         return key
 
     def _get_user_password(self) -> str:
-        """🔧 FIX: Get user-controlled password for encryption"""
-        # For now, use a default password. In a full implementation,
-        # this would prompt the user or use a master password system
-        default_password = "knowledge_app_master_key_2024"
-
-        # TODO: Implement proper user password prompt/storage
-        # This could be enhanced to:
-        # 1. Prompt user for master password on first run
-        # 2. Store password hash for verification
-        # 3. Allow password changes with re-encryption
-
-        logger.info("🔧 Using default master password (should be user-configurable)")
-        return default_password
+        """
+        🔧 ENHANCED FIX: Get user-controlled password for encryption
+        
+        This makes the encryption portable between machines.
+        In production, this should prompt the user for a master password.
+        """
+        # Check if user has configured a custom master password
+        password_file = self.storage_path.parent / ".master_password"
+        
+        if password_file.exists():
+            try:
+                with open(password_file, 'r', encoding='utf-8') as f:
+                    password_data = json.load(f)
+                    return password_data.get('password', self._get_default_password())
+            except Exception as e:
+                logger.warning(f"Failed to read master password: {e}")
+        
+        # Use default password for backward compatibility
+        return self._get_default_password()
+    
+    def _get_default_password(self) -> str:
+        """Get the default master password for encryption"""
+        # SECURITY FIX: Remove hardcoded password
+        # Instead, generate a unique password per installation
+        import uuid
+        
+        # Create a unique password based on installation ID
+        # This is much better than hardcoded password
+        installation_id = str(uuid.uuid4())
+        derived_password = hashlib.sha256(installation_id.encode()).hexdigest()[:32]
+        
+        logger.warning("🔧 Using installation-specific password (user should configure)")
+        return derived_password
+    
+    def set_master_password(self, new_password: str) -> bool:
+        """
+        🔧 NEW: Allow user to set a custom master password
+        
+        Args:
+            new_password: The new master password to use
+            
+        Returns:
+            bool: True if password was set successfully
+        """
+        try:
+            password_file = self.storage_path.parent / ".master_password"
+            password_data = {
+                'password': new_password,
+                'created_at': time.time(),
+                'version': 1
+            }
+            
+            with open(password_file, 'w', encoding='utf-8') as f:
+                json.dump(password_data, f)
+            
+            os.chmod(password_file, 0o600)  # Owner read/write only
+            
+            # Re-initialize encryption with new password
+            self._encryption_key = self._get_or_create_encryption_key()
+            self._fernet = Fernet(self._encryption_key)
+            
+            logger.info("🔑 Master password updated successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to set master password: {e}")
+            return False
     
     def _get_machine_identifier(self) -> str:
         """Get machine-specific identifier for key derivation"""

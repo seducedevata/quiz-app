@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Race Condition Fix Test</title>
+    <style>
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .test-result { margin: 10px; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>Race Condition Fix Test</h1>
+    
+    <div id="review-screen" class="screen">
+        <h2>Review Screen</h2>
+        <div id="questions-list"></div>
+        <div id="loading-history">Loading...</div>
+        <div id="no-questions">No questions</div>
+    </div>
+    
+    <div id="other-screen" class="screen">
+        <h2>Other Screen</h2>
+    </div>
+    
+    <button onclick="testRaceCondition()">Test Race Condition Fix</button>
+    <div id="test-results"></div>
+
+    <script>
+        // Mock the functions from app.js
+        let questionHistoryLoadTimeout = null;
+        let loadCallCount = 0;
+        let abortedCallCount = 0;
+
+        function safeLoadQuestionHistory(delay = 100) {
+            if (questionHistoryLoadTimeout) {
+                clearTimeout(questionHistoryLoadTimeout);
+                questionHistoryLoadTimeout = null;
+            }
+            
+            questionHistoryLoadTimeout = setTimeout(() => {
+                loadQuestionHistory();
+                questionHistoryLoadTimeout = null;
+            }, delay);
+        }
+
+        function loadQuestionHistory() {
+            loadCallCount++;
+            console.log('📚 Loading question history...');
+            
+            // Check if review screen is still active to prevent race conditions
+            const reviewScreen = document.getElementById('review-screen');
+            if (!reviewScreen || !reviewScreen.classList.contains('active')) {
+                console.log('🔧 Review screen is no longer active. Aborting history load.');
+                abortedCallCount++;
+                return;
+            }
+            
+            console.log('✅ Question history loaded successfully');
+        }
+
+        function displayQuestions(questions) {
+            // Check if review screen is still active to prevent race conditions
+            const reviewScreen = document.getElementById('review-screen');
+            if (!reviewScreen || !reviewScreen.classList.contains('active')) {
+                console.log('🔧 Review screen is no longer active. Aborting question display.');
+                return;
+            }
+            
+            console.log('✅ Questions displayed successfully');
+        }
+
+        function testRaceCondition() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h3>Running Race Condition Test...</h3>';
+            
+            // Reset counters
+            loadCallCount = 0;
+            abortedCallCount = 0;
+            
+            // Test 1: Normal operation
+            console.log('Test 1: Normal operation');
+            document.getElementById('review-screen').classList.add('active');
+            safeLoadQuestionHistory(50);
+            
+            setTimeout(() => {
+                // Test 2: Rapid screen switching
+                console.log('Test 2: Rapid screen switching');
+                document.getElementById('review-screen').classList.remove('active');
+                document.getElementById('other-screen').classList.add('active');
+                
+                // Try to load again - should be aborted
+                safeLoadQuestionHistory(50);
+                
+                setTimeout(() => {
+                    // Test 3: Multiple rapid calls
+                    console.log('Test 3: Multiple rapid calls');
+                    document.getElementById('review-screen').classList.add('active');
+                    
+                    // Make multiple rapid calls - only last one should execute
+                    safeLoadQuestionHistory(100);
+                    safeLoadQuestionHistory(100);
+                    safeLoadQuestionHistory(100);
+                    
+                    setTimeout(() => {
+                        // Display results
+                        const results = `
+                            <div class="test-result success">
+                                <h4>✅ Race Condition Fix Test Results</h4>
+                                <p><strong>Total load attempts:</strong> ${loadCallCount}</p>
+                                <p><strong>Aborted calls:</strong> ${abortedCallCount}</p>
+                                <p><strong>Expected behavior:</strong> Multiple rapid calls should be consolidated, and calls should be aborted when screen is not active.</p>
+                                <p><strong>Status:</strong> ${loadCallCount <= 3 && abortedCallCount >= 1 ? '✅ PASS' : '❌ FAIL'}</p>
+                            </div>
+                        `;
+                        resultsDiv.innerHTML = results;
+                    }, 300);
+                }, 200);
+            }, 100);
+        }
+    </script>
+</body>
+</html>

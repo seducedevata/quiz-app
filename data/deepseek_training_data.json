@@ -1,0 +1,34 @@
+{
+  "concepts": [
+    "Advanced Machine Learning",
+    "Neural Networks",
+    "Deep Learning Architecture",
+    "Optimization Algorithms",
+    "Mathematical Foundations"
+  ],
+  "relationships": [
+    "Neural Networks -> Deep Learning",
+    "Optimization -> Training Process",
+    "Mathematics -> Algorithm Design"
+  ],
+  "training_examples": [
+    {
+      "question": "What are the key components of neural networks?",
+      "answer": "Neural networks consist of neurons, weights, biases, and activation functions organized in layers.",
+      "topic": "Neural Networks",
+      "difficulty": "medium"
+    },
+    {
+      "question": "How do optimization algorithms improve model performance?",
+      "answer": "Optimization algorithms adjust model parameters to minimize loss and improve prediction accuracy.",
+      "topic": "Optimization",
+      "difficulty": "hard"
+    }
+  ],
+  "processed_documents": [
+    "2404.01023v1.pdf",
+    "2405.17372v3.pdf"
+  ],
+  "processing_time": 2.5,
+  "timestamp": 1753312354
+}

@@ -71,7 +71,7 @@ class OllamaModelInference:
                 if available_models:
                     best_model = self._select_best_model(available_models)
                     self.active_model = best_model
-                    logger.info(f"✅ Active Ollama model set to: {self.active_model}")
+                    logger.debug(f"✅ Active Ollama model set to: {self.active_model}")
                     self._optimize_model_for_gpu()  # FIXED: Removed 'await' from synchronous function
                 else:
                     logger.error("❌ No models available in Ollama")
@@ -91,7 +91,7 @@ class OllamaModelInference:
 
         # Return highest scoring model
         best_model = max(model_scores.items(), key=lambda x: x[1])[0]
-        logger.info(f"🎯 Selected best model: {best_model} (score: {model_scores[best_model]})")
+        logger.debug(f"🎯 Selected best model: {best_model} (score: {model_scores[best_model]})")
         return best_model
 
     def _score_model_capabilities(self, model_name: str) -> int:
@@ -173,8 +173,9 @@ class OllamaModelInference:
             'use_mlock': True,
         })
 
+        model_to_use = kwargs.pop('model_override', self.active_model)
         payload = {
-            "model": self.active_model,
+            "model": model_to_use,
             "prompt": prompt,
             "stream": stream,  # Now configurable
             "options": generation_options
@@ -313,7 +314,7 @@ class OllamaModelInference:
 
     def optimize_for_speed(self):
         """Apply maximum speed optimizations at runtime"""
-        logger.info("[START] Applying TURBO speed optimizations...")
+        logger.debug("[START] Applying TURBO speed optimizations...")
 
         # Ultra-fast generation parameters
         self.generation_params.update({
@@ -329,7 +330,7 @@ class OllamaModelInference:
             'parallel': 6,  # More parallel processing
         })
 
-        logger.info("[FAST] TURBO mode activated - Maximum speed with full GPU utilization!")
+        logger.debug("[FAST] TURBO mode activated - Maximum speed with full GPU utilization!")
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics"""
@@ -448,11 +449,11 @@ class OllamaModelInference:
                     'use_mlock': False,     # Don't lock memory (more flexible)
                 })
 
-                logger.info(f"🎮 Gaming optimizations applied: GPU layers={self.generation_params['num_gpu']}")
-                logger.info("🎮 Models will use more RAM and less VRAM for gaming compatibility")
+                logger.debug(f"🎮 Gaming optimizations applied: GPU layers={self.generation_params['num_gpu']}")
+                logger.debug("🎮 Models will use more RAM and less VRAM for gaming compatibility")
 
             else:
-                logger.info("[START] PERFORMANCE MODE: Using maximum GPU utilization")
+                logger.debug("[START] PERFORMANCE MODE: Using maximum GPU utilization")
 
                 # Performance-optimized parameters (more VRAM, max speed)
                 self.generation_params.update({
@@ -465,7 +466,7 @@ class OllamaModelInference:
                     'use_mlock': True,      # Lock memory for speed
                 })
 
-                logger.info("[START] Performance optimizations applied for maximum speed")
+                logger.debug("[START] Performance optimizations applied for maximum speed")
 
         except Exception as e:
             logger.warning(f"🎮 Gaming optimization failed: {e}")
@@ -479,17 +480,21 @@ class OllamaModelInference:
         logger.info("Initializing Ollama: Verifying connection and finding available model...")
 
         try:
-            # ✅ CRITICAL FIX: Use async converter for non-blocking connection test
-            from .async_converter import AsyncConverter
+            # ✅ CRITICAL FIX: Use direct requests for non-blocking connection test
+            import requests
 
-            logger.info("[START] AsyncConverter initialized")
             logger.info(f"[START] Making GET request to {self.base_url}/api/tags")
 
-            # Create async converter instance
-            async_converter = AsyncConverter()
-
-            # Non-blocking request to Ollama
-            response_data = async_converter.sync_get(f"{self.base_url}/api/tags", timeout=3.0)
+            try:
+                response = requests.get(f"{self.base_url}/api/tags", timeout=3.0)
+                if response.status_code == 200:
+                    response_data = response.json()
+                else:
+                    logger.error(f"[ERROR] Failed to get models: {response.status_code}")
+                    return False
+            except Exception as e:
+                logger.error(f"[ERROR] Request failed: {e}")
+                return False
 
             logger.info("[OK] GET request successful")
 
@@ -500,8 +505,8 @@ class OllamaModelInference:
                 if available_models:
                     best_model = self._select_best_model(available_models)
                     self.active_model = best_model
-                    logger.info(f"🎯 Selected best model: {best_model} (score: {self._score_model_capabilities(best_model)})")
-                    logger.info(f"✅ Active Ollama model set to: {self.active_model}")
+                    logger.debug(f"🎯 Selected best model: {best_model} (score: {self._score_model_capabilities(best_model)})")
+                    logger.debug(f"✅ Active Ollama model set to: {self.active_model}")
 
                     # Apply GPU optimizations without blocking
                     self._optimize_model_for_gpu()

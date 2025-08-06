@@ -14,7 +14,14 @@
 
 class SecureApiKeyClient {
     constructor() {
-        this.supportedProviders = ['openai', 'anthropic', 'gemini', 'groq', 'openrouter'];
+        this.supportedProviders = [
+          "openai",
+          "anthropic",
+          "gemini",
+          "groq",
+          "openrouter",
+          "tavily",
+        ];
         this.initialized = false;
         this.initializationPromise = null;
         
@@ -66,9 +73,21 @@ class SecureApiKeyClient {
             if (!this.supportedProviders.includes(provider)) {
                 throw new Error(`Unsupported provider: ${provider}`);
             }
+
+            // Don't store placeholder keys or empty keys
+            if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) {
+                throw new Error('API key cannot be empty');
+            }
             
-            if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {
-                throw new Error('Invalid API key format');
+            // Don't store placeholder keys (masked keys)
+            if (apiKey.includes('••••') || apiKey.includes('****')) {
+                console.log(`🔒 Skipping storage of placeholder key for ${provider}`);
+                return false;
+            }
+            
+            // Basic validation - API keys should be at least 8 characters
+            if (apiKey.trim().length < 8) {
+                throw new Error('API key too short');
             }
             
             // Sanitize inputs
@@ -78,15 +97,16 @@ class SecureApiKeyClient {
             const result = await this._callSecureMethod('storeSecureApiKey', [cleanProvider, cleanApiKey]);
             
             if (result.success) {
-                console.log(`🔒 API key stored securely for ${provider}`);
-                
-                // Update UI status
-                this._updateProviderStatus(provider, true);
-                
-                // Trigger settings save (without API keys in client-side storage)
-                this._triggerSecureSettingsSave();
-                
-                return true;
+              console.log(`🔒 API key stored securely for ${provider}`);
+
+              // Update UI status
+              this._updateProviderStatus(provider, true);
+
+              // DON'T trigger settings save to prevent infinite loop
+              // The API key is already stored securely on the server
+              // this._triggerSecureSettingsSave(); // REMOVED TO PREVENT INFINITE LOOP
+
+              return true;
             } else {
                 console.error(`❌ Failed to store API key for ${provider}:`, result.error);
                 return false;
@@ -240,14 +260,27 @@ class SecureApiKeyClient {
     async _callSecureMethod(methodName, args) {
         return new Promise((resolve, reject) => {
             try {
-                const result = pythonBridge[methodName](...args);
-                
+              const result = pythonBridge[methodName](...args);
+
+              // Handle Promises from QWebChannel
+              if (result && typeof result.then === "function") {
+                result
+                  .then((data) => {
+                    if (typeof data === "string") {
+                      resolve(JSON.parse(data));
+                    } else {
+                      resolve(data);
+                    }
+                  })
+                  .catch(reject);
+              } else {
                 // Handle both direct results and JSON strings
-                if (typeof result === 'string') {
-                    resolve(JSON.parse(result));
+                if (typeof result === "string") {
+                  resolve(JSON.parse(result));
                 } else {
-                    resolve(result);
+                  resolve(result);
                 }
+              }
             } catch (error) {
                 reject(error);
             }

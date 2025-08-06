@@ -250,6 +250,11 @@ class UnifiedConfigManager:
         """
         with self._config_lock:
             try:
+                # Type safety: ensure key_path is a string
+                if not isinstance(key_path, str):
+                    logger.warning(f"⚠️ Config key expected string, got {type(key_path)}: {key_path}")
+                    key_path = str(key_path)
+                
                 keys = key_path.split('.')
                 value = self._config_data
                 
@@ -279,6 +284,11 @@ class UnifiedConfigManager:
         """
         with self._config_lock:
             try:
+                # Type safety: ensure key_path is a string
+                if not isinstance(key_path, str):
+                    logger.warning(f"⚠️ Config key expected string, got {type(key_path)}: {key_path}")
+                    key_path = str(key_path)
+                
                 keys = key_path.split('.')
                 current = self._config_data
                 

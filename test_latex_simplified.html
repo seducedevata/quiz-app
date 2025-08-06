@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX Test - Simplified</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                packages: {'[+]': ['noerrors', 'textmacros']},
+                formatError: function (jax, error) {
+                    console.warn('MathJax error:', error.message);
+                    return ['span', {style: 'color: red;'}, '[Math Error]'];
+                }
+            },
+            startup: {
+                ready() {
+                    console.log('✅ MathJax ready');
+                    MathJax.startup.defaultReady();
+                    window.mathJaxReady = true;
+                    testLatexProcessing();
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <h1>Simplified LaTeX Test</h1>
+    
+    <div id="test-content">
+        <h2>Original Content from Screenshot:</h2>
+        <div id="original">
+            For a molecule consisting of two hydrogen atoms (H2) and one oxygen atom (O), undergoing dissociation in a solvent with dielectric constant ε = 78.5 at temperature T = 298 K, calculate the Gibbs free energy change (ΔG) associated with this reaction, assuming the bond dissociation energy for H-O is D_HO = 463 kJ/mol and the gas phase enthalpy of formation for ΔH_f^°(g) = -241.8 kJ/mol.
+        </div>
+        
+        <h2>Processed Content:</h2>
+        <div id="processed"></div>
+    </div>
+
+    <script>
+        function processLatexText(text) {
+            if (!text) return text;
+
+            console.log("🔧 Processing LaTeX for:", text);
+
+            // Handle temperature notation (T = 298 K)
+            text = text.replace(/T\s*=\s*(\d+)\s*K\b/g, "$T = $1\\text{ K}$");
+            
+            // Handle energy values with units (463 kJ/mol)
+            text = text.replace(/(\d+(?:\.\d+)?)\s*kJ\/mol/g, "$1\\text{ kJ/mol}");
+            text = text.replace(/(\d+(?:\.\d+)?)\s*J\/mol/g, "$1\\text{ J/mol}");
+            
+            // Handle chemical subscripts (H2, O, H-O, etc.)
+            text = text.replace(/\bH2\b/g, "H$_2$");
+            text = text.replace(/\bO2\b/g, "O$_2$");
+            text = text.replace(/\bH2O\b/g, "H$_2$O");
+            
+            // Handle variables with subscripts (D_HO, N_A, etc.)
+            text = text.replace(/\b([A-Z])_([A-Z]+)\b/g, "$1_{$2}");
+            text = text.replace(/\b([A-Z])_([A-Z][a-z]+)\b/g, "$1_{\\text{$2}}");
+            
+            // Handle Greek letters in chemical contexts
+            text = text.replace(/ΔH/g, "$\\Delta H$");
+            text = text.replace(/ΔG/g, "$\\Delta G$");
+            text = text.replace(/ΔS/g, "$\\Delta S$");
+            
+            // Handle superscripts for charges and states (f^°, e^-, etc.)
+            text = text.replace(/([A-Za-z]+)\^\s*°/g, "$1^{\\circ}");
+            text = text.replace(/([A-Za-z]+)\^([+-])/g, "$1^{$2}");
+            
+            // Handle dielectric constant
+            text = text.replace(/ε\s*=\s*([0-9.]+)/g, "$\\varepsilon = $1$");
+            
+            // Clean up any double dollar signs
+            text = text.replace(/\$\$+/g, "$");
+            text = text.replace(/\$\s*\$/g, "");
+
+            console.log("✅ Processed:", text);
+            return text;
+        }
+
+        function testLatexProcessing() {
+            const originalElement = document.getElementById('original');
+            const processedElement = document.getElementById('processed');
+            
+            const originalText = originalElement.innerHTML;
+            const processedText = processLatexText(originalText);
+            
+            processedElement.innerHTML = processedText;
+            
+            console.log('🧮 Rendering with MathJax...');
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([processedElement]).then(() => {
+                    console.log('✅ MathJax rendering complete');
+                }).catch(err => {
+                    console.error('❌ MathJax error:', err);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

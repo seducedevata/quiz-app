@@ -1,0 +1,156 @@
+{
+  "metadata": {
+    "source_document": "2404.01023v1.pdf",
+    "total_chunks": 3,
+    "total_examples": 10,
+    "processing_timestamp": "2025-07-21T22:57:00Z",
+    "processor_version": "complete_pipeline_v1.0",
+    "document_stats": {
+      "original_size": 327556,
+      "extracted_text_length": 46989,
+      "chunk_count": 3
+    }
+  },
+  "training_examples": [
+    {
+      "input": "Based on this research content: 'Published as a workshop paper at ICLR 2024\nLARGE LANGUAGE MODEL EVALUATION VIA MULTI\nAI AGENTS: PRELIMINARY RESULTS\nZeeshan Rasheed, Muhammad Waseem, Kari Systä & Pekka Abrahamsson\nFaculty of Information Technology and Communication Science, Tampere University\nFaculty of Information Technology, Jyväskylä University\nTampere & Jyväskylä , Finland\n{zeeshan'",
+      "output": "This discusses Published as a workshop paper at ICLR 2024\nLARGE L... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 0,
+      "example_id": 0,
+      "metadata": {
+        "chunk_length": 26973,
+        "sentence_position": 0,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'fi\nABSTRACT\nThe increasing significance of Large Language Models (LLMs) in both the aca-\ndemic and industrial sectors can be attributed to their exceptional performance\nacross a diverse range of applications'",
+      "output": "This discusses fi\nABSTRACT\nThe increasing significance of Large L... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 0,
+      "example_id": 3,
+      "metadata": {
+        "chunk_length": 26973,
+        "sentence_position": 3,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'As LLMs have become integral to both\nresearch and daily operations, rigorous evaluation is crucial'",
+      "output": "This discusses As LLMs have become integral to both\nresearch and ... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 0,
+      "example_id": 4,
+      "metadata": {
+        "chunk_length": 26973,
+        "sentence_position": 4,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'A simple Python program for creating and using flashcards for study, allowing users to\ntest their knowledge on various subjects\n02'",
+      "output": "This discusses A simple Python program for creating and using fla... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 1,
+      "example_id": 1,
+      "metadata": {
+        "chunk_length": 16315,
+        "sentence_position": 1,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'An interactive Python game that tests users on various academic subjects and provides\ninstant feedback\n03'",
+      "output": "This discusses An interactive Python game that tests users on var... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 1,
+      "example_id": 2,
+      "metadata": {
+        "chunk_length": 16315,
+        "sentence_position": 2,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'A short, interactive, text-based adventure game written in Python, where players make\nchoices that influence the outcome of the story'",
+      "output": "This discusses A short, interactive, text-based adventure game wr... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 1,
+      "example_id": 3,
+      "metadata": {
+        "chunk_length": 16315,
+        "sentence_position": 3,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'Are deep neural networks the best choice for\nmodeling source code? In Proceedings of the 2017 11th Joint meeting on foundations of software\nengineering, pp'",
+      "output": "This discusses Are deep neural networks the best choice for\nmodel... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 2,
+      "example_id": 0,
+      "metadata": {
+        "chunk_length": 3991,
+        "sentence_position": 0,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'Xinyi Hou, Yanjie Zhao, Yue Liu, Zhou Yang, Kailong Wang, Li Li, Xiapu Luo, David Lo, John\nGrundy, and Haoyu Wang'",
+      "output": "This discusses Xinyi Hou, Yanjie Zhao, Yue Liu, Zhou Yang, Kailon... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 2,
+      "example_id": 2,
+      "metadata": {
+        "chunk_length": 3991,
+        "sentence_position": 2,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'Large language models for software engineering: A systematic litera-\nture review'",
+      "output": "This discusses Large language models for software engineering: A ... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 2,
+      "example_id": 3,
+      "metadata": {
+        "chunk_length": 3991,
+        "sentence_position": 3,
+        "processing_method": "simulated_deepseek"
+      }
+    },
+    {
+      "input": "Based on this research content: 'arXiv preprint arXiv:2308'",
+      "output": "This discusses arXiv preprint arXiv:2308... which relates to the main research topic.",
+      "type": "conceptual",
+      "difficulty": "expert",
+      "source": "2404.01023v1.pdf",
+      "chunk_id": 2,
+      "example_id": 4,
+      "metadata": {
+        "chunk_length": 3991,
+        "sentence_position": 4,
+        "processing_method": "simulated_deepseek"
+      }
+    }
+  ]
+}
