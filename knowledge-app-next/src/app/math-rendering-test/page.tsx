@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import { MathJax } from 'better-react-mathjax';
+import React, { useEffect, useState } from 'react';
 
 // KaTeX CSS - Assuming it's loaded globally or via a link tag in _document.js or similar
 // For this component, we'll just ensure the link is mentioned for clarity.
@@ -29,10 +29,6 @@ const mathJaxConfig = {
       nanometer: '\text{nm}',
       picometer: '\text{pm}',
       bohr: 'a_0'
-    },
-    formatError: function (jax: any, error: any) {
-      console.warn('MathJax error:', error.message);
-      return ['span', {style: 'font-family: monospace; color: #333;'}, jax.math];
     }
   },
   options: {
@@ -41,12 +37,7 @@ const mathJaxConfig = {
     processHtmlClass: 'tex2jax_process'
   },
   startup: {
-    typeset: false,
-    ready() {
-      console.log('✅ MathJax loaded');
-      (window as any).MathJax.startup.defaultReady();
-      (window as any).mathJaxReady = true;
-    }
+    typeset: false
   }
 };
 
@@ -156,8 +147,7 @@ const MathRenderingTestPage: React.FC = () => {
         <h3 className="text-xl font-semibold mb-3 text-blue-700 border-b-2 border-blue-700 pb-2">📐 Complex Physics Expression (from screenshot)</h3>
         <div className="bg-white p-4 my-2 border-l-4 border-green-500 rounded-md text-lg">
           <MathJax>
-            Consider a hydrogen atom in its ground state, with principal quantum number n = 1 and orbital angular momentum quantum number l = 0. Calculate the expectation value of the radial probability density for an electron in this atom using the formula: ⟨r⟩ = $$rac{2}{a_0} 
-int_0^{\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximately $$5.29 \times 10^{-11}$$ m).
+            {`Consider a hydrogen atom in its ground state, with principal quantum number n = 1 and orbital angular momentum quantum number l = 0. Calculate the expectation value of the radial probability density for an electron in this atom using the formula: $$\\langle r \\rangle = \\frac{2}{a_0} \\int_0^{\\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximately $$5.29 \\times 10^{-11}$$ m).`}
           </MathJax>
         </div>
       </div>
@@ -166,7 +156,7 @@ int_0^{\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximatel
         <h3 className="text-xl font-semibold mb-3 text-blue-700 border-b-2 border-blue-700 pb-2">🌊 Wave Function</h3>
         <div className="bg-white p-4 my-2 border-l-4 border-green-500 rounded-md text-lg">
           <MathJax>
-            $$\psi(r) = \frac{1}{\sqrt{\pi}} \left(\frac{a_0}{r}\right)^{3/2} e^{-r/a_0}$$
+            {`Calculate the enthalpy change ($\\Delta H$) for the reaction: $$H_2(g) + \\frac{1}{2}O_2(g) \\rightarrow H_2O(l)$$ Given: $\\Delta H = -285.8$ kJ/mol at 298 K.`}
           </MathJax>
         </div>
       </div>
@@ -175,7 +165,7 @@ int_0^{\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximatel
         <h3 className="text-xl font-semibold mb-3 text-blue-700 border-b-2 border-blue-700 pb-2">🔢 Complex Integral</h3>
         <div className="bg-white p-4 my-2 border-l-4 border-green-500 rounded-md text-lg">
           <MathJax>
-            $$\int r |\psi(r)|^2 d^3r = \int_0^{\infty} r \cdot r^2 \left|\frac{1}{\sqrt{\pi}} \left(\frac{a_0}{r}\right)^{3/2} e^{-r/a_0}\right|^2 dr$$
+            {`$$\\int r |\\psi(r)|^2 d^3r = \\int_0^{\\infty} r \\cdot r^2 \\left|\\frac{1}{\\sqrt{\\pi}} \\left(\\frac{a_0}{r}\\right)^{3/2} e^{-r/a_0}\\right|^2 dr$$`}
           </MathJax>
         </div>
       </div>
@@ -184,7 +174,7 @@ int_0^{\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximatel
         <h3 className="text-xl font-semibold mb-3 text-blue-700 border-b-2 border-blue-700 pb-2">⚗️ Chemistry Expression</h3>
         <div className="bg-white p-4 my-2 border-l-4 border-green-500 rounded-md text-lg">
           <MathJax>
-            The reaction $$	ext{H}_2 + 	ext{O}_2 ightarrow 	ext{H}_2	ext{O}$$ releases $$463 	ext{ kJ/mol}$$ at $$T = 298 	ext{ K}$$. The enthalpy change is $$\Delta H = -463 	ext{ kJ/mol}$$.
+            {`The reaction $$\\text{H}_2 + \\text{O}_2 \\rightarrow \\text{H}_2\\text{O}$$ releases $$463 \\text{ kJ/mol}$$ at $$T = 298 \\text{ K}$$. The enthalpy change is $$\\Delta H = -463 \\text{ kJ/mol}$$.`}
           </MathJax>
         </div>
       </div>
@@ -193,9 +183,13 @@ int_0^{\infty} r^4 e^{-2r/a_0} dr$$, where a₀ is the Bohr radius (approximatel
         <h3 className="text-xl font-semibold mb-3 text-blue-700 border-b-2 border-blue-700 pb-2">🔬 Mixed Mathematical Expressions</h3>
         <div className="bg-white p-4 my-2 border-l-4 border-green-500 rounded-md text-lg">
           <MathJax>
-            $$\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}$$, 
-            $$e^{i\pi} + 1 = 0$$,
-            $$\nabla^2 \psi + \frac{2m}{\hbar^2}(E - V)\psi = 0$$
+            {`Solve for n in the equation: $$n \\log(n) = \\sum_{i=1}^{n} \\log(i)$$ for n \\geq 1.`}
+          </MathJax>
+          <MathJax>
+            {`$$e^{i\\pi} + 1 = 0$$`}
+          </MathJax>
+          <MathJax>
+            {`$$\\nabla^2 \\psi + \\frac{2m}{\\hbar^2}(E - V)\\psi = 0$$`}
           </MathJax>
         </div>
       </div>

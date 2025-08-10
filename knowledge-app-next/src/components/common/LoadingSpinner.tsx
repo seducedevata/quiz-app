@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 interface LoadingSpinnerProps {
@@ -9,30 +7,30 @@ interface LoadingSpinnerProps {
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'medium',
-  color = 'var(--primary-color)',
+  color = '#007bff'
 }) => {
   const spinnerSize = {
     small: '20px',
     medium: '40px',
     large: '60px',
-  }[size];
+  };
 
   const borderWidth = {
     small: '2px',
     medium: '4px',
     large: '6px',
-  }[size];
+  };
 
   return (
     <div
       className="loading-spinner"
       style={{
-        width: spinnerSize,
-        height: spinnerSize,
-        borderTopColor: color,
-        borderRightColor: color,
-        borderBottomColor: color,
-        borderWidth: borderWidth,
+        width: spinnerSize[size],
+        height: spinnerSize[size],
+        border: `${borderWidth[size]} solid #f3f3f3`,
+        borderTop: `${borderWidth[size]} solid ${color}`,
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
       }}
     ></div>
   );

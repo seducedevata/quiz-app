@@ -168,10 +168,22 @@ class PythonBridgeServer:
         # Training methods
         elif method_name == 'start_training':
             return await self.start_training(args[0] if args else {})
+        elif method_name == 'startTraining':
+            return await self.start_training_frontend(args[0] if args else {})
         elif method_name == 'stop_training':
             return await self.stop_training()
         elif method_name == 'upload_document_for_training':
             return await self.upload_document_for_training(args[0], args[1])
+        elif method_name == 'uploadFile':
+            return await self.upload_file(args[0], args[1])
+        elif method_name == 'deleteUploadedFile':
+            return await self.delete_uploaded_file(args[0])
+        elif method_name == 'getUploadedFiles':
+            return await self.get_uploaded_files()
+        elif method_name == 'getTrainingConfiguration':
+            return await self.get_training_configuration()
+        elif method_name == 'saveTrainingConfiguration':
+            return await self.save_training_configuration(args[0] if args else {})
         
         # Settings methods
         elif method_name == 'get_app_settings':
@@ -180,6 +192,30 @@ class PythonBridgeServer:
             return await self.save_app_settings(args[0])
         elif method_name == 'validate_api_key':
             return await self.validate_api_key(args[0], args[1])
+        elif method_name == 'getUserSettings':
+            return await self.get_user_settings()
+        elif method_name == 'saveUserSettings':
+            return await self.save_user_settings(args[0])
+        elif method_name == 'checkProviderStatus':
+            return await self.check_provider_status(args[0])
+        
+        # Enhanced question history methods
+        elif method_name == 'getQuestionHistory':
+            return await self.get_question_history_paginated(args[0] if len(args) > 0 else 0, args[1] if len(args) > 1 else 50)
+        elif method_name == 'searchQuestions':
+            return await self.search_questions(args[0])
+        elif method_name == 'filterQuestionsByTopic':
+            return await self.filter_questions_by_topic(args[0])
+        elif method_name == 'filterQuestionsByDifficulty':
+            return await self.filter_questions_by_difficulty(args[0])
+        
+        # AI Model methods
+        elif method_name == 'getDeepSeekStatus':
+            return await self.get_deepseek_status()
+        
+        # Logging methods
+        elif method_name == 'logClientEvent':
+            return await self.log_client_event(args[0] if args else {})
         
         else:
             raise ValueError(f"Unknown method: {method_name}")
@@ -371,6 +407,174 @@ class PythonBridgeServer:
         except Exception as e:
             logger.error(f"Error uploading document: {e}")
             return False
+
+    async def get_uploaded_files(self) -> str:
+        """Get list of uploaded training files as JSON string"""
+        try:
+            files = await self.get_uploaded_files_list()
+            return json.dumps(files)
+        except Exception as e:
+            logger.error(f"Error getting uploaded files: {e}")
+            return json.dumps([])
+
+    async def save_training_configuration(self, config: Dict[str, Any]) -> bool:
+        """Save training configuration"""
+        try:
+            training_dir = Path("data/training")
+            training_dir.mkdir(parents=True, exist_ok=True)
+            
+            config_path = training_dir / "config.json"
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=2)
+            
+            logger.info(f"Training configuration saved: {config}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving training configuration: {e}")
+            return False
+
+    async def upload_file(self, filename: str, file_data: list) -> str:
+        """Upload file from frontend (expects array of bytes)"""
+        try:
+            training_dir = Path("data/training")
+            training_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Convert array of bytes to bytes
+            file_bytes = bytes(file_data)
+            
+            # Save file
+            file_path = training_dir / filename
+            with open(file_path, 'wb') as f:
+                f.write(file_bytes)
+            
+            logger.info(f"File uploaded successfully: {filename} ({len(file_bytes)} bytes)")
+            return json.dumps({"success": True, "message": f"File {filename} uploaded successfully"})
+            
+        except Exception as e:
+            logger.error(f"Error uploading file {filename}: {e}")
+            return json.dumps({"success": False, "message": f"Error uploading file: {str(e)}"})
+
+    async def delete_uploaded_file(self, filename: str) -> str:
+        """Delete uploaded training file"""
+        try:
+            training_dir = Path("data/training")
+            file_path = training_dir / filename
+            
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"File deleted successfully: {filename}")
+                return json.dumps({"success": True, "message": f"File {filename} deleted successfully"})
+            else:
+                return json.dumps({"success": False, "message": f"File {filename} not found"})
+            
+        except Exception as e:
+            logger.error(f"Error deleting file {filename}: {e}")
+            return json.dumps({"success": False, "message": f"Error deleting file: {str(e)}"})
+
+    async def start_training_frontend(self, config_json: str) -> str:
+        """Start training from frontend (expects JSON string)"""
+        try:
+            config = json.loads(config_json) if isinstance(config_json, str) else config_json
+            
+            logger.info(f"Starting training with config: {config}")
+            
+            # Save training config
+            await self.save_training_configuration(config)
+            
+            # Emit progress events
+            await self.emit_event("onTrainingProgress", {
+                "progress": 0,
+                "status": "Starting training...",
+                "stage": "initialization"
+            })
+            
+            # Start training process
+            asyncio.create_task(self.mock_training_process())
+            
+            return json.dumps({"success": True, "message": "Training started successfully"})
+            
+        except Exception as e:
+            logger.error(f"Error starting training: {e}")
+            return json.dumps({"success": False, "message": f"Error starting training: {str(e)}"})
+
+    async def get_uploaded_files(self) -> str:
+        """Get list of uploaded training files as JSON string"""
+        try:
+            files = await self.get_uploaded_files_list()
+            return json.dumps(files)
+        except Exception as e:
+            logger.error(f"Error getting uploaded files: {e}")
+            return json.dumps([])
+
+    async def get_uploaded_files_list(self) -> list:
+        """Get list of uploaded training files"""
+        try:
+            training_dir = Path("data/training")
+            if not training_dir.exists():
+                return []
+            
+            files = []
+            for file_path in training_dir.glob("*"):
+                if file_path.is_file() and file_path.name != "config.json":
+                    files.append({
+                        "name": file_path.name,
+                        "size": file_path.stat().st_size,
+                        "modified": file_path.stat().st_mtime,
+                        "path": str(file_path)
+                    })
+            
+            return files
+            
+        except Exception as e:
+            logger.error(f"Error getting uploaded files: {e}")
+            return []
+
+    async def get_training_configuration(self) -> str:
+        """Get current training configuration as JSON string"""
+        try:
+            config = await self.get_training_config_dict()
+            return json.dumps(config)
+        except Exception as e:
+            logger.error(f"Error getting training configuration: {e}")
+            return json.dumps({
+                "modelType": "text-generation",
+                "epochs": 3,
+                "batchSize": 8,
+                "learningRate": 0.001
+            })
+
+    async def get_training_config_dict(self) -> Dict[str, Any]:
+        """Get current training configuration"""
+        try:
+            # Try to load from config file
+            config_path = Path("data/training/config.json")
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    return json.loads(f.read())
+            
+            # Return default configuration
+            return {
+                "modelType": "text-generation",
+                "epochs": 3,
+                "batchSize": 8,
+                "learningRate": 0.001,
+                "maxLength": 512,
+                "warmupSteps": 100,
+                "saveSteps": 500,
+                "evaluationSteps": 1000,
+                "outputDir": "data/models",
+                "logLevel": "info"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting training configuration: {e}")
+            return {
+                "modelType": "text-generation",
+                "epochs": 3,
+                "batchSize": 8,
+                "learningRate": 0.001
+            }
     
     async def get_app_settings(self) -> Dict[str, Any]:
         """Get application settings"""
@@ -397,6 +601,172 @@ class PythonBridgeServer:
         logger.info(f"Validating API key for provider: {provider}")
         # Mock validation
         return len(api_key) > 10
+    
+    async def log_client_event(self, event_data: Dict[str, Any]) -> bool:
+        """Log client-side events for debugging and analytics"""
+        try:
+            # Extract event information
+            event_type = event_data.get('type', 'unknown')
+            event_level = event_data.get('level', 'info')
+            event_message = event_data.get('message', '')
+            event_details = event_data.get('details', {})
+            timestamp = event_data.get('timestamp', time.time())
+            
+            # Log the event with appropriate level
+            log_message = f"CLIENT_EVENT [{event_type}]: {event_message}"
+            if event_details:
+                log_message += f" | Details: {event_details}"
+            
+            if event_level.lower() == 'error':
+                logger.error(log_message)
+            elif event_level.lower() == 'warning':
+                logger.warning(log_message)
+            elif event_level.lower() == 'debug':
+                logger.debug(log_message)
+            else:
+                logger.info(log_message)
+            
+            # Optionally store in a database or file for analytics
+            # For now, just return success
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error logging client event: {e}")
+            return False
+
+    async def get_user_settings(self) -> str:
+        """Get user settings as JSON string"""
+        settings = await self.get_app_settings()
+        return json.dumps(settings)
+
+    async def save_user_settings(self, settings_json: str) -> bool:
+        """Save user settings from JSON string"""
+        try:
+            settings = json.loads(settings_json)
+            return await self.save_app_settings(settings)
+        except Exception as e:
+            logger.error(f"Error saving user settings: {e}")
+            return False
+
+    async def check_provider_status(self, provider: str) -> str:
+        """Check AI provider status"""
+        # Mock implementation - check if provider is available
+        mock_statuses = {
+            'openai': {'available': True, 'status': 'operational'},
+            'anthropic': {'available': True, 'status': 'operational'},
+            'gemini': {'available': True, 'status': 'operational'},
+            'groq': {'available': True, 'status': 'operational'},
+            'openrouter': {'available': True, 'status': 'operational'},
+            'deepseek': {'available': True, 'status': 'operational'},
+            'tavily': {'available': True, 'status': 'operational'}
+        }
+        
+        status = mock_statuses.get(provider, {'available': False, 'status': 'unknown'})
+        return json.dumps(status)
+
+    async def get_question_history_paginated(self, offset: int, limit: int) -> str:
+        """Get paginated question history"""
+        try:
+            if not self.question_storage:
+                # Mock paginated data
+                mock_questions = [
+                    {
+                        "id": f"q_{i}",
+                        "question": f"Sample question {i}?",
+                        "options": ["Option A", "Option B", "Option C", "Option D"],
+                        "correct": i % 4,
+                        "topic": "General",
+                        "difficulty": ["Easy", "Medium", "Hard"][i % 3],
+                        "timestamp": f"2025-01-{(i % 28) + 1:02d}T10:00:00"
+                    }
+                    for i in range(offset, min(offset + limit, 100))
+                ]
+                return json.dumps(mock_questions)
+            
+            questions = self.question_storage.get_recent_questions(limit=limit, offset=offset)
+            return json.dumps(questions)
+        except Exception as e:
+            logger.error(f"Error getting paginated question history: {e}")
+            return json.dumps([])
+
+    async def search_questions(self, search_term: str) -> str:
+        """Search questions by term"""
+        try:
+            # Mock search results
+            mock_results = [
+                {
+                    "id": "search_1",
+                    "question": f"Question containing '{search_term}'?",
+                    "options": ["A", "B", "C", "D"],
+                    "correct": 0,
+                    "topic": "Search Results",
+                    "difficulty": "Medium",
+                    "timestamp": "2025-01-31T10:00:00"
+                }
+            ]
+            return json.dumps(mock_results)
+        except Exception as e:
+            logger.error(f"Error searching questions: {e}")
+            return json.dumps([])
+
+    async def filter_questions_by_topic(self, topic: str) -> str:
+        """Filter questions by topic"""
+        try:
+            # Mock filtered results
+            mock_results = [
+                {
+                    "id": f"topic_{topic}_1",
+                    "question": f"Question about {topic}?",
+                    "options": ["A", "B", "C", "D"],
+                    "correct": 0,
+                    "topic": topic,
+                    "difficulty": "Medium",
+                    "timestamp": "2025-01-31T10:00:00"
+                }
+            ]
+            return json.dumps(mock_results)
+        except Exception as e:
+            logger.error(f"Error filtering questions by topic: {e}")
+            return json.dumps([])
+
+    async def filter_questions_by_difficulty(self, difficulty: str) -> str:
+        """Filter questions by difficulty"""
+        try:
+            # Mock filtered results
+            mock_results = [
+                {
+                    "id": f"diff_{difficulty}_1",
+                    "question": f"{difficulty} difficulty question?",
+                    "options": ["A", "B", "C", "D"],
+                    "correct": 0,
+                    "topic": "General",
+                    "difficulty": difficulty,
+                    "timestamp": "2025-01-31T10:00:00"
+                }
+            ]
+            return json.dumps(mock_results)
+        except Exception as e:
+            logger.error(f"Error filtering questions by difficulty: {e}")
+            return json.dumps([])
+
+    async def get_deepseek_status(self) -> Dict[str, Any]:
+        """Get DeepSeek AI model status"""
+        try:
+            # Mock DeepSeek status
+            return {
+                "available": True,
+                "model": "deepseek-chat",
+                "status": "ready",
+                "version": "v1.0",
+                "capabilities": ["text-generation", "code-completion"],
+                "rate_limit": {
+                    "requests_per_minute": 60,
+                    "tokens_per_minute": 10000
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting DeepSeek status: {e}")
+            return {"available": False, "status": "error", "message": str(e)}
     
     async def emit_event(self, event_name: str, data: Any):
         """Emit event to all connected WebSocket clients"""

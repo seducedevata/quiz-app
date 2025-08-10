@@ -10,16 +10,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bgPrimary: 'var(--color-bg-primary)',
-        bgSecondary: 'var(--color-bg-secondary)',
-        textPrimary: 'var(--color-text-primary)',
-        textSecondary: 'var(--color-text-secondary)',
-        borderColor: 'var(--color-border-color)',
-        primaryColor: 'var(--color-primary-color)',
-        primaryHover: 'var(--color-primary-hover)',
-        successColor: 'var(--color-success-color)',
-        dangerColor: 'var(--color-danger-color)',
-        warningColor: 'var(--color-warning-color)',
+        // Map to the actual CSS variables defined in globals.css
+        'bg-primary': 'var(--bg-primary)',
+        'bg-secondary': 'var(--bg-secondary)',
+        'bg-tertiary': 'var(--bg-tertiary)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
+        'text-inverse': 'var(--text-inverse)',
+        'border-color': 'var(--border-color)',
+        'primary-color': 'var(--primary-color)',
+        'primary-hover': 'var(--primary-hover)',
+        'success-color': 'var(--success-color)',
+        'danger-color': 'var(--danger-color)',
+        'warning-color': 'var(--warning-color)',
+        'info-color': 'var(--info-color)',
       },
       spacing: {
         xs: '4px',

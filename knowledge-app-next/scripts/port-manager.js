@@ -27,7 +27,8 @@ class PortManager {
   async killPort(port) {
     console.log(`Attempting to kill any process on port ${port}...`);
     return new Promise((resolve, reject) => {
-      exec(`netstat -ano | findstr :${port}`, (error, stdout, stderr) => {
+      // Check for both IPv4 and IPv6 addresses
+      exec(`netstat -ano | findstr ":${port}"`, (error, stdout, stderr) => {
         if (error) {
           console.log(`No process found on port ${port} or error: ${error.message}`);
           return resolve();
@@ -36,19 +37,32 @@ class PortManager {
           console.warn(`Stderr while checking port ${port}: ${stderr}`);
         }
 
-        const lines = stdout.trim().split('\n');
-        if (lines.length > 0 && lines[0] !== '') {
-          const pidMatch = lines[0].match(/\s(\d+)$/);
-          if (pidMatch) {
-            const pid = pidMatch[1];
-            exec(`taskkill /PID ${pid} /F`, (killError, killStdout, killStderr) => {
-              if (killError) {
-                console.error(`Error killing process ${pid} on port ${port}: ${killError.message}`);
-                return reject(killError);
-              }
-              console.log(`Successfully killed process ${pid} on port ${port}.`);
-              resolve();
+        const lines = stdout.trim().split('\n').filter(line => line.trim() !== '');
+        if (lines.length > 0) {
+          const pidsToKill = new Set();
+          
+          lines.forEach(line => {
+            const pidMatch = line.match(/\s(\d+)$/);
+            if (pidMatch) {
+              pidsToKill.add(pidMatch[1]);
+            }
+          });
+
+          if (pidsToKill.size > 0) {
+            const promises = Array.from(pidsToKill).map(pid => {
+              return new Promise((pidResolve) => {
+                exec(`taskkill /PID ${pid} /F`, (killError, killStdout, killStderr) => {
+                  if (killError) {
+                    console.error(`Error killing process ${pid} on port ${port}: ${killError.message}`);
+                  } else {
+                    console.log(`Successfully killed process ${pid} on port ${port}.`);
+                  }
+                  pidResolve();
+                });
+              });
             });
+            
+            Promise.all(promises).then(() => resolve());
           } else {
             console.log(`Could not find PID for port ${port}.`);
             resolve();
@@ -59,6 +73,17 @@ class PortManager {
         }
       });
     });
+  }
+
+  async clearAllPorts() {
+    const ports = [3000, 3001, 3003, 8000];
+    for (const port of ports) {
+      try {
+        await this.killPort(port);
+      } catch (error) {
+        console.error(`Error clearing port ${port}:`, error);
+      }
+    }
   }
 
   setupGracefulShutdown(server, port) {

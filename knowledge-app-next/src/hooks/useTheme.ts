@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import { usePreferences } from './usePreferences';
 
 interface ThemeContextType {
   isDark: boolean;
@@ -14,32 +15,19 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const [isDark, setIsDark] = useState(true); // Default to dark theme
+  const { preferences, updatePreference } = usePreferences();
+  const isDark = preferences.theme === 'dark';
 
   useEffect(() => {
-    // Check for saved theme preference or default to dark
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-      setIsDark(false);
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      setIsDark(true);
+    if (isDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
     }
-  }, []);
+  }, [isDark]);
 
   const toggleTheme = () => {
-    setIsDark((prevIsDark) => {
-      const newIsDark = !prevIsDark;
-      if (newIsDark) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem('theme', 'light');
-      }
-      return newIsDark;
-    });
+    updatePreference('theme', isDark ? 'light' : 'dark');
   };
 
   const contextValue: ThemeContextType = { isDark, toggleTheme };

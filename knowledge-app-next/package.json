@@ -3,14 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm-run-all --parallel dev:next dev:api",
+    "dev": "npm run clear-ports && npm-run-all --parallel dev:next dev:bridge",
     "dev:next": "next dev --turbo",
     "dev:api": "node scripts/start-api.js",
+    "dev:bridge": "python api-server/bridge-server.py",
     "dev:full": "node scripts/start-full.js",
     "build": "next build",
     "start": "next start",
+    "start:full": "npm-run-all --parallel start start:bridge",
+    "start:bridge": "python api-server/bridge-server.py",
     "lint": "next lint",
-    "clear-ports": "node -e \"const PortManager = require('./scripts/port-manager'); new PortManager().clearAllPorts();\""
+    "clear-ports": "node -e \"const PortManager = require('./scripts/port-manager'); new PortManager().clearAllPorts();\"",
+    "api:start": "node api-server/server.js",
+    "api:test": "node scripts/test-bridge.js",
+    "bridge:install": "pip install -r api-server/requirements.txt",
+    "bridge:test": "python -c \"import sys; sys.path.append('.'); from api_server.bridge_server import initialize_backend; print('✅ Bridge test passed' if initialize_backend() else '❌ Bridge test failed')\"",
+    "test": "jest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
@@ -22,20 +30,27 @@
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
     "react-icons": "^5.2.1",
     "socket.io-client": "^4.8.1",
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "eslint": "^8",
     "eslint-config-next": "^15.4.5",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "multer": "^1.4.5-lts.1",
     "npm-run-all": "^4.1.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.9.2"
   }
 }

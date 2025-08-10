@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuizStore } from '@/store/quizStore';
 import { StatusDisplay } from '@/components/common/StatusDisplay';
-import { ExpertModePanel } from '@/components/expert/ExpertModePanel';
 
+// EXACT Qt WebEngine options - no extras allowed!
 const modeOptions = [
   { label: 'Offline (Local AI - TURBO)', value: 'offline' },
   { label: 'Auto (Best Available)', value: 'auto' },
@@ -35,10 +35,97 @@ export const QuizSetup: React.FC = () => {
   const [gameMode, setGameMode] = useState('casual');
   const [questionType, setQuestionType] = useState('mixed');
   const [difficulty, setDifficulty] = useState('medium');
-  const [numQuestions, setNumQuestions] = useState('5');
+  const [numQuestions, setNumQuestions] = useState('2');
   const [tokenStreaming, setTokenStreaming] = useState(true);
+  const [deepSeekStatus, setDeepSeekStatus] = useState('Checking DeepSeek availability...');
+  const [isDeepSeekAvailable, setIsDeepSeekAvailable] = useState(false);
 
   const { setIsLoading, startQuiz } = useQuizStore();
+
+  // Info text updaters - EXACT Qt behavior
+  const updateModeInfo = () => {
+    const element = document.getElementById('mode-info');
+    if (element) {
+      element.innerHTML = '<small>🤖 Auto-selecting best available method</small>';
+    }
+  };
+
+  const updateGameModeInfo = () => {
+    const element = document.getElementById('game-mode-info');
+    if (element) {
+      const info = gameMode === 'casual' 
+        ? '🎵 Relaxed learning with background music and no time pressure'
+        : '⏱️ Focused learning with time limits and performance tracking';
+      element.innerHTML = `<small>${info}</small>`;
+    }
+  };
+
+  const updateSubmodeInfo = () => {
+    const element = document.getElementById('submode-info');
+    if (element) {
+      const info = questionType === 'mixed' 
+        ? '🔀 Balanced mix of numerical and conceptual questions'
+        : questionType === 'numerical'
+        ? '📊 Focus on calculations, formulas, and problem-solving'
+        : '🧠 Focus on understanding, theory, and concepts';
+      element.innerHTML = `<small>${info}</small>`;
+    }
+  };
+
+  const updateDifficultyInfo = () => {
+    const element = document.getElementById('difficulty-info');
+    if (element) {
+      const info = difficulty === 'easy' 
+        ? '🟢 Basic concepts and straightforward questions'
+        : difficulty === 'medium'
+        ? '🟡 Moderate complexity requiring some analysis'
+        : difficulty === 'hard'
+        ? '🔴 Advanced analysis and complex problem-solving'
+        : '🔥💀 PhD-level complexity with cutting-edge research topics 💀🔥';
+      element.innerHTML = `<small>${info}</small>`;
+    }
+  };
+
+  const saveSettings = () => {
+    console.log('Settings saved'); // Qt compatibility placeholder
+  };
+
+  useEffect(() => {
+    // Initialize info displays
+    updateModeInfo();
+    updateGameModeInfo();
+    updateSubmodeInfo();
+    updateDifficultyInfo();
+    
+    // Check DeepSeek status
+    const checkDeepSeek = async () => {
+      try {
+        // Simulate DeepSeek status check like Qt
+        setDeepSeekStatus('Ready: DeepSeek R1 + Llama JSON');
+        setIsDeepSeekAvailable(true);
+      } catch (error) {
+        setDeepSeekStatus('Not available');
+        setIsDeepSeekAvailable(false);
+      }
+    };
+    checkDeepSeek();
+  }, []);
+
+  useEffect(() => {
+    updateModeInfo();
+  }, [mode]);
+
+  useEffect(() => {
+    updateGameModeInfo();
+  }, [gameMode]);
+
+  useEffect(() => {
+    updateSubmodeInfo();
+  }, [questionType]);
+
+  useEffect(() => {
+    updateDifficultyInfo();
+  }, [difficulty]);
 
   const handleStartQuiz = async () => {
     setIsLoading(true);
@@ -51,9 +138,11 @@ export const QuizSetup: React.FC = () => {
         body: JSON.stringify({
           topic,
           difficulty,
-          num_questions: parseInt(numQuestions),
+          numQuestions: parseInt(numQuestions),
           mode,
-          submode: questionType, // Using questionType as submode
+          gameMode, // submode in Qt
+          questionType,
+          enableTokenStreaming: tokenStreaming,
         }),
       });
 
@@ -66,24 +155,23 @@ export const QuizSetup: React.FC = () => {
         throw new Error(data.error);
       }
       
-      // Assuming data.questions is an array of Question objects
       startQuiz(data.questions);
     } catch (error) {
       console.error('Failed to generate quiz:', error);
-      // Handle error state in UI, e.g., show a toast message
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="quiz-setup screen">
+    <div className="quiz-setup">
       <h2>Quiz Setup</h2>
       
       <div className="form-group">
         <label>Topic</label>
         <input
           type="text"
+          id="quiz-topic"
           placeholder="Enter topic (e.g., Science, History)"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
@@ -92,47 +180,89 @@ export const QuizSetup: React.FC = () => {
 
       <div className="form-group">
         <label>Mode</label>
-        <select value={mode} onChange={(e) => setMode(e.target.value)}>
+        <select 
+          id="quiz-mode" 
+          value={mode} 
+          onChange={(e) => { 
+            setMode(e.target.value); 
+            updateModeInfo(); 
+            saveSettings(); 
+          }}
+        >
           {modeOptions.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
-        <small>🤖 Auto-selecting best available method</small>
+        <div id="mode-info" className="mode-info">
+          <small>🤖 Auto-selecting best available method</small>
+        </div>
       </div>
 
       <div className="form-group">
         <label>Game Mode</label>
-        <select value={gameMode} onChange={(e) => setGameMode(e.target.value)}>
+        <select 
+          id="quiz-game-mode" 
+          value={gameMode} 
+          onChange={(e) => { 
+            setGameMode(e.target.value); 
+            updateGameModeInfo(); 
+            saveSettings(); 
+          }}
+        >
           {gameModeOptions.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
+        <div id="game-mode-info" className="mode-info">
+          <small>🎵 Relaxed learning with background music and no time pressure</small>
+        </div>
       </div>
 
       <div className="form-group">
         <label>Question Type</label>
-        <select value={questionType} onChange={(e) => setQuestionType(e.target.value)}>
+        <select 
+          id="quiz-submode" 
+          value={questionType} 
+          onChange={(e) => { 
+            setQuestionType(e.target.value); 
+            updateSubmodeInfo(); 
+            saveSettings(); 
+          }}
+        >
           {questionTypeOptions.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
+        <div id="submode-info" className="mode-info">
+          <small>🔀 Balanced mix of numerical and conceptual questions</small>
+        </div>
       </div>
 
       <div className="form-group">
         <label>Difficulty</label>
-        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+        <select 
+          id="quiz-difficulty" 
+          value={difficulty} 
+          onChange={(e) => { 
+            setDifficulty(e.target.value); 
+            updateDifficultyInfo(); 
+            saveSettings(); 
+          }}
+        >
           {difficultyOptions.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
+        <div id="difficulty-info" className="mode-info">
+          <small>🔴 Advanced analysis and complex problem-solving</small>
+        </div>
       </div>
-
-      {difficulty === 'expert' && <ExpertModePanel />}
 
       <div className="form-group">
         <label>Number of Questions</label>
         <input
           type="number"
+          id="quiz-questions"
           value={numQuestions}
           onChange={(e) => setNumQuestions(e.target.value)}
           min="1"
@@ -140,22 +270,60 @@ export const QuizSetup: React.FC = () => {
         />
       </div>
 
+      {/* Token Streaming - EXACT Qt styling */}
       <div className="form-group">
-        <label>
+        <div className="checkbox-group">
           <input
             type="checkbox"
+            id="token-streaming-enabled"
+            className="toggle-checkbox"
             checked={tokenStreaming}
-            onChange={(e) => {
-              setTokenStreaming(e.target.checked);
-              console.log(`🔥 ENHANCED DEBUG - QuizSetup: Token streaming checkbox changed to: ${e.target.checked}`);
-            }}
+            onChange={(e) => setTokenStreaming(e.target.checked)}
           />
-          🌊 Live Token Streaming
-        </label>
-        <small>Watch AI thinking process in real-time</small>
+          <label htmlFor="token-streaming-enabled" className="toggle-label">
+            🌊 Live Token Streaming
+            <small className="feature-description">Watch AI thinking process in real-time (Expert + Online mode only)</small>
+          </label>
+        </div>
       </div>
 
-      <button className="btn-primary" onClick={handleStartQuiz}>
+      {/* DeepSeek Section - EXACT Qt styling */}
+      {isDeepSeekAvailable && (
+        <div className="form-group deepseek-section" id="deepseek-section">
+          <div className="deepseek-header">
+            <h3>🧠 DeepSeek AI Pipeline</h3>
+            <div id="deepseek-status" className="deepseek-status">
+              <span className="status-indicator">⏳</span>
+              <span className="status-text">{deepSeekStatus}</span>
+            </div>
+          </div>
+          <div className="deepseek-info">
+            <small>🔬 Two-Model Pipeline: DeepSeek R1 thinking + Llama JSON formatting</small>
+            <br />
+            <small>🎯 Optimized for expert-level, PhD-quality questions</small>
+          </div>
+        </div>
+      )}
+
+      {/* START QUIZ Button - EXACT Qt styling */}
+      <button 
+        className="btn btn-primary" 
+        id="start-quiz-button"
+        onClick={handleStartQuiz}
+        style={{
+          backgroundColor: '#007bff',
+          color: 'white',
+          fontWeight: 'bold',
+          padding: '15px 30px',
+          fontSize: '16px',
+          borderRadius: '8px',
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          zIndex: 1000
+        }}
+      >
         ⭐ START QUIZ
       </button>
     </div>

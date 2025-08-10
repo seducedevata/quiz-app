@@ -191,13 +191,22 @@ debug_screenshots*/
 test_screenshots*/
 screenshots/
 
-# Generated images
+# Generated images (allow explicit Next.js public assets override later)
 *.png
 *.jpg
 *.jpeg
 *.gif
 *.bmp
 *.tiff
+
+# Re-allow public asset images for Next.js (must come AFTER image ignore rules)
+!knowledge-app-next/public/**/*.png
+!knowledge-app-next/public/**/*.jpg
+!knowledge-app-next/public/**/*.jpeg
+!knowledge-app-next/public/**/*.gif
+!knowledge-app-next/public/**/*.svg
+!knowledge-app-next/public/**/*.webp
+!knowledge-app-next/public/**/*.ico
 
 # ===== DEBUG & TESTING FILES =====
 # Debug and test scripts (clutter)
@@ -339,10 +348,10 @@ tests/*_debug.py
 !GEMINI.md
 !CURSOR_UI_RECREATION_PROMPT.md
 
-# HTML debug files (for Qt WebEngine reference)
+# HTML debug files (keep only specifically needed reference examples)
 !debug_navigation.html
 !test_js_syntax.html
-!*.html
+# (Removed blanket !*.html to avoid re-introducing large / test html dumps.)
 
 # Python bridge server
 !python_bridge_server.py

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { AppLogger, setCurrentScreenName } from '../lib/logger';
+import { sessionTracker } from '../lib/sessionTracker';
 
 interface ScreenContextType {
   currentScreen: string;
@@ -17,6 +18,9 @@ export const ScreenProvider = ({ children }: { children: ReactNode }) => {
     const previousScreen = currentScreen;
     setCurrentScreenState(screenName);
     setCurrentScreenName(screenName); // Update logger's current screen
+
+    // Update session tracker (this will also log navigation)
+    sessionTracker.setScreen(screenName);
 
     AppLogger.action('NAVIGATION', `Navigating from ${previousScreen} to ${screenName}`, {
       method: navElement ? 'nav-click' : 'programmatic',

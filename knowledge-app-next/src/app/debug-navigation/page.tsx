@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { callPythonMethod } from '../../lib/pythonBridge';
 
 const DebugNavigationPage: React.FC = () => {
   const [output, setOutput] = useState<string>('');

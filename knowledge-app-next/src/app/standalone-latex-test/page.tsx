@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
+import { MathJaxContext } from 'better-react-mathjax';
+import React, { useEffect, useState } from 'react';
 
 // MathJax configuration (same as in math-rendering-test/page.tsx)
 const mathJaxConfig = {
@@ -25,10 +25,6 @@ const mathJaxConfig = {
       nanometer: '\text{nm}',
       picometer: '\text{pm}',
       bohr: 'a_0'
-    },
-    formatError: function (jax: any, error: any) {
-      console.warn('MathJax error:', error.message);
-      return ['span', {style: 'font-family: monospace; color: #333;'}, jax.math];
     }
   },
   svg: {
@@ -42,12 +38,7 @@ const mathJaxConfig = {
     processHtmlClass: 'tex2jax_process'
   },
   startup: {
-    typeset: false,
-    ready() {
-      console.log('✅ MathJax loaded and ready');
-      (window as any).MathJax.startup.defaultReady();
-      (window as any).mathJaxReady = true;
-    }
+    typeset: false
   }
 };
 

@@ -1,0 +1,11 @@
+{
+  "topic": "math",
+  "mode": "auto", 
+  "gameMode": "casual",
+  "questionType": "mixed",
+  "difficulty": "medium",
+  "numQuestions": 2,
+  "enableTokenStreaming": false,
+  "deepSeekModel": "",
+  "customPrompt": ""
+}
